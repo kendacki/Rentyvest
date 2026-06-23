@@ -1,0 +1,31 @@
+module RentyVest.Types where
+
+-- | Lifecycle state for a PropertyPool fundraising escrow.
+data PoolStatus
+  = Pending
+  | Active
+  | Expired
+  | Archived
+  deriving (Eq, Show)
+
+-- | Immutable record of a yield distribution event for a property pool.
+data YieldRecord = YieldRecord
+  with
+    distribution_id : Text
+    period_start : Time
+    period_end : Time
+    amount_per_slot : Decimal
+    currency : Text
+    recorded_at : Time
+  deriving (Eq, Show)
+
+-- | Immutable record of an on-ledger PropertyNFT transfer.
+data TransferRecord = TransferRecord
+  with
+    transfer_id : Text
+    slot_index : Int
+    from_owner : Party
+    to_owner : Party
+    transferred_at : Time
+    consideration : Optional Decimal
+  deriving (Eq, Show)

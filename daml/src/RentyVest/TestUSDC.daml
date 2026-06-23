@@ -1,0 +1,564 @@
+module RentyVest.TestUSDC where
+
+import DA.Map as M
+import DA.Optional (isNone)
+import DA.TextMap as TM
+
+import RentyVest.CIP0056.Allocation
+import RentyVest.CIP0056.Holdings
+import RentyVest.CIP0056.TokenMetadata
+import RentyVest.CIP0056.TransferInstruction
+
+-- | CIP-0056 mandates 10 decimal places for on-ledger Decimal amounts.
+tokenDecimals : Int
+tokenDecimals = 10
+
+tokenName : Text
+tokenName = "Test USDC"
+
+tokenSymbol : Text
+tokenSymbol = "tUSDC"
+
+instrumentIdText : Text
+instrumentIdText = "tUSDC"
+
+makeInstrumentId : Party -> InstrumentId
+makeInstrumentId admin =
+  InstrumentId with
+    admin = admin
+    id = instrumentIdText
+
+tokenMetadataValues : Metadata
+tokenMetadataValues =
+  setMetadataValue "decimals" (show tokenDecimals) $
+    setMetadataValue "symbol" tokenSymbol $
+      setMetadataValue "name" tokenName emptyMetadata
+
+-- | Sum and validate sender-owned, unlocked holdings for the expected instrument.
+validateInputHoldings : Party -> InstrumentId -> [ContractId Holding] -> Update ([ContractId Asset], Decimal)
+validateInputHoldings expectedOwner expectedInstrument cids = do
+  assertMsg "At least one input holding is required" (cids /= [])
+  validateInputHoldingsLoop expectedOwner expectedInstrument cids 0.0 []
+
+validateInputHoldingsLoop : Party -> InstrumentId -> [ContractId Holding] -> Decimal -> [ContractId Asset] -> Update ([ContractId Asset], Decimal)
+validateInputHoldingsLoop _ _ [] total acc = return (reverse acc, total)
+validateInputHoldingsLoop expectedOwner expectedInstrument (cid :: rest) total acc = do
+  let assetCid : ContractId Asset = coerceContractId cid
+  asset <- fetch assetCid
+  assertMsg "Holding owner mismatch" (asset.owner == expectedOwner)
+  assertMsg "Instrument admin mismatch" (asset.instrumentId.admin == expectedInstrument.admin)
+  assertMsg "Instrument id mismatch" (asset.instrumentId.id == expectedInstrument.id)
+  assertMsg "Holding amount must be positive" (asset.amount > 0.0)
+  assertMsg "Locked holdings cannot be transferred" (isNone asset.lock)
+  validateInputHoldingsLoop expectedOwner expectedInstrument rest (total + asset.amount) (assetCid :: acc)
+
+archiveAssets : [ContractId Asset] -> Update ()
+archiveAssets [] = return ()
+archiveAssets (cid :: rest) = do
+  archive cid
+  archiveAssets rest
+
+mintAsset : Party -> Party -> InstrumentId -> Decimal -> Metadata -> [Party] -> Update (ContractId Asset)
+mintAsset issuer owner instrumentId amount meta observers = do
+  assertMsg "Mint amount must be positive" (amount > 0.0)
+  create
+    Asset with
+      issuer = issuer
+      owner = owner
+      amount = amount
+      instrumentId = instrumentId
+      lock = None
+      meta = meta
+      observers = observers
+
+-- | Primary CIP-0056 holding template. Balances are read via the Holding interface view.
+template Asset
+  with
+    issuer : Party
+    owner : Party
+    amount : Decimal
+    instrumentId : InstrumentId
+    lock : Optional Lock
+    meta : Metadata
+    observers : [Party]
+  where
+    signatory issuer, owner
+    observer observers
+
+    ensure amount > 0.0
+
+    interface instance Holding for Asset where
+      view =
+        HoldingView with
+          owner
+          instrumentId
+          amount
+          lock
+          meta
+
+    -- | Isolate an exact payment amount for settlement (CIP-0056 UTXO split).
+    choice Split : (ContractId Asset, Optional (ContractId Asset))
+      with
+        paymentAmount : Decimal
+      controller owner
+      do
+        assertMsg "Payment amount must be positive" (paymentAmount > 0.0)
+        assertMsg "Insufficient holding balance for split" (amount >= paymentAmount)
+        assertMsg "Locked holdings cannot be split" (isNone lock)
+
+        archive self
+
+        paymentCid <-
+          create
+            Asset with
+              issuer
+              owner
+              amount = paymentAmount
+              instrumentId
+              lock
+              meta
+              observers
+
+        changeCid <-
+          if amount > paymentAmount
+            then do
+              cid <-
+                create
+                  Asset with
+                    issuer
+                    owner
+                    amount = amount - paymentAmount
+                    instrumentId
+                    lock
+                    meta
+                    observers
+              return (Some cid)
+            else return None
+
+        return (paymentCid, changeCid)
+
+    -- | Transfer holding ownership to a new party (free-of-payment).
+    choice TransferAsset : ContractId Asset
+      with
+        newOwner : Party
+      controller owner
+      do
+        assertMsg "Cannot transfer to the current owner" (newOwner /= owner)
+        assertMsg "Locked holdings cannot be transferred" (isNone lock)
+
+        archive self
+
+        create
+          Asset with
+            issuer
+            owner = newOwner
+            amount
+            instrumentId
+            lock
+            meta
+            observers
+
+    -- | Consolidate two same-owner UTXOs into a single holding.
+    choice MergeWith : ContractId Asset
+      with
+        otherCid : ContractId Asset
+      controller owner
+      do
+        otherAsset <- fetch otherCid
+        assertMsg "Cannot merge with self" (otherCid /= self)
+        assertMsg "Merge requires same owner" (otherAsset.owner == owner)
+        assertMsg "Merge requires same issuer" (otherAsset.issuer == issuer)
+        assertMsg "Merge requires same instrument admin" (otherAsset.instrumentId.admin == instrumentId.admin)
+        assertMsg "Merge requires same instrument id" (otherAsset.instrumentId.id == instrumentId.id)
+        assertMsg "Locked holdings cannot be merged" (isNone lock && isNone otherAsset.lock)
+
+        archive self
+        archive otherCid
+
+        create
+          Asset with
+            issuer
+            owner
+            amount = amount + otherAsset.amount
+            instrumentId
+            lock = None
+            meta
+            observers
+
+-- | Platform-controlled issuer for Test USDC. Only this contract can mint new holdings.
+template USDCIssuer
+  with
+    platform_admin : Party
+    instrumentId : InstrumentId
+    totalSupply : Decimal
+    meta : Metadata
+  where
+    signatory platform_admin
+
+    ensure totalSupply >= 0.0
+
+    interface instance TokenMetadata for USDCIssuer where
+      view =
+        TokenMetadataView with
+          instrumentAdmin = platform_admin
+          instrumentId = instrumentId.id
+          name = tokenName
+          symbol = tokenSymbol
+          decimals = tokenDecimals
+          totalSupply = Some totalSupply
+          registryUrl = None
+          logoUrl = None
+          meta
+
+    nonconsuming choice USDCIssuer_BootstrapFactories : (ContractId TestUSDCTransferFactory, ContractId TestUSDCAllocationFactory)
+      controller platform_admin
+      do
+        transferFactoryCid <- create
+          TestUSDCTransferFactory with
+            admin = platform_admin
+            instrumentId = instrumentId
+            meta = meta
+        allocationFactoryCid <- create
+          TestUSDCAllocationFactory with
+            admin = platform_admin
+            instrumentId = instrumentId
+            meta = meta
+        return (transferFactoryCid, allocationFactoryCid)
+
+    choice Mint : ContractId Asset
+      with
+        owner : Party
+        amount : Decimal
+        observers : [Party]
+      controller platform_admin
+      do
+        assertMsg "Mint amount must be positive" (amount > 0.0)
+        holdingCid <- mintAsset platform_admin owner instrumentId amount meta observers
+        _ <- create this with totalSupply = totalSupply + amount
+        return holdingCid
+
+    nonconsuming choice PublicFetch : TokenMetadataView
+      with
+        actor : Party
+      controller actor
+      do
+        return
+          TokenMetadataView with
+            instrumentAdmin = platform_admin
+            instrumentId = instrumentId.id
+            name = tokenName
+            symbol = tokenSymbol
+            decimals = tokenDecimals
+            totalSupply = Some totalSupply
+            registryUrl = None
+            logoUrl = None
+            meta
+
+-- | CIP-0056 transfer factory — sender-initiated free-of-payment transfer workflow.
+template TestUSDCTransferFactory
+  with
+    admin : Party
+    instrumentId : InstrumentId
+    meta : Metadata
+  where
+    signatory admin
+
+    interface instance TransferFactory for TestUSDCTransferFactory where
+      view =
+        TransferFactoryView with
+          admin
+          instrumentId
+          meta
+
+      transferFactory_TransferImpl _ arg = do
+        let expectedAdmin = arg.expectedAdmin
+            transfer = arg.transfer
+            extraArgs = arg.extraArgs
+        assertMsg "Transfer factory admin mismatch" (expectedAdmin == admin)
+        assertMsg "Instrument admin mismatch" (transfer.instrumentId.admin == instrumentId.admin)
+        assertMsg "Instrument id mismatch" (transfer.instrumentId.id == instrumentId.id)
+        assertMsg "Transfer amount must be positive" (transfer.amount > 0.0)
+        assertMsg "Sender cannot transfer to self" (transfer.sender /= transfer.receiver)
+        (assetCids, total) <- validateInputHoldings transfer.sender instrumentId transfer.inputHoldingCids
+        assertMsg "Insufficient holding balance for transfer" (total >= transfer.amount)
+        archiveAssets assetCids
+        let changeAmount = total - transfer.amount
+        changeCids <-
+          if changeAmount > 0.0
+            then do
+              changeCid <- mintAsset admin transfer.sender instrumentId changeAmount meta []
+              return [toInterfaceContractId changeCid]
+            else return []
+        instructionCid <-
+          create
+            TestUSDCTransferInstruction with
+              issuer = admin
+              transfer = transfer
+              escrowedAmount = transfer.amount
+              status = TransferPendingReceiverAcceptance
+              meta = extraArgs.meta
+        return
+          TransferInstructionResult with
+            output = TIPending (toInterfaceContractId instructionCid)
+            senderChangeCids = changeCids
+            meta = extraArgs.meta
+
+      transferFactory_PublicFetchImpl _ arg = do
+        let expectedAdmin = arg.expectedAdmin
+        assertMsg "Transfer factory admin mismatch" (expectedAdmin == admin)
+        return
+          TransferFactoryView with
+            admin
+            instrumentId
+            meta
+
+-- | Pending transfer awaiting receiver acceptance (CIP-0056 TransferInstruction API).
+template TestUSDCTransferInstruction
+  with
+    issuer : Party
+    transfer : Transfer
+    escrowedAmount : Decimal
+    status : TransferInstructionStatus
+    meta : Metadata
+  where
+    signatory issuer, transfer.sender
+    observer transfer.receiver
+
+    ensure escrowedAmount > 0.0
+
+    interface instance TransferInstruction for TestUSDCTransferInstruction where
+      view =
+        TransferInstructionView with
+          originalInstructionCid = None
+          transfer
+          status
+          meta
+
+      transferInstruction_AcceptImpl _ arg = do
+        let extraArgs = arg.extraArgs
+        assertMsg "Transfer is not pending acceptance" (status == TransferPendingReceiverAcceptance)
+        receiverCid <- mintAsset issuer transfer.receiver transfer.instrumentId escrowedAmount meta []
+        return
+          TransferInstructionResult with
+            output = TICompleted [toInterfaceContractId receiverCid]
+            senderChangeCids = []
+            meta = extraArgs.meta
+
+      transferInstruction_RejectImpl _ arg = do
+        let extraArgs = arg.extraArgs
+        assertMsg "Transfer is not pending acceptance" (status == TransferPendingReceiverAcceptance)
+        refundCid <- mintAsset issuer transfer.sender transfer.instrumentId escrowedAmount meta []
+        return
+          TransferInstructionResult with
+            output = TICompleted [toInterfaceContractId refundCid]
+            senderChangeCids = []
+            meta = extraArgs.meta
+
+      transferInstruction_WithdrawImpl _ arg = do
+        let extraArgs = arg.extraArgs
+        assertMsg "Transfer is not pending acceptance" (status == TransferPendingReceiverAcceptance)
+        refundCid <- mintAsset issuer transfer.sender transfer.instrumentId escrowedAmount meta []
+        return
+          TransferInstructionResult with
+            output = TICompleted [toInterfaceContractId refundCid]
+            senderChangeCids = []
+            meta = extraArgs.meta
+
+      transferInstruction_UpdateImpl cid arg = do
+        let extraActors = arg.extraActors
+            extraArgs = arg.extraArgs
+        assertMsg "Only instrument admin may update pending transfers" (transfer.instrumentId.admin == issuer)
+        return
+          TransferInstructionResult with
+            output = TIPending (toInterfaceContractId cid)
+            senderChangeCids = []
+            meta = extraArgs.meta
+
+-- | CIP-0056 allocation factory for atomic DvP-style settlement legs.
+template TestUSDCAllocationFactory
+  with
+    admin : Party
+    instrumentId : InstrumentId
+    meta : Metadata
+  where
+    signatory admin
+
+    interface instance AllocationFactory for TestUSDCAllocationFactory where
+      view =
+        AllocationFactoryView with
+          admin
+          instrumentId
+          meta
+
+      allocationFactory_AllocateImpl _ arg = do
+        let expectedAdmin = arg.expectedAdmin
+            allocation = arg.allocation
+            requestedAt = arg.requestedAt
+            inputHoldingCids = arg.inputHoldingCids
+            extraArgs = arg.extraArgs
+        assertMsg "Allocation factory admin mismatch" (expectedAdmin == admin)
+        let leg = allocation.transferLeg
+        assertMsg "Instrument admin mismatch" (leg.instrumentId.admin == instrumentId.admin)
+        assertMsg "Instrument id mismatch" (leg.instrumentId.id == instrumentId.id)
+        assertMsg "Allocation amount must be positive" (leg.amount > 0.0)
+        assertMsg "Allocation sender mismatch" (leg.sender == leg.sender)
+        (assetCids, total) <- validateInputHoldings leg.sender instrumentId inputHoldingCids
+        assertMsg "Insufficient holding balance for allocation" (total >= leg.amount)
+        archiveAssets assetCids
+        let changeAmount = total - leg.amount
+        changeCids <-
+          if changeAmount > 0.0
+            then do
+              changeCid <- mintAsset admin leg.sender instrumentId changeAmount meta []
+              return [toInterfaceContractId changeCid]
+            else return []
+        allocationCid <-
+          create
+            TestUSDCAllocation with
+              issuer = admin
+              allocation = allocation
+              heldAmount = leg.amount
+              meta = extraArgs.meta
+        return
+          AllocationInstructionResult with
+            output = AICompleted (toInterfaceContractId allocationCid)
+            senderChangeCids = changeCids
+            meta = extraArgs.meta
+
+      allocationFactory_PublicFetchImpl _ arg = do
+        let expectedAdmin = arg.expectedAdmin
+        assertMsg "Allocation factory admin mismatch" (expectedAdmin == admin)
+        return
+          AllocationFactoryView with
+            admin
+            instrumentId
+            meta
+
+-- | Escrowed allocation leg executed atomically by executor and both trade parties.
+template TestUSDCAllocation
+  with
+    issuer : Party
+    allocation : AllocationSpecification
+    heldAmount : Decimal
+    meta : Metadata
+  where
+    signatory issuer, allocation.transferLeg.sender
+    observer allocation.transferLeg.receiver, allocation.settlement.executor
+
+    ensure heldAmount > 0.0
+
+    interface instance Allocation for TestUSDCAllocation where
+      view =
+        AllocationView with
+          allocation
+          holdingCids = []
+          meta
+
+      allocation_ExecuteTransferImpl _ arg = do
+        let extraArgs = arg.extraArgs
+        let leg = allocation.transferLeg
+        receiverCid <- mintAsset issuer leg.receiver leg.instrumentId heldAmount meta []
+        return
+          Allocation_ExecuteTransferResult with
+            senderHoldingCids = []
+            receiverHoldingCids = [toInterfaceContractId receiverCid]
+            meta = extraArgs.meta
+
+      allocation_CancelImpl _ arg = do
+        let extraArgs = arg.extraArgs
+        let leg = allocation.transferLeg
+        refundCid <- mintAsset issuer leg.sender leg.instrumentId heldAmount meta []
+        return
+          Allocation_CancelResult with
+            senderHoldingCids = [toInterfaceContractId refundCid]
+            meta = extraArgs.meta
+
+      allocation_WithdrawImpl _ arg = do
+        let extraArgs = arg.extraArgs
+        let leg = allocation.transferLeg
+        refundCid <- mintAsset issuer leg.sender leg.instrumentId heldAmount meta []
+        return
+          Allocation_WithdrawResult with
+            senderHoldingCids = [toInterfaceContractId refundCid]
+            meta = extraArgs.meta
+
+-- | Multi-step allocation instruction (reserved for workflows requiring counterparty approval).
+template TestUSDCAllocationInstruction
+  with
+    issuer : Party
+    allocation : AllocationSpecification
+    requestedAt : Time
+    inputHoldingCids : [ContractId Holding]
+    pendingActions : M.Map Party Text
+    meta : Metadata
+  where
+    signatory issuer, allocation.transferLeg.sender
+    observer allocation.transferLeg.receiver, allocation.settlement.executor
+
+    interface instance AllocationInstruction for TestUSDCAllocationInstruction where
+      view =
+        AllocationInstructionView with
+          originalInstructionCid = None
+          allocation
+          pendingActions
+          requestedAt
+          inputHoldingCids
+          meta
+
+      allocationInstruction_WithdrawImpl _ arg = do
+        let extraArgs = arg.extraArgs
+        let leg = allocation.transferLeg
+        (assetCids, total) <- validateInputHoldings leg.sender leg.instrumentId inputHoldingCids
+        assertMsg "Insufficient escrowed holdings" (total >= leg.amount)
+        archiveAssets assetCids
+        refundCid <- mintAsset issuer leg.sender leg.instrumentId leg.amount meta []
+        return
+          AllocationInstructionResult with
+            output = AIFailed
+            senderChangeCids = [toInterfaceContractId refundCid]
+            meta = extraArgs.meta
+
+      allocationInstruction_UpdateImpl cid arg = do
+        let extraActors = arg.extraActors
+            extraArgs = arg.extraArgs
+        assertMsg "Only instrument admin may update allocation instructions" (allocation.transferLeg.instrumentId.admin == issuer)
+        return
+          AllocationInstructionResult with
+            output = AIPending (toInterfaceContractId cid)
+            senderChangeCids = []
+            meta = extraArgs.meta
+
+-- | Settlement batch request observable by all transfer leg parties.
+partiesForTransferLegs : TM.TextMap TransferLeg -> [Party]
+partiesForTransferLegs legs =
+  let
+    entries = TM.toList legs
+    senders = [leg.sender | (_, leg) <- entries]
+    receivers = [leg.receiver | (_, leg) <- entries]
+  in
+    senders ++ receivers
+
+template TestUSDCAllocationRequest
+  with
+    issuer : Party
+    settlement : SettlementInfo
+    transferLegs : TM.TextMap TransferLeg
+    meta : Metadata
+  where
+    signatory issuer, settlement.executor
+    observer partiesForTransferLegs transferLegs
+
+    interface instance AllocationRequest for TestUSDCAllocationRequest where
+      view =
+        AllocationRequestView with
+          settlement
+          transferLegs
+          meta
+
+      allocationRequest_RejectImpl _ arg = do
+        let extraArgs = arg.extraArgs
+        return ChoiceExecutionMetadata with meta = extraArgs.meta
+
+      allocationRequest_WithdrawImpl _ arg = do
+        let extraArgs = arg.extraArgs
+        return ChoiceExecutionMetadata with meta = extraArgs.meta

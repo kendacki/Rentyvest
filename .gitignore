@@ -1,0 +1,36 @@
+# Secrets and local env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Daml build artifacts
+daml/.daml/
+
+# Go
+**/bin/
+*.exe
+*.test
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Misc
+coverage/
+dist/
+.turbo/

@@ -1,0 +1,270 @@
+module RentyVest.PropertyPool where
+
+import DA.List (filter, head)
+import DA.Optional (isNone)
+
+import RentyVest.PropertyNFT
+import RentyVest.TestUSDC
+import RentyVest.Types
+
+-- | Escrowed CIP-0056 payment linked to a pledge bid reference.
+data EscrowedPledge = EscrowedPledge
+  with
+    bid_reference : Text
+    buyer : Party
+    slot_count : Int
+    paymentAssetCid : ContractId Asset
+    nftCids : [ContractId PropertyNFT]
+  deriving (Eq, Show)
+
+-- | Result returned by a successful Pledge exercise.
+data PledgeResult = PledgeResult
+  with
+    poolCid : ContractId PropertyPool
+    nftCids : [ContractId PropertyNFT]
+    paymentAssetCid : ContractId Asset
+    buyerChangeCid : Optional (ContractId Asset)
+  deriving (Eq, Show)
+
+totalCostForSlots : Int -> Decimal -> Decimal
+totalCostForSlots 0 _ = 0.0
+totalCostForSlots n price = price + totalCostForSlots (n - 1) price
+
+mintPledgeNFTs : Party -> Party -> Text -> Text -> Int -> Int -> Text -> Update [ContractId PropertyNFT]
+mintPledgeNFTs _ _ _ _ startIdx endIdx _ | startIdx >= endIdx = return []
+mintPledgeNFTs platformAdmin buyer poolId propertyId startIdx endIdx currency = do
+  cid <-
+    create PropertyNFT with
+      platform_admin = platformAdmin
+      original_holder = buyer
+      current_holder = buyer
+      pool_id = poolId
+      property_id = propertyId
+      slot_index = startIdx
+      pending_yield = 0.0
+      currency = currency
+      transfer_locked = False
+  rest <- mintPledgeNFTs platformAdmin buyer poolId propertyId (startIdx + 1) endIdx currency
+  return (cid :: rest)
+
+archiveNFTs : [ContractId PropertyNFT] -> Update ()
+archiveNFTs [] = return ()
+archiveNFTs (cid :: rest) = do
+  archive cid
+  archiveNFTs rest
+
+refundAllEscrows : [EscrowedPledge] -> Update ()
+refundAllEscrows [] = return ()
+refundAllEscrows (escrow :: rest) = do
+  _ <-
+    exercise
+      escrow.paymentAssetCid
+      TransferAsset with
+        newOwner = escrow.buyer
+  archiveNFTs escrow.nftCids
+  refundAllEscrows rest
+
+-- | Master escrow pool coordinating slot pledges for a tokenized property.
+template PropertyPool
+  with
+    platform_admin : Party
+    seller : Party
+    prop_manager : Party
+    pool_id : Text
+    property_id : Text
+    property_title : Text
+    total_slots : Int
+    next_slot_index : Int
+    slot_price : Decimal
+    currency : Text
+    status : PoolStatus
+    fundraising_deadline : Time
+    yield_history : [YieldRecord]
+    transfer_log : [TransferRecord]
+    refunded_bid_references : [Text]
+    escrowed_pledges : [EscrowedPledge]
+    created_at : Time
+  where
+    signatory platform_admin
+    observer seller, prop_manager
+
+    ensure
+      total_slots > 0
+        && next_slot_index >= 0
+        && next_slot_index <= total_slots
+        && slot_price > 0.0
+
+    -- | AUD-002: Nonconsuming pledge with atomic slot minting, USDC settlement, and Active transition.
+    nonconsuming choice Pledge : PledgeResult
+      with
+        buyer : Party
+        slot_count : Int
+        meta_uri : Text
+        paymentAssetCid : ContractId Asset
+      controller platform_admin, buyer
+      do
+        assertMsg "Property pool must be Pending to accept pledges" (status == Pending)
+        assertMsg "Slot count must be greater than zero" (slot_count > 0)
+        assertMsg "Meta URI is required" (meta_uri /= "")
+        assertMsg "Insufficient slots remaining in pool"
+          (next_slot_index + slot_count <= total_slots)
+
+        let total_cost = totalCostForSlots slot_count slot_price
+
+        paymentAsset <- fetch paymentAssetCid
+        assertMsg "Payment asset owner must be the pledging buyer"
+          (paymentAsset.owner == buyer)
+        assertMsg "Payment asset balance must cover the pledge cost"
+          (paymentAsset.amount >= total_cost)
+        assertMsg "Payment asset must be unlocked" (isNone paymentAsset.lock)
+        assertMsg "Payment asset currency must match pool instrument"
+          (paymentAsset.instrumentId.id == tokenSymbol)
+
+        -- CIP-0056 split: isolate exact pledge cost; change remains with buyer.
+        (pledgePaymentCid, buyerChangeCid) <-
+          exercise
+            paymentAssetCid
+            Split with
+              paymentAmount = total_cost
+
+        -- Escrow pledged USDC with platform_admin until the pool fully subscribes.
+        escrowedPaymentCid <-
+          exercise
+            pledgePaymentCid
+            TransferAsset with
+              newOwner = platform_admin
+
+        let startIndex = next_slot_index
+        let endIndex = next_slot_index + slot_count
+        let newStatus =
+              if endIndex == total_slots
+                then Active
+                else Pending
+
+        nftCids <- mintPledgeNFTs platform_admin buyer pool_id property_id startIndex endIndex currency
+
+        archive self
+
+        poolCid <- create this with
+          next_slot_index = endIndex
+          status = newStatus
+          escrowed_pledges =
+            EscrowedPledge with
+              bid_reference = meta_uri
+              buyer = buyer
+              slot_count = slot_count
+              paymentAssetCid = escrowedPaymentCid
+              nftCids = nftCids
+            :: escrowed_pledges
+
+        return PledgeResult with
+          poolCid = poolCid
+          nftCids = nftCids
+          paymentAssetCid = escrowedPaymentCid
+          buyerChangeCid = buyerChangeCid
+
+    -- | AUD-011: Expire a pending bid, refund escrowed tUSDC, and burn slot NFTs.
+    choice ExpireBid : ContractId PropertyPool
+      with
+        bid_reference : Text
+        refund_reference : Text
+      controller platform_admin
+      do
+        assertMsg "ExpireBid requires pool status Pending to prevent double refunds"
+          (status == Pending)
+        assertMsg "Bid reference is required" (bid_reference /= "")
+        assertMsg "Refund reference is required" (refund_reference /= "")
+        assertMsg "Bid reference has already been refunded"
+          (bid_reference `notElem` refunded_bid_references)
+
+        let (matched, remainingEscrows) = partitionEscrow bid_reference escrowed_pledges
+        assertMsg "Escrowed pledge not found for bid reference" (length matched == 1)
+        let escrow = head matched
+
+        _ <-
+          exercise
+            escrow.paymentAssetCid
+            TransferAsset with
+              newOwner = escrow.buyer
+
+        archiveNFTs escrow.nftCids
+
+        archive self
+
+        create this with
+          next_slot_index = next_slot_index - escrow.slot_count
+          refunded_bid_references = bid_reference :: refunded_bid_references
+          escrowed_pledges = remainingEscrows
+
+    -- | AUD-012: Emergency halt transitions the pool to Archived.
+    choice EmergencyHalt : ContractId PropertyPool
+      with
+        reason : Text
+      controller platform_admin
+      do
+        assertMsg "Emergency halt reason is required" (reason /= "")
+        assertMsg "Archived pools cannot be halted again" (status /= Archived)
+
+        archive self
+
+        create this with
+          status = Archived
+
+    -- | Close fundraising after deadline; refund all escrowed CIP-0056 pledges.
+    choice ExpirePool : ContractId PropertyPool
+      with
+        reason : Text
+      controller platform_admin
+      do
+        assertMsg "Only Pending pools can expire" (status == Pending)
+        assertMsg "Fully subscribed pools cannot be expired" (next_slot_index < total_slots)
+        assertMsg "Expiry reason is required" (reason /= "")
+
+        refundAllEscrows escrowed_pledges
+
+        archive self
+
+        create this with
+          status = Expired
+          next_slot_index = 0
+          escrowed_pledges = []
+
+    -- | Record a completed yield distribution on an Active pool.
+    choice RecordYield : ContractId PropertyPool
+      with
+        record : YieldRecord
+      controller platform_admin
+      do
+        assertMsg "Yield can only be recorded on Active pools" (status == Active)
+        assertMsg "Yield distribution id is required" (record.distribution_id /= "")
+        assertMsg "Yield amount per slot must be positive"
+          (record.amount_per_slot > 0.0)
+
+        archive self
+
+        create this with
+          yield_history = record :: yield_history
+
+    -- | Record an NFT transfer in the pool audit log.
+    choice RecordTransfer : ContractId PropertyPool
+      with
+        record : TransferRecord
+      controller platform_admin
+      do
+        assertMsg "Transfer id is required" (record.transfer_id /= "")
+        assertMsg "Transfer slot index must be non-negative" (record.slot_index >= 0)
+        assertMsg "Transfer slot index must exist in this pool"
+          (record.slot_index < total_slots)
+
+        archive self
+
+        create this with
+          transfer_log = record :: transfer_log
+
+partitionEscrow : Text -> [EscrowedPledge] -> ([EscrowedPledge], [EscrowedPledge])
+partitionEscrow bidReference escrows =
+  let
+    matched = filter (\escrow -> escrow.bid_reference == bidReference) escrows
+    rest = filter (\escrow -> escrow.bid_reference /= bidReference) escrows
+  in
+    (matched, rest)

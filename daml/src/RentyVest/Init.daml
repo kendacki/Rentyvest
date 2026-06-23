@@ -1,0 +1,163 @@
+module RentyVest.Init where
+
+import Daml.Script
+import DA.Time
+
+import RentyVest.PropertyPool
+import RentyVest.TestUSDC
+import RentyVest.Types
+
+-- | Parties provisioned on Canton DevNet for RentyVest platform operations.
+data DevnetParties = DevnetParties
+  with
+    platform_admin : Party
+    prop_manager : Party
+  deriving (Eq, Show)
+
+-- | Backward-compatible alias used by legacy deployment scripts.
+data TestnetParties = TestnetParties
+  with
+    platform_admin : Party
+    prop_manager : Party
+  deriving (Eq, Show)
+
+-- | On-ledger contracts created by deployDevnet.
+data DeployedContracts = DeployedContracts
+  with
+    parties : DevnetParties
+    usdcIssuerCid : ContractId USDCIssuer
+    transferFactoryCid : ContractId TestUSDCTransferFactory
+    allocationFactoryCid : ContractId TestUSDCAllocationFactory
+    demoPoolCid : ContractId PropertyPool
+  deriving (Eq, Show)
+
+-- | Allocate core platform parties for Canton DevNet deployment.
+--
+-- Copy the printed Party IDs into your Go backend environment:
+--   CANTON_ACT_AS_PARTY
+--   CANTON_READ_AS_PARTY (usually same as platform_admin)
+--   CANTON_PROP_MANAGER_PARTY
+setupDevnet : Script DevnetParties
+setupDevnet = do
+  platformAdmin <- allocatePartyWithHint "RentyVest_PlatformAdmin" (PartyIdHint "platform_admin")
+  propManager <- allocatePartyWithHint "RentyVest_PropManager" (PartyIdHint "prop_manager")
+
+  debug "---------------------------------------------------------------"
+  debug "RentyVest DevNet parties allocated successfully"
+  debug "---------------------------------------------------------------"
+  debug $ "platform_admin = " <> show platformAdmin
+  debug $ "prop_manager   = " <> show propManager
+  debug ""
+  debug "Add these values to services/core-api/.env (or root .env):"
+  debug $ "CANTON_ACT_AS_PARTY=" <> show platformAdmin
+  debug $ "CANTON_READ_AS_PARTY=" <> show platformAdmin
+  debug $ "CANTON_PROP_MANAGER_PARTY=" <> show propManager
+  debug "---------------------------------------------------------------"
+
+  return DevnetParties with
+    platform_admin = platformAdmin
+    prop_manager = propManager
+
+-- | Legacy alias retained for existing Makefile targets.
+setupTestnet : Script TestnetParties
+setupTestnet = do
+  parties <- setupDevnet
+  return TestnetParties with
+    platform_admin = parties.platform_admin
+    prop_manager = parties.prop_manager
+
+-- | Deploy CIP-0056 Test USDC issuer and transfer/allocation factories.
+setupTestUSDC : Party -> Script (ContractId USDCIssuer, ContractId TestUSDCTransferFactory, ContractId TestUSDCAllocationFactory)
+setupTestUSDC platformAdmin = do
+  let instrumentId = makeInstrumentId platformAdmin
+
+  issuerCid <- submit platformAdmin do
+    createCmd USDCIssuer with
+      platform_admin = platformAdmin
+      instrumentId = instrumentId
+      totalSupply = 0.0
+      meta = tokenMetadataValues
+
+  (transferFactoryCid, allocationFactoryCid) <- submit platformAdmin do
+    exerciseCmd issuerCid USDCIssuer_BootstrapFactories
+
+  debug "---------------------------------------------------------------"
+  debug "Test USDC contracts deployed"
+  debug "---------------------------------------------------------------"
+  debug $ "CANTON_USDC_ISSUER_CONTRACT_ID=" <> show issuerCid
+  debug $ "CANTON_USDC_TRANSFER_FACTORY_ID=" <> show transferFactoryCid
+  debug $ "CANTON_USDC_ALLOCATION_FACTORY_ID=" <> show allocationFactoryCid
+  debug "---------------------------------------------------------------"
+
+  return (issuerCid, transferFactoryCid, allocationFactoryCid)
+
+-- | Deploy a demo PropertyPool for integration testing and the pledge worker.
+setupDemoPropertyPool : DevnetParties -> Script (ContractId PropertyPool)
+setupDemoPropertyPool parties = do
+  now <- getTime
+  let deadline = addRelTime now (days 90)
+
+  poolCid <- submit parties.platform_admin do
+    createCmd PropertyPool with
+      platform_admin = parties.platform_admin
+      seller = parties.prop_manager
+      prop_manager = parties.prop_manager
+      pool_id = "demo-pool-001"
+      property_id = "00000000-0000-0000-0000-000000000001"
+      property_title = "RentyVest Demo Property"
+      total_slots = 100
+      next_slot_index = 0
+      slot_price = 1000.0
+      currency = "USD"
+      status = Pending
+      fundraising_deadline = deadline
+      yield_history = []
+      transfer_log = []
+      refunded_bid_references = []
+      escrowed_pledges = []
+      created_at = now
+
+  debug "---------------------------------------------------------------"
+  debug "Demo PropertyPool deployed"
+  debug "---------------------------------------------------------------"
+  debug $ "CANTON_DEMO_POOL_CONTRACT_ID=" <> show poolCid
+  debug $ "Link this contract id to properties.canton_pool_contract_id in Supabase"
+  debug "---------------------------------------------------------------"
+
+  return poolCid
+
+-- | Full DevNet bootstrap: parties, Test USDC, and demo PropertyPool.
+deployDevnet : Script DeployedContracts
+deployDevnet = do
+  debug "==============================================================="
+  debug "RentyVest deployDevnet starting"
+  debug "==============================================================="
+
+  parties <- setupDevnet
+  (issuerCid, transferFactoryCid, allocationFactoryCid) <- setupTestUSDC parties.platform_admin
+  demoPoolCid <- setupDemoPropertyPool parties
+
+  debug ""
+  debug "==============================================================="
+  debug "RentyVest deployDevnet complete"
+  debug "==============================================================="
+  debug "Required core-api environment variables:"
+  debug $ "  CANTON_NETWORK=devnet"
+  debug $ "  CANTON_ACT_AS_PARTY=" <> show parties.platform_admin
+  debug $ "  CANTON_READ_AS_PARTY=" <> show parties.platform_admin
+  debug $ "  CANTON_ADMIN_PARTY_ID=" <> show parties.platform_admin
+  debug $ "  CANTON_PROP_MANAGER_PARTY=" <> show parties.prop_manager
+  debug $ "  CANTON_USDC_ISSUER_CONTRACT_ID=" <> show issuerCid
+  debug $ "  CANTON_DEMO_POOL_CONTRACT_ID=" <> show demoPoolCid
+  debug "==============================================================="
+
+  return DeployedContracts with
+    parties = parties
+    usdcIssuerCid = issuerCid
+    transferFactoryCid = transferFactoryCid
+    allocationFactoryCid = allocationFactoryCid
+    demoPoolCid = demoPoolCid
+
+-- | Legacy alias retained for existing Makefile targets.
+deployTestnet : Script DeployedContracts
+deployTestnet = deployDevnet

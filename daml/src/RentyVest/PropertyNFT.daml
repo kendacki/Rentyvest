@@ -1,0 +1,127 @@
+module RentyVest.PropertyNFT where
+
+-- | Cryptographic bearer instrument representing fractional ownership of one pool slot.
+template PropertyNFT
+  with
+    platform_admin : Party
+    original_holder : Party
+    current_holder : Party
+    pool_id : Text
+    property_id : Text
+    slot_index : Int
+    pending_yield : Decimal
+    currency : Text
+    transfer_locked : Bool
+  where
+    signatory current_holder
+    observer original_holder, platform_admin
+
+    ensure
+      slot_index >= 0
+        && pending_yield >= 0.0
+        && currency /= ""
+
+    -- | AUD-008 & AUD-009: Transfer with anti-self-transfer and yield preservation.
+    choice TransferNFT : ContractId PropertyNFT
+      with
+        new_holder : Party
+        transfer_id : Text
+      controller current_holder
+      do
+        assertMsg "NFT transfers are locked by compliance hold" (not transfer_locked)
+        assertMsg "Transfer id is required" (transfer_id /= "")
+        assertMsg "Transfer recipient must differ from current holder"
+          (new_holder /= current_holder)
+
+        archive self
+
+        create this with
+          current_holder = new_holder
+          pending_yield = pending_yield
+
+    -- | Withdraw accrued yield; pool binding prevents cross-pool theft.
+    choice ClaimYield : Decimal
+      with
+        claiming_pool_id : Text
+        claim_amount : Decimal
+      controller current_holder
+      do
+        assertMsg "Yield claims must target the NFT originating pool"
+          (pool_id == claiming_pool_id)
+        assertMsg "Claim amount must be positive" (claim_amount > 0.0)
+        assertMsg "Insufficient pending yield for claim"
+          (claim_amount <= pending_yield)
+
+        let remainingYield = pending_yield - claim_amount
+
+        archive self
+
+        create this with
+          pending_yield = remainingYield
+
+        return claim_amount
+
+    -- | AUD-003: Holder-authorized yield accrual onto the NFT.
+    choice AccrueYield : ContractId PropertyNFT
+      with
+        accrued_amount : Decimal
+      controller current_holder
+      do
+        assertMsg "Accrued amount must be positive" (accrued_amount > 0.0)
+
+        archive self
+
+        create this with
+          pending_yield = pending_yield + accrued_amount
+
+    choice LockTransfer : ContractId PropertyNFT
+      with
+        reason : Text
+      controller platform_admin
+      do
+        assertMsg "Lock reason is required" (reason /= "")
+        assertMsg "NFT transfer is already locked" (not transfer_locked)
+
+        archive self
+
+        create this with
+          transfer_locked = True
+
+    choice LockTransferByOriginalHolder : ContractId PropertyNFT
+      with
+        reason : Text
+      controller original_holder
+      do
+        assertMsg "Lock reason is required" (reason /= "")
+        assertMsg "NFT transfer is already locked" (not transfer_locked)
+
+        archive self
+
+        create this with
+          transfer_locked = True
+
+    choice UnlockTransfer : ContractId PropertyNFT
+      with
+        reason : Text
+      controller platform_admin
+      do
+        assertMsg "Unlock reason is required" (reason /= "")
+        assertMsg "NFT transfer is not locked" transfer_locked
+
+        archive self
+
+        create this with
+          transfer_locked = False
+
+    choice UnlockTransferByOriginalHolder : ContractId PropertyNFT
+      with
+        reason : Text
+      controller original_holder
+      do
+        assertMsg "Unlock reason is required" (reason /= "")
+        assertMsg "NFT transfer is not locked" transfer_locked
+
+        archive self
+
+        create this with
+          transfer_locked = False

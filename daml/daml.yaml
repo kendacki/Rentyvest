@@ -1,0 +1,13 @@
+sdk-version: 3.4.11
+name: rentyvest
+version: 0.1.0
+source: src
+build-options:
+  - -Wno-upgrade-interfaces
+# For strict Canton Network ABI compatibility, add Splice CIP-0056 interface DARs
+# under daml/dars/ and list them as data-dependencies (see CIP-0056 spec).
+dependencies:
+  - daml-prim
+  - daml-stdlib
+  - daml-script
+  - daml-script
