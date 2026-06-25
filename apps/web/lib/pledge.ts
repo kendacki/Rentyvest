@@ -36,6 +36,11 @@ export type CreatePledgeRequest = {
   property_id: string;
   slot_count: number;
   payment_asset_contract_id: string;
+  client_submitted?: boolean;
+  canton_command_id?: string;
+  canton_update_id?: string;
+  pool_contract_id?: string;
+  minted_nft_contract_ids?: string[];
 };
 
 export type CreatePledgeResponse = {

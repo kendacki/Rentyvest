@@ -18,6 +18,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 type ExchangeTokenResponse = {
   supabase_token: string;
+  canton_ledger_token?: string;
 };
 
 type ProblemDetails = {
@@ -28,6 +29,7 @@ type ProblemDetails = {
 
 type SupabaseAuthContextValue = {
   supabaseToken: string | null;
+  cantonLedgerToken: string | null;
   supabase: SupabaseClient | null;
   isLoading: boolean;
   isReady: boolean;
@@ -47,7 +49,9 @@ function getCoreApiUrl(): string {
   return base.replace(/\/$/, '');
 }
 
-async function exchangePrivyToken(privyToken: string): Promise<string> {
+async function exchangePrivyToken(
+  privyToken: string,
+): Promise<{ supabaseToken: string; cantonLedgerToken: string | null }> {
   const response = await fetch(`${getCoreApiUrl()}/auth/exchange`, {
     method: 'POST',
     headers: {
@@ -79,7 +83,10 @@ async function exchangePrivyToken(privyToken: string): Promise<string> {
     throw new Error('Token exchange response did not include supabase_token');
   }
 
-  return data.supabase_token;
+  return {
+    supabaseToken: data.supabase_token,
+    cantonLedgerToken: data.canton_ledger_token?.trim() || null,
+  };
 }
 
 function reportExchangeError(
@@ -98,6 +105,7 @@ export function SupabaseAuthProvider({
   const { ready: walletsReady } = useWallets();
 
   const [supabaseToken, setSupabaseToken] = useState<string | null>(null);
+  const [cantonLedgerToken, setCantonLedgerToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exchangeVersion, setExchangeVersion] = useState(0);
@@ -106,6 +114,7 @@ export function SupabaseAuthProvider({
 
   const clearSession = useCallback(() => {
     setSupabaseToken(null);
+    setCantonLedgerToken(null);
     setError(null);
     resetSupabaseBrowserClient();
   }, []);
@@ -126,8 +135,9 @@ export function SupabaseAuthProvider({
         throw new Error('Privy access token is unavailable');
       }
 
-      const token = await exchangePrivyToken(privyToken);
-      setSupabaseToken(token);
+      const tokens = await exchangePrivyToken(privyToken);
+      setSupabaseToken(tokens.supabaseToken);
+      setCantonLedgerToken(tokens.cantonLedgerToken);
     } catch (exchangeError) {
       const message =
         exchangeError instanceof Error
@@ -135,6 +145,7 @@ export function SupabaseAuthProvider({
           : 'Token exchange failed';
 
       setSupabaseToken(null);
+      setCantonLedgerToken(null);
       setError(message);
       resetSupabaseBrowserClient();
       reportExchangeError(message, onExchangeError);
@@ -168,13 +179,14 @@ export function SupabaseAuthProvider({
   const value = useMemo<SupabaseAuthContextValue>(
     () => ({
       supabaseToken,
+      cantonLedgerToken,
       supabase,
       isLoading,
       isReady,
       error,
       retryExchange,
     }),
-    [error, isLoading, isReady, retryExchange, supabase, supabaseToken],
+    [cantonLedgerToken, error, isLoading, isReady, retryExchange, supabase, supabaseToken],
   );
 
   return (

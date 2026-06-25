@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/rentyvest/core-api/internal/privy"
@@ -28,7 +29,8 @@ type exchangeTokenRequest struct {
 }
 
 type exchangeTokenResponse struct {
-	SupabaseToken string `json:"supabase_token"`
+	SupabaseToken     string `json:"supabase_token"`
+	CantonLedgerToken string `json:"canton_ledger_token,omitempty"`
 }
 
 func (h *AuthHandler) Exchange(w http.ResponseWriter, r *http.Request) {
@@ -68,8 +70,23 @@ func (h *AuthHandler) Exchange(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(exchangeTokenResponse{
-		SupabaseToken: supabaseToken,
+		SupabaseToken:     supabaseToken,
+		CantonLedgerToken: resolveCantonLedgerToken(),
 	})
+}
+
+func resolveCantonLedgerToken() string {
+	for _, key := range []string{
+		"CANTON_LEDGER_TOKEN",
+		"CANTON_ADMIN_TOKEN",
+		"CANTON_JWT",
+	} {
+		if token := strings.TrimSpace(os.Getenv(key)); token != "" {
+			return token
+		}
+	}
+
+	return ""
 }
 
 func extractPrivyToken(r *http.Request) (string, error) {

@@ -18,6 +18,7 @@ export type PropertyRow = {
   total_units: number;
   unit_price: number | string;
   slots_filled: number;
+  canton_pool_contract_id: string | null;
   estimated_annual_yield: number | string;
   status: PropertyStatus;
   listed_at: string | null;
@@ -39,6 +40,7 @@ export type Property = {
   total_units: number;
   unit_price: number;
   slots_filled: number;
+  canton_pool_contract_id: string | null;
   estimated_annual_yield: number;
   status: PropertyStatus;
   listed_at: string | null;
@@ -63,6 +65,7 @@ export function normalizeProperty(row: PropertyRow): Property {
     total_units: row.total_units,
     unit_price: Number(row.unit_price),
     slots_filled: row.slots_filled,
+    canton_pool_contract_id: row.canton_pool_contract_id ?? null,
     estimated_annual_yield: Number(row.estimated_annual_yield),
     status: row.status,
     listed_at: row.listed_at,

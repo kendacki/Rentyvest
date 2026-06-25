@@ -63,9 +63,14 @@ func NewPledgesHandler(store *db.Store, verifier *privy.Verifier, cantonClient *
 }
 
 type createPledgeRequest struct {
-	PropertyID              string `json:"property_id"`
-	SlotCount               int32  `json:"slot_count"`
-	PaymentAssetContractID  string `json:"payment_asset_contract_id"`
+	PropertyID             string   `json:"property_id"`
+	SlotCount              int32    `json:"slot_count"`
+	PaymentAssetContractID string   `json:"payment_asset_contract_id"`
+	ClientSubmitted        bool     `json:"client_submitted"`
+	CantonCommandID        string   `json:"canton_command_id,omitempty"`
+	CantonUpdateID         string   `json:"canton_update_id,omitempty"`
+	PoolContractID         string   `json:"pool_contract_id,omitempty"`
+	MintedNFTContractIDs   []string `json:"minted_nft_contract_ids,omitempty"`
 }
 
 type createPledgeResponse struct {
@@ -175,9 +180,11 @@ func (h *PledgesHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if h.cantonClient == nil || !h.cantonClient.Configured() {
-		problems.WriteCode(w, http.StatusServiceUnavailable, "RV-9003", "Service Unavailable", "Canton ledger integration is not configured")
-		return
+	if !request.ClientSubmitted {
+		if h.cantonClient == nil || !h.cantonClient.Configured() {
+			problems.WriteCode(w, http.StatusServiceUnavailable, "RV-9003", "Service Unavailable", "Canton ledger integration is not configured")
+			return
+		}
 	}
 
 	buyerPartyID, err := h.store.GetUserCantonPartyID(r.Context(), userID)
@@ -199,21 +206,61 @@ func (h *PledgesHandler) Create(w http.ResponseWriter, r *http.Request) {
 	metaURI := fmt.Sprintf("%s/%s", h.metaURIBase, idempotencyKey)
 	commandID := fmt.Sprintf("pledge-%s", idempotencyKey)
 
-	cantonCtx, cancel := pledgeCantonContext(r)
-	defer cancel()
+	var pledgeResult *canton.PledgeResult
+	if request.ClientSubmitted {
+		clientCommandID := strings.TrimSpace(request.CantonCommandID)
+		if clientCommandID == "" {
+			problems.WriteCode(w, http.StatusBadRequest, "RV-2011", "Bad Request", "canton_command_id is required when client_submitted is true")
+			return
+		}
 
-	pledgeResult, err := h.cantonClient.SubmitPledge(cantonCtx, canton.PledgeCommand{
-		PoolContractID:         property.CantonPoolContractID,
-		BuyerPartyID:           buyerPartyID,
-		SlotCount:              request.SlotCount,
-		MetaURI:                metaURI,
-		PaymentAssetContractID: paymentAssetContractID,
-		CommandID:              commandID,
-	})
-	if err != nil {
-		status, code, detail := canton.ProblemForSubmitError(err)
-		problems.WriteCode(w, status, code, http.StatusText(status), detail)
-		return
+		assets, listErr := h.store.ListUserTokenAssets(r.Context(), userID)
+		if listErr != nil {
+			problems.Write(w, http.StatusInternalServerError, "Internal Server Error", "Unable to verify payment asset ownership")
+			return
+		}
+
+		var paymentAsset *db.UserTokenAsset
+		for index := range assets {
+			if assets[index].CantonContractID == paymentAssetContractID {
+				paymentAsset = &assets[index]
+				break
+			}
+		}
+		if paymentAsset == nil {
+			problems.WriteCode(w, http.StatusBadRequest, "RV-2012", "Bad Request", "Payment asset was not found for this user")
+			return
+		}
+		if paymentAsset.OwnerPartyID != buyerPartyID {
+			problems.WriteCode(w, http.StatusBadRequest, "RV-2013", "Bad Request", "Payment asset owner does not match the user's Canton party")
+			return
+		}
+
+		pledgeResult = &canton.PledgeResult{
+			CommandID:       clientCommandID,
+			UpdateID:        strings.TrimSpace(request.CantonUpdateID),
+			PoolContractID:  coalesceNonEmpty(strings.TrimSpace(request.PoolContractID), property.CantonPoolContractID),
+			PaymentAssetCID: paymentAssetContractID,
+			NFTContractIDs:  request.MintedNFTContractIDs,
+		}
+	} else {
+		cantonCtx, cancel := pledgeCantonContext(r)
+		defer cancel()
+
+		var submitErr error
+		pledgeResult, submitErr = h.cantonClient.SubmitPledge(cantonCtx, canton.PledgeCommand{
+			PoolContractID:         property.CantonPoolContractID,
+			BuyerPartyID:           buyerPartyID,
+			SlotCount:              request.SlotCount,
+			MetaURI:                metaURI,
+			PaymentAssetContractID: paymentAssetContractID,
+			CommandID:              commandID,
+		})
+		if submitErr != nil {
+			status, code, detail := canton.ProblemForSubmitError(submitErr)
+			problems.WriteCode(w, status, code, http.StatusText(status), detail)
+			return
+		}
 	}
 
 	paymentMethod := db.PledgePaymentMethodTUSDC

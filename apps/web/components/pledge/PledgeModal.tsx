@@ -9,6 +9,9 @@ import {
   truncatePartyId,
 } from '../../lib/format';
 import { createPledge, mergeUserAssets } from '../../lib/pledge';
+import { submitPledgeTx } from '../../lib/canton/client';
+import { formatCantonError } from '../../lib/canton/errors';
+import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { useUserAssets } from '../../hooks/useUserAssets';
 import {
   getSlotsRemaining,
@@ -65,6 +68,7 @@ export function PledgeModal({
   onPledgeConfirmed,
 }: PledgeModalProps) {
   const { getAccessToken } = usePrivy();
+  const { cantonLedgerToken } = useSupabaseAuth();
   const { assets, isLoading, isValidating, error, refetch } = useUserAssets({
     enabled: open,
   });
@@ -179,6 +183,18 @@ export function PledgeModal({
       return;
     }
 
+    if (!property.canton_pool_contract_id) {
+      setSubmitError('This property is not linked to a Canton pool contract yet');
+      return;
+    }
+
+    if (!cantonLedgerToken) {
+      setSubmitError(
+        'Canton ledger access is unavailable. Configure CANTON_LEDGER_TOKEN on the API and sign in again.',
+      );
+      return;
+    }
+
     setSubmitError(null);
     setIsSubmittingCanton(true);
     setBaselineSlotsFilled(property.slots_filled);
@@ -194,11 +210,30 @@ export function PledgeModal({
           ? crypto.randomUUID()
           : `pledge-${Date.now()}`;
 
+      const commandId = `pledge-${idempotencyKey}`;
+      const metaUriBase =
+        process.env.NEXT_PUBLIC_PLEDGE_META_URI_BASE ??
+        'https://api.rentyvest.com/metadata/pledges';
+
+      const cantonResult = await submitPledgeTx(cantonLedgerToken, {
+        poolContractId: property.canton_pool_contract_id,
+        buyerPartyId: selectedAsset.owner_party_id,
+        paymentAssetCid: selectedAsset.canton_contract_id,
+        slotCount,
+        metaUri: `${metaUriBase.replace(/\/$/, '')}/${idempotencyKey}`,
+        commandId,
+      });
+
       await createPledge(
         {
           property_id: property.id,
           slot_count: slotCount,
           payment_asset_contract_id: selectedAsset.canton_contract_id,
+          client_submitted: true,
+          canton_command_id: cantonResult.commandId,
+          canton_update_id: cantonResult.updateId,
+          pool_contract_id: cantonResult.poolContractId,
+          minted_nft_contract_ids: cantonResult.mintedNftContractIds,
         },
         accessToken,
         idempotencyKey,
@@ -206,8 +241,7 @@ export function PledgeModal({
 
       setAwaitingConfirmation(true);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Pledge submission failed';
+      const message = formatCantonError(error);
       setSubmitError(message);
       setBaselineSlotsFilled(null);
     } finally {
