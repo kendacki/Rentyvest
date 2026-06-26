@@ -6,10 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "generate-daml": "dpm codegen-js ../../daml/.daml/dist/RentyVest-1.0.0.dar -o src/generated"
+    "generate-daml": "dpm codegen-js ../../daml/.daml/dist/RentyVest-1.0.0.dar -o src/generated",
+    "probe-ledger": "node --env-file=../../.env scripts/probe-ledger.mjs",
+    "probe-m2m": "node --env-file=../../.env scripts/probe-m2m.mjs",
+    "fetch-canton-jwt": "node --env-file=../../.env scripts/fetch-canton-jwt.mjs"
   },
   "dependencies": {
     "@c7/ledger": "npm:@c7-digital/ledger@^0.0.28",
+    "@fivenorth/loop-sdk": "^0.13.1",
     "@hookform/resolvers": "^3.9.1",
     "@privy-io/react-auth": "^1.98.0",
     "@radix-ui/react-dialog": "^1.1.2",
@@ -18,6 +22,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.2",
+    "yaml": "^2.9.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

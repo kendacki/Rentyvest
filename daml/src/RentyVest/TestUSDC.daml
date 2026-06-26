@@ -82,8 +82,8 @@ template Asset
     meta : Metadata
     observers : [Party]
   where
-    signatory issuer, owner
-    observer observers
+    signatory issuer
+    observer owner, observers
 
     ensure amount > 0.0
 

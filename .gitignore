@@ -1,6 +1,5 @@
-# Secrets and local env
+# Secrets and local env (single file at repo root)
 .env
-.env.local
 .env.*.local
 !.env.example
 

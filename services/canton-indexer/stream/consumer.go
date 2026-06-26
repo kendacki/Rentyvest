@@ -68,6 +68,7 @@ func NewConsumer(store *db.Store, broadcaster *realtime.Broadcaster, cfg Config)
 	if poolTemplate == "" {
 		poolTemplate = "RentyVest.PropertyPool:PropertyPool"
 	}
+	poolTemplate = qualifyTemplateID(packageIDFromEnv(), poolTemplate)
 
 	nftTemplate := cfg.NFTTemplateID
 	if nftTemplate == "" {
@@ -76,6 +77,7 @@ func NewConsumer(store *db.Store, broadcaster *realtime.Broadcaster, cfg Config)
 	if nftTemplate == "" {
 		nftTemplate = "RentyVest.PropertyNFT:PropertyNFT"
 	}
+	nftTemplate = qualifyTemplateID(packageIDFromEnv(), nftTemplate)
 
 	offset := cfg.InitialOffset
 	if offset == "" {

@@ -5,8 +5,6 @@ import (
 	"net/http"
 )
 
-const contentType = "application/problem+json"
-
 func WriteCode(
 	w http.ResponseWriter,
 	status int,
