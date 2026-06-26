@@ -233,16 +233,22 @@ export function FaucetCard() {
   }, [toast]);
 
   const handleClaim = useCallback(async () => {
-    if (!isConnected || !partyId || !provider) {
-      await connect();
+    const activeProvider = provider ?? (await connect());
+    if (!activeProvider?.party_id) {
+      setToast({
+        type: 'error',
+        message: 'Connect your Loop wallet to claim test USDC.',
+      });
       return;
     }
+
+    const activePartyId = partyId ?? activeProvider.party_id;
 
     setIsClaiming(true);
     setToast(null);
 
     try {
-      await claimFaucetViaLoop(getApiUrl(), partyId, provider);
+      await claimFaucetViaLoop(getApiUrl(), activePartyId, activeProvider);
 
       await refetchBalance();
 
@@ -260,7 +266,7 @@ export function FaucetCard() {
     } finally {
       setIsClaiming(false);
     }
-  }, [connect, isConnected, partyId, provider, refetchBalance]);
+  }, [connect, partyId, provider, refetchBalance]);
 
   return (
     <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">

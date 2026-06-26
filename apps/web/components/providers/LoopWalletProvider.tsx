@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -33,7 +34,7 @@ type LoopWalletContextValue = {
   partyId: string | null;
   email: string | null;
   provider: LoopProviderLike | null;
-  connect: () => Promise<void>;
+  connect: () => Promise<LoopProviderLike | null>;
   disconnect: () => void;
 };
 
@@ -53,6 +54,8 @@ export function LoopWalletProvider({ children }: { children: ReactNode }) {
   const [partyId, setPartyId] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [provider, setProvider] = useState<LoopWalletContextValue['provider']>(null);
+  const providerRef = useRef<LoopProviderLike | null>(null);
+  const connectResolverRef = useRef<((provider: LoopProviderLike | null) => void) | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -73,10 +76,13 @@ export function LoopWalletProvider({ children }: { children: ReactNode }) {
             return;
           }
 
+          providerRef.current = nextProvider;
           setProvider(nextProvider);
           setPartyId(nextProvider.party_id);
           setEmail(nextProvider.email ?? null);
           setIsConnecting(false);
+          connectResolverRef.current?.(nextProvider);
+          connectResolverRef.current = null;
         },
         onReject: () => {
           if (!mounted) {
@@ -84,6 +90,8 @@ export function LoopWalletProvider({ children }: { children: ReactNode }) {
           }
 
           setIsConnecting(false);
+          connectResolverRef.current?.(null);
+          connectResolverRef.current = null;
         },
       });
 
@@ -106,13 +114,34 @@ export function LoopWalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const connect = useCallback(async () => {
+    if (providerRef.current) {
+      return providerRef.current;
+    }
+
     const { loop } = await import('@fivenorth/loop-sdk');
 
     setIsConnecting(true);
 
     try {
-      await loop.connect();
-    } catch {
+      return await new Promise<LoopProviderLike | null>((resolve) => {
+        connectResolverRef.current = (nextProvider) => {
+          connectResolverRef.current = null;
+          resolve(nextProvider);
+        };
+
+        void loop.connect()
+          .then(() => {
+            if (providerRef.current) {
+              connectResolverRef.current = null;
+              resolve(providerRef.current);
+            }
+          })
+          .catch(() => {
+            connectResolverRef.current = null;
+            resolve(null);
+          });
+      });
+    } finally {
       setIsConnecting(false);
     }
   }, []);
@@ -120,6 +149,7 @@ export function LoopWalletProvider({ children }: { children: ReactNode }) {
   const disconnect = useCallback(() => {
     void import('@fivenorth/loop-sdk').then(({ loop }) => {
       loop.logout();
+      providerRef.current = null;
       setProvider(null);
       setPartyId(null);
       setEmail(null);
