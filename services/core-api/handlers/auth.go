@@ -1,10 +1,8 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -14,21 +12,15 @@ import (
 	supabaseauth "github.com/rentyvest/core-api/internal/supabase"
 )
 
-type cantonTokenSource interface {
-	AccessToken(ctx context.Context) (string, error)
-}
-
 type AuthHandler struct {
-	privyVerifier     *privy.Verifier
+	privyVerifier    *privy.Verifier
 	supabaseJWTSecret string
-	cantonTokenSource cantonTokenSource
 }
 
-func NewAuthHandler(privyVerifier *privy.Verifier, supabaseJWTSecret string, cantonTokenSource cantonTokenSource) *AuthHandler {
+func NewAuthHandler(privyVerifier *privy.Verifier, supabaseJWTSecret string) *AuthHandler {
 	return &AuthHandler{
 		privyVerifier:     privyVerifier,
 		supabaseJWTSecret: supabaseJWTSecret,
-		cantonTokenSource: cantonTokenSource,
 	}
 }
 
@@ -79,24 +71,11 @@ func (h *AuthHandler) Exchange(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(exchangeTokenResponse{
 		SupabaseToken:     supabaseToken,
-		CantonLedgerToken: h.resolveCantonLedgerToken(r.Context()),
+		CantonLedgerToken: resolveCantonLedgerToken(),
 	})
 }
 
-func (h *AuthHandler) resolveCantonLedgerToken(ctx context.Context) string {
-	if h.cantonTokenSource != nil {
-		token, err := h.cantonTokenSource.AccessToken(ctx)
-		if err == nil {
-			if trimmed := strings.TrimSpace(token); trimmed != "" {
-				return trimmed
-			}
-		}
-	}
-
-	return resolveCantonLedgerTokenFromEnv()
-}
-
-func resolveCantonLedgerTokenFromEnv() string {
+func resolveCantonLedgerToken() string {
 	for _, key := range []string{
 		"CANTON_LEDGER_TOKEN",
 		"CANTON_ADMIN_TOKEN",
@@ -127,7 +106,7 @@ func extractPrivyToken(r *http.Request) (string, error) {
 	if r.Body != nil {
 		decoder := json.NewDecoder(r.Body)
 		decoder.DisallowUnknownFields()
-		if err := decoder.Decode(&body); err != nil && !errors.Is(err, io.EOF) {
+		if err := decoder.Decode(&body); err != nil && !errors.Is(err, json.EOF) {
 			return "", errors.New("request body must be valid JSON with an optional privy_token field")
 		}
 	}

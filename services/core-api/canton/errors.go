@@ -27,7 +27,7 @@ func NewSubmitError(statusCode int, body string) *SubmitError {
 
 func ProblemForSubmitError(err error) (status int, code string, detail string) {
 	var submitErr *SubmitError
-	if !errors.As(err, &submitErr) {
+	if !errors.As(err, &SubmitError) {
 		if errors.Is(err, ErrNotConfigured) {
 			return http.StatusServiceUnavailable, "RV-9003", "Canton ledger integration is not configured"
 		}

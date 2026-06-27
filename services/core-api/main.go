@@ -5,13 +5,11 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/rentyvest/core-api/canton"
 	"github.com/rentyvest/core-api/handlers"
 	"github.com/rentyvest/core-api/internal/db"
-	"github.com/rentyvest/core-api/internal/httpmw"
 	"github.com/rentyvest/core-api/internal/privy"
 )
 
@@ -42,42 +40,23 @@ func main() {
 		CacheTTL: time.Hour,
 	})
 
-	tokenManager, err := canton.NewM2MTokenManagerFromEnv()
-	if err != nil {
-		log.Fatalf("canton m2m token manager: %v", err)
-	}
+	authHandler := handlers.NewAuthHandler(verifier, supabaseJWTSecret)
+	propertiesHandler := handlers.NewPropertiesHandler(store)
+	pledgesHandler := handlers.NewPledgesHandler(store, verifier, cantonClient)
 
-	cantonCfg := canton.Config{}
-	if tokenManager != nil {
-		cantonCfg.TokenSource = tokenManager
-		if _, err := tokenManager.AccessToken(context.Background()); err != nil {
-			log.Printf(
-				"WARNING: canton m2m token fetch failed: %v — ledger submits will fail until OAuth credentials are fixed",
-				err,
-			)
-		} else {
-			log.Printf("canton m2m oauth token acquired; refresh every %s", tokenManager.RefreshInterval())
-		}
-	}
-
-	cantonClient, err := canton.NewClient(cantonCfg)
 	workerCtx, workerCancel := context.WithCancel(context.Background())
 	defer workerCancel()
 
+	cantonClient, err := canton.NewClient(canton.Config{})
 	if err != nil {
 		log.Printf("canton client disabled: %v", err)
 	} else {
-		if tokenManager != nil {
-			go tokenManager.Start(workerCtx)
-		}
 		worker := canton.NewWorker(store, cantonClient)
 		go worker.Start(workerCtx)
 	}
 
-	authHandler := handlers.NewAuthHandler(verifier, supabaseJWTSecret, tokenManager)
-	propertiesHandler := handlers.NewPropertiesHandler(store)
-	pledgesHandler := handlers.NewPledgesHandler(store, verifier, cantonClient)
-	faucetHandler := handlers.NewFaucetHandler(store, cantonClient)
+	faucetHandler := handlers.NewFaucetHandler(store, verifier, cantonClient)
+
 	assetsHandler := handlers.NewAssetsHandler(store, verifier, cantonClient)
 
 	mux := http.NewServeMux()
@@ -86,9 +65,6 @@ func main() {
 	mux.HandleFunc("/pledges", pledgesHandler.Create)
 	mux.HandleFunc("/pledges/flw-webhook", pledgesHandler.FlutterwaveWebhook)
 	mux.HandleFunc("/faucet/usdc", faucetHandler.ClaimUSDC)
-	mux.HandleFunc("/faucet/usdc/prepare", faucetHandler.PrepareClaim)
-	mux.HandleFunc("/faucet/usdc/complete", faucetHandler.CompleteClaim)
-	mux.HandleFunc("/faucet/assets", faucetHandler.ListAssetsByParty)
 	mux.HandleFunc("/nfts/assets", assetsHandler.ListAssets)
 	mux.HandleFunc("/nfts/assets/merge", assetsHandler.MergeAssets)
 
@@ -98,21 +74,7 @@ func main() {
 	}
 
 	log.Printf("core-api listening on :%s", addr)
-
-	allowedOrigins := []string{
-		"http://localhost:3000",
-		"http://127.0.0.1:3000",
-	}
-	if extra := strings.TrimSpace(os.Getenv("CORS_ALLOWED_ORIGINS")); extra != "" {
-		for _, origin := range strings.Split(extra, ",") {
-			if trimmed := strings.TrimSpace(origin); trimmed != "" {
-				allowedOrigins = append(allowedOrigins, trimmed)
-			}
-		}
-	}
-
-	handler := httpmw.CORS(allowedOrigins, mux)
-	if err := http.ListenAndServe(":"+addr, handler); err != nil {
+	if err := http.ListenAndServe(":"+addr, mux); err != nil {
 		log.Fatal(err)
 	}
 }

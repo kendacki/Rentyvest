@@ -62,7 +62,7 @@ func (v *Verifier) Verify(ctx context.Context, tokenString string) (string, erro
 		return "", ErrTokenMissing
 	}
 
-	keySet, err := v.getKeySet(ctx)
+	keySet, err := v.keySet(ctx)
 	if err != nil {
 		return "", fmt.Errorf("load privy jwks: %w", err)
 	}
@@ -89,7 +89,7 @@ func (v *Verifier) Verify(ctx context.Context, tokenString string) (string, erro
 	return subject, nil
 }
 
-func (v *Verifier) getKeySet(ctx context.Context) (jwk.Set, error) {
+func (v *Verifier) keySet(ctx context.Context) (jwk.Set, error) {
 	v.mu.RLock()
 	if v.keySet != nil && time.Since(v.fetchedAt) < v.cacheTTL {
 		cached := v.keySet

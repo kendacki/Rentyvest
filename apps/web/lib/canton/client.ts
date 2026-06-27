@@ -12,10 +12,7 @@ import {
   type PledgeChoiceArgument,
 } from './templates';
 
-import {
-  getCantonLedgerUrl,
-  getPledgeMetaUriBase,
-} from './config';
+const DEFAULT_META_URI_BASE = 'https://api.rentyvest.com/metadata/pledges';
 
 export type CantonLedgerClient = Ledger;
 
@@ -55,8 +52,18 @@ export type SubmitPledgeTxResult = {
 let cachedClient: Ledger | null = null;
 let cachedToken: string | null = null;
 
+function getCantonLedgerUrl(): string {
+  return (process.env.NEXT_PUBLIC_CANTON_LEDGER_URL ?? '').replace(/\/$/, '');
+}
+
 function getPlatformAdminPartyId(): string {
   return (process.env.NEXT_PUBLIC_CANTON_ADMIN_PARTY_ID ?? '').trim();
+}
+
+function getPledgeMetaUriBase(): string {
+  return (
+    process.env.NEXT_PUBLIC_PLEDGE_META_URI_BASE ?? DEFAULT_META_URI_BASE
+  ).replace(/\/$/, '');
 }
 
 function createCommandId(): string {
