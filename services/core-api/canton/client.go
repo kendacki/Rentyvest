@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -22,6 +23,7 @@ type Client struct {
 	readAsParty          string
 	adminParty           string
 	adminToken           string
+	tokenSource          TokenSource
 	userID               string
 	templatePoolID       string
 	templateUSDCIssuerID string
@@ -36,6 +38,7 @@ type Config struct {
 	ReadAsParty          string
 	AdminParty           string
 	AdminToken           string
+	TokenSource          TokenSource
 	UserID               string
 	TemplatePoolID       string
 	TemplateUSDCIssuerID string
@@ -90,8 +93,8 @@ type MintResult struct {
 
 type submitRequest struct {
 	ActAs     []string      `json:"actAs"`
-	ReadAs    []string      `json:"readAs,omitempty"`
-	UserID    string        `json:"userId"`
+	ReadAs    []string      `json:"readAs"`
+	UserID    string        `json:"userId,omitempty"`
 	CommandID string        `json:"commandId"`
 	Commands  []interface{} `json:"commands"`
 }
@@ -134,10 +137,11 @@ func NewClient(cfg Config) (*Client, error) {
 
 	userID := cfg.UserID
 	if userID == "" {
-		userID = os.Getenv("CANTON_LEDGER_USER_ID")
+		userID = strings.TrimSpace(os.Getenv("CANTON_LEDGER_USER_ID"))
 	}
-	if userID == "" {
-		userID = "rentyvest-core-api"
+	if userID == "" && strings.TrimSpace(os.Getenv("CANTON_OAUTH_URL")) != "" {
+		// 5N M2M tokens are bound to ledger user id "6" (JWT sub); wrong userId → 403.
+		userID = "6"
 	}
 
 	templatePoolID := cfg.TemplatePoolID
@@ -147,6 +151,7 @@ func NewClient(cfg Config) (*Client, error) {
 	if templatePoolID == "" {
 		templatePoolID = "RentyVest.PropertyPool:PropertyPool"
 	}
+	templatePoolID = QualifyTemplateID(PackageIDFromEnv(), templatePoolID)
 
 	adminParty := cfg.AdminParty
 	if adminParty == "" {
@@ -171,6 +176,7 @@ func NewClient(cfg Config) (*Client, error) {
 	if templateUSDCIssuerID == "" {
 		templateUSDCIssuerID = "RentyVest.TestUSDC:USDCIssuer"
 	}
+	templateUSDCIssuerID = QualifyTemplateID(PackageIDFromEnv(), templateUSDCIssuerID)
 
 	templateAssetID := cfg.TemplateAssetID
 	if templateAssetID == "" {
@@ -179,6 +185,7 @@ func NewClient(cfg Config) (*Client, error) {
 	if templateAssetID == "" {
 		templateAssetID = "RentyVest.TestUSDC:Asset"
 	}
+	templateAssetID = QualifyTemplateID(PackageIDFromEnv(), templateAssetID)
 
 	usdcIssuerContractID := cfg.USDCIssuerContractID
 	if usdcIssuerContractID == "" {
@@ -191,6 +198,7 @@ func NewClient(cfg Config) (*Client, error) {
 		readAsParty:          readAs,
 		adminParty:           adminParty,
 		adminToken:           adminToken,
+		tokenSource:          cfg.TokenSource,
 		userID:               userID,
 		templatePoolID:       templatePoolID,
 		templateUSDCIssuerID: templateUSDCIssuerID,
@@ -200,6 +208,24 @@ func NewClient(cfg Config) (*Client, error) {
 			Timeout: 60 * time.Second,
 		},
 	}, nil
+}
+
+func (c *Client) ledgerReadAs(fallback ...string) []string {
+	if party := strings.TrimSpace(c.readAsParty); party != "" {
+		return []string{party}
+	}
+	for _, candidate := range fallback {
+		if party := strings.TrimSpace(candidate); party != "" {
+			return []string{party}
+		}
+	}
+	if party := strings.TrimSpace(c.adminParty); party != "" {
+		return []string{party}
+	}
+	if party := strings.TrimSpace(c.actAsParty); party != "" {
+		return []string{party}
+	}
+	return nil
 }
 
 func (c *Client) Configured() bool {
@@ -230,7 +256,7 @@ func (c *Client) SubmitPledge(ctx context.Context, cmd PledgeCommand) (*PledgeRe
 
 	body := submitRequest{
 		ActAs:     []string{c.adminParty, cmd.BuyerPartyID},
-		ReadAs:    []string{c.readAsParty},
+		ReadAs:    c.ledgerReadAs(cmd.BuyerPartyID),
 		UserID:    c.userID,
 		CommandID: commandID,
 		Commands: []interface{}{
@@ -250,7 +276,7 @@ func (c *Client) SubmitPledge(ctx context.Context, cmd PledgeCommand) (*PledgeRe
 		},
 	}
 
-	responseBody, err := c.submitAndWait(ctx, body, c.adminToken)
+	responseBody, err := c.submitAndWait(ctx, body)
 	if err != nil {
 		return nil, err
 	}
@@ -291,7 +317,7 @@ func (c *Client) SubmitMergeAssets(ctx context.Context, cmd MergeAssetsCommand) 
 		stepCommandID := fmt.Sprintf("%s-%d", commandID, index)
 		body := submitRequest{
 			ActAs:     []string{cmd.OwnerPartyID},
-			ReadAs:    []string{c.readAsParty},
+			ReadAs:    c.ledgerReadAs(cmd.OwnerPartyID),
 			UserID:    c.userID,
 			CommandID: stepCommandID,
 			Commands: []interface{}{
@@ -308,7 +334,7 @@ func (c *Client) SubmitMergeAssets(ctx context.Context, cmd MergeAssetsCommand) 
 			},
 		}
 
-		responseBody, err := c.submitAndWait(ctx, body, c.adminToken)
+		responseBody, err := c.submitAndWait(ctx, body)
 		if err != nil {
 			return nil, err
 		}
@@ -327,16 +353,34 @@ func (c *Client) SubmitMergeAssets(ctx context.Context, cmd MergeAssetsCommand) 
 }
 
 func (c *Client) USDCIssuerConfigured() bool {
-	return strings.TrimSpace(c.usdcIssuerContractID) != ""
+	return strings.TrimSpace(c.adminParty) != "" && strings.TrimSpace(c.templateUSDCIssuerID) != ""
+}
+
+func (c *Client) USDCIssuerContractID() string {
+	return strings.TrimSpace(c.usdcIssuerContractID)
+}
+
+func (c *Client) TemplateUSDCIssuerID() string {
+	return strings.TrimSpace(c.templateUSDCIssuerID)
+}
+
+func (c *Client) AdminPartyID() string {
+	return strings.TrimSpace(c.adminParty)
+}
+
+func (c *Client) RefreshUSDCIssuer(ctx context.Context) (string, error) {
+	return c.refreshUSDCIssuerFromLedger(ctx)
 }
 
 func (c *Client) SubmitMint(ctx context.Context, cmd MintCommand) (*MintResult, error) {
-	issuerContractID := strings.TrimSpace(cmd.IssuerContractID)
-	if issuerContractID == "" {
-		issuerContractID = c.usdcIssuerContractID
+	issuerContractID, err := c.resolveUSDCIssuerContractID(ctx, cmd.IssuerContractID)
+	if err != nil {
+		return nil, err
 	}
-	if issuerContractID == "" {
-		return nil, fmt.Errorf("CANTON_USDC_ISSUER_CONTRACT_ID is required")
+	if refreshed, refreshErr := c.refreshUSDCIssuerFromLedger(ctx); refreshErr == nil && refreshed != "" {
+		issuerContractID = refreshed
+	} else if cached := strings.TrimSpace(c.usdcIssuerContractID); cached != "" {
+		issuerContractID = cached
 	}
 	if strings.TrimSpace(cmd.OwnerPartyID) == "" {
 		return nil, fmt.Errorf("owner party id is required")
@@ -357,7 +401,7 @@ func (c *Client) SubmitMint(ctx context.Context, cmd MintCommand) (*MintResult, 
 
 	body := submitRequest{
 		ActAs:     []string{c.adminParty},
-		ReadAs:    []string{c.readAsParty},
+		ReadAs:    []string{c.adminParty},
 		UserID:    c.userID,
 		CommandID: commandID,
 		Commands: []interface{}{
@@ -376,9 +420,39 @@ func (c *Client) SubmitMint(ctx context.Context, cmd MintCommand) (*MintResult, 
 		},
 	}
 
-	responseBody, err := c.submitAndWait(ctx, body, c.adminToken)
+	responseBody, err := c.submitAndWait(ctx, body)
 	if err != nil {
-		return nil, err
+		var submitErr *SubmitError
+		if errors.As(err, &submitErr) && submitErr.StatusCode == http.StatusNotFound &&
+			strings.Contains(submitErr.Body, "CONTRACT_NOT_FOUND") {
+			refreshed, refreshErr := c.refreshUSDCIssuerFromLedger(ctx)
+			if refreshErr == nil && refreshed != "" && refreshed != issuerContractID {
+				body.Commands = []interface{}{
+					exerciseCommand{
+						ExerciseCommand: exercisePayload{
+							TemplateID: c.templateUSDCIssuerID,
+							ContractID: refreshed,
+							Choice:     "Mint",
+							ChoiceArgument: map[string]interface{}{
+								"owner":     cmd.OwnerPartyID,
+								"amount":    cmd.Amount,
+								"observers": observers,
+							},
+						},
+					},
+				}
+				responseBody, err = c.submitAndWait(ctx, body)
+				issuerContractID = refreshed
+			}
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if newIssuer := extractCreatedContractID(responseBody, ":USDCIssuer"); newIssuer != "" {
+		c.usdcIssuerContractID = newIssuer
+		issuerContractID = newIssuer
 	}
 
 	result := &MintResult{
@@ -392,7 +466,12 @@ func (c *Client) SubmitMint(ctx context.Context, cmd MintCommand) (*MintResult, 
 	return result, nil
 }
 
-func (c *Client) submitAndWait(ctx context.Context, body submitRequest, token string) ([]byte, error) {
+func (c *Client) submitAndWait(ctx context.Context, body submitRequest) ([]byte, error) {
+	token, err := c.resolveToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	payload, err := json.Marshal(body)
 	if err != nil {
 		return nil, fmt.Errorf("marshal canton submit request: %w", err)
@@ -429,6 +508,19 @@ func (c *Client) submitAndWait(ctx context.Context, body submitRequest, token st
 	}
 
 	return responseBody, nil
+}
+
+func (c *Client) resolveToken(ctx context.Context) (string, error) {
+	if c.tokenSource != nil {
+		return c.tokenSource.AccessToken(ctx)
+	}
+
+	token := strings.TrimSpace(c.adminToken)
+	if token == "" {
+		return "", fmt.Errorf("canton ledger token is not configured")
+	}
+
+	return token, nil
 }
 
 func extractStringField(body []byte, field string) (string, bool) {

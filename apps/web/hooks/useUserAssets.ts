@@ -2,7 +2,9 @@
 
 import { usePrivy } from '@privy-io/react-auth';
 import { useCallback, useEffect, useState } from 'react';
+import { fetchLedgerUserAssets } from '../lib/canton/assets';
 import { fetchUserAssets } from '../lib/pledge';
+import { useSupabaseAuth } from './useSupabaseAuth';
 import type { UserTokenAsset } from '../types/asset';
 
 type UseUserAssetsOptions = {
@@ -22,6 +24,7 @@ export function useUserAssets(
 ): UseUserAssetsResult {
   const { enabled = true } = options;
   const { authenticated, getAccessToken } = usePrivy();
+  const { cantonLedgerToken } = useSupabaseAuth();
 
   const [assets, setAssets] = useState<UserTokenAsset[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,6 +49,20 @@ export function useUserAssets(
         throw new Error('Authentication is required to load token assets');
       }
 
+      let ledgerAssets: UserTokenAsset[] | null = null;
+      if (cantonLedgerToken) {
+        try {
+          ledgerAssets = await fetchLedgerUserAssets(cantonLedgerToken);
+        } catch (ledgerError) {
+          console.warn('[useUserAssets] Canton ledger query failed; using API index', ledgerError);
+        }
+      }
+
+      if (ledgerAssets && ledgerAssets.length > 0) {
+        setAssets(ledgerAssets);
+        return;
+      }
+
       const response = await fetchUserAssets(accessToken);
       setAssets(response.assets);
     } catch (fetchError) {
@@ -59,7 +76,7 @@ export function useUserAssets(
       setIsLoading(false);
       setIsValidating(false);
     }
-  }, [authenticated, enabled, getAccessToken]);
+  }, [authenticated, cantonLedgerToken, enabled, getAccessToken]);
 
   useEffect(() => {
     if (!enabled || !authenticated) {

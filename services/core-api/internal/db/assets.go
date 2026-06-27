@@ -72,6 +72,57 @@ func (s *Store) ListUserTokenAssets(ctx context.Context, userID string) ([]UserT
 	return assets, nil
 }
 
+func (s *Store) ListTokenAssetsByOwnerParty(ctx context.Context, ownerPartyID string) ([]UserTokenAsset, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT
+			id,
+			user_id,
+			canton_contract_id,
+			owner_party_id,
+			balance::text,
+			symbol,
+			instrument_id,
+			locked,
+			created_at,
+			updated_at
+		FROM public.user_token_assets
+		WHERE owner_party_id = $1
+		  AND locked = false
+		  AND balance > 0
+		ORDER BY balance DESC, created_at ASC
+	`, ownerPartyID)
+	if err != nil {
+		return nil, fmt.Errorf("list token assets by owner party: %w", err)
+	}
+	defer rows.Close()
+
+	assets := make([]UserTokenAsset, 0)
+	for rows.Next() {
+		var asset UserTokenAsset
+		if err := rows.Scan(
+			&asset.ID,
+			&asset.UserID,
+			&asset.CantonContractID,
+			&asset.OwnerPartyID,
+			&asset.Balance,
+			&asset.Symbol,
+			&asset.InstrumentID,
+			&asset.Locked,
+			&asset.CreatedAt,
+			&asset.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("scan token asset by owner party: %w", err)
+		}
+		assets = append(assets, asset)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate token assets by owner party: %w", err)
+	}
+
+	return assets, nil
+}
+
 func (s *Store) UpsertUserTokenAsset(
 	ctx context.Context,
 	userID string,
