@@ -2,7 +2,7 @@
 
 import { PrivyProvider } from '@privy-io/react-auth';
 import type { ReactNode } from 'react';
-import { SupabaseAuthProvider } from '../../hooks/useSupabaseAuth';
+import { SupabaseAuthDisabledProvider, SupabaseAuthProvider } from '../../hooks/useSupabaseAuth';
 import { LoopWalletProvider } from './LoopWalletProvider';
 
 type AppProvidersProps = {
@@ -27,7 +27,11 @@ export function AppProviders({ children }: AppProvidersProps) {
   );
 
   if (!privyAppId) {
-    return content;
+    return (
+      <SupabaseAuthDisabledProvider>
+        {content}
+      </SupabaseAuthDisabledProvider>
+    );
   }
 
   return (

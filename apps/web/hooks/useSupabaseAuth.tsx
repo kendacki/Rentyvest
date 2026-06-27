@@ -97,6 +97,29 @@ function reportExchangeError(
   onExchangeError?.(message);
 }
 
+const disabledAuthValue: SupabaseAuthContextValue = {
+  supabaseToken: null,
+  cantonLedgerToken: null,
+  supabase: null,
+  isLoading: false,
+  isReady: true,
+  error: null,
+  retryExchange: async () => {},
+};
+
+/** Safe fallback when Privy / Supabase env is not configured (e.g. Vercel preview). */
+export function SupabaseAuthDisabledProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  return (
+    <SupabaseAuthContext.Provider value={disabledAuthValue}>
+      {children}
+    </SupabaseAuthContext.Provider>
+  );
+}
+
 export function SupabaseAuthProvider({
   children,
   onExchangeError,
