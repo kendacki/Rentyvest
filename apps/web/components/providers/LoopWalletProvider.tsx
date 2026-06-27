@@ -12,6 +12,8 @@ import {
 } from 'react';
 
 type LoopProviderLike = {
+  party_id: string;
+  email?: string;
   submitAndWaitForTransaction: (
     payload: {
       commands: unknown[];
