@@ -1,5 +1,7 @@
 export type TransferableNFT = {
   id: string;
+  /** Canton PropertyNFT contract id (required for WalletConnect transfer). */
+  contractId: string;
   propertyName: string;
   slotNumber: number;
   tokenId: string | null;

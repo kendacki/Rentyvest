@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -78,6 +79,59 @@ func (s *Store) HasRecentFaucetClaim(
 	return true, lastClaim, nil
 }
 
+func (s *Store) HasRecentFaucetClaimByParty(
+	ctx context.Context,
+	cantonPartyID string,
+	window time.Duration,
+) (bool, time.Time, error) {
+	since := time.Now().Add(-window)
+
+	var lastClaim time.Time
+	err := s.pool.QueryRow(ctx, `
+		SELECT created_at
+		FROM public.faucet_claims
+		WHERE canton_party_id = $1
+		  AND created_at > $2
+		ORDER BY created_at DESC
+		LIMIT 1
+	`, cantonPartyID, since).Scan(&lastClaim)
+	if errors.Is(err, pgx.ErrNoRows) {
+		userID, lookupErr := s.lookupUserIDByCantonParty(ctx, cantonPartyID)
+		if lookupErr != nil {
+			if errors.Is(lookupErr, ErrUserCantonPartyMissing) {
+				return false, time.Time{}, nil
+			}
+			return false, time.Time{}, lookupErr
+		}
+		return s.HasRecentFaucetClaim(ctx, userID, window)
+	}
+	if err != nil {
+		return false, time.Time{}, fmt.Errorf("query recent faucet claim by party: %w", err)
+	}
+	return true, lastClaim, nil
+}
+
+func (s *Store) LookupUserIDByCantonParty(ctx context.Context, cantonPartyID string) (string, error) {
+	return s.lookupUserIDByCantonParty(ctx, cantonPartyID)
+}
+
+func (s *Store) lookupUserIDByCantonParty(ctx context.Context, cantonPartyID string) (string, error) {
+	var userID string
+	err := s.pool.QueryRow(ctx, `
+		SELECT id
+		FROM public.users
+		WHERE canton_party_id = $1
+		LIMIT 1
+	`, cantonPartyID).Scan(&userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", ErrUserCantonPartyMissing
+	}
+	if err != nil {
+		return "", fmt.Errorf("lookup user by canton party id: %w", err)
+	}
+	return userID, nil
+}
+
 func (s *Store) InsertFaucetClaimAudit(
 	ctx context.Context,
 	userID string,
@@ -104,6 +158,65 @@ func (s *Store) InsertFaucetClaimAudit(
 		return nil, fmt.Errorf("insert faucet audit log: %w", err)
 	}
 	return &audit, nil
+}
+
+type FaucetPartyClaim struct {
+	ID                    uuid.UUID
+	CantonPartyID         string
+	Amount                string
+	CantonCommandID       string
+	CantonUpdateID        string
+	CantonHoldingCID      string
+	CantonIssuerCID       string
+	CreatedAt             time.Time
+}
+
+func (s *Store) InsertFaucetPartyClaim(
+	ctx context.Context,
+	cantonPartyID string,
+	eventData FaucetClaimEventData,
+) (*FaucetPartyClaim, error) {
+	var claim FaucetPartyClaim
+	err := s.pool.QueryRow(ctx, `
+		INSERT INTO public.faucet_claims (
+			canton_party_id,
+			amount,
+			canton_command_id,
+			canton_update_id,
+			canton_holding_contract_id,
+			canton_issuer_contract_id
+		)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING
+			id,
+			canton_party_id,
+			amount,
+			COALESCE(canton_command_id, ''),
+			COALESCE(canton_update_id, ''),
+			COALESCE(canton_holding_contract_id, ''),
+			COALESCE(canton_issuer_contract_id, ''),
+			created_at
+	`, cantonPartyID, eventData.Amount, nullIfEmpty(eventData.CantonCommandID), nullIfEmpty(eventData.CantonUpdateID), nullIfEmpty(eventData.CantonHoldingCID), nullIfEmpty(eventData.CantonIssuerCID)).Scan(
+		&claim.ID,
+		&claim.CantonPartyID,
+		&claim.Amount,
+		&claim.CantonCommandID,
+		&claim.CantonUpdateID,
+		&claim.CantonHoldingCID,
+		&claim.CantonIssuerCID,
+		&claim.CreatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("insert faucet party claim: %w", err)
+	}
+	return &claim, nil
+}
+
+func nullIfEmpty(value string) interface{} {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	return value
 }
 
 func (s *Store) TryFaucetUserLock(ctx context.Context, userID string) (func(context.Context) error, error) {

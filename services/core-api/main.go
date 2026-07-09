@@ -79,6 +79,9 @@ func main() {
 	pledgesHandler := handlers.NewPledgesHandler(store, verifier, cantonClient)
 	faucetHandler := handlers.NewFaucetHandler(store, cantonClient)
 	assetsHandler := handlers.NewAssetsHandler(store, verifier, cantonClient)
+	ledgerReadHandler := handlers.NewLedgerReadHandler(cantonClient)
+	ledgerPrepareHandler := handlers.NewLedgerPrepareHandler(cantonClient)
+	backendExecuteHandler := handlers.NewBackendExecuteHandler(store, cantonClient)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/auth/exchange", authHandler.Exchange)
@@ -91,6 +94,14 @@ func main() {
 	mux.HandleFunc("/faucet/assets", faucetHandler.ListAssetsByParty)
 	mux.HandleFunc("/nfts/assets", assetsHandler.ListAssets)
 	mux.HandleFunc("/nfts/assets/merge", assetsHandler.MergeAssets)
+	mux.HandleFunc("/api/properties", ledgerReadHandler.ListLedgerProperties)
+	mux.HandleFunc("/api/escrows/", ledgerReadHandler.ListEscrowsByParty)
+	mux.HandleFunc("/api/nfts/", ledgerReadHandler.ListUserNFTs)
+	mux.HandleFunc("/api/ledger/prepare/pledge", ledgerPrepareHandler.PreparePledge)
+	mux.HandleFunc("/api/ledger/prepare/transfer-nft", ledgerPrepareHandler.PrepareTransferNFT)
+	mux.HandleFunc("/api/ledger/prepare/nft-transfer", ledgerPrepareHandler.PrepareNFTTransfer)
+	mux.HandleFunc("/api/ledger/prepare/claim-yield", ledgerPrepareHandler.PrepareClaimYield)
+	mux.HandleFunc("/api/v2/backend-execute/pledge", backendExecuteHandler.ExecutePledge)
 
 	addr := os.Getenv("PORT")
 	if addr == "" {

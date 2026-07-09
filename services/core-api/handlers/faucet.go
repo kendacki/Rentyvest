@@ -69,13 +69,14 @@ type claimUSDCResponse struct {
 }
 
 type prepareFaucetClaimResponse struct {
-	Amount            string `json:"amount"`
-	Symbol            string `json:"symbol"`
-	CantonPartyID     string `json:"canton_party_id"`
-	AdminPartyID      string `json:"admin_party_id"`
-	IssuerContractID  string `json:"issuer_contract_id"`
-	TemplateID        string `json:"template_id"`
-	CommandID         string `json:"command_id"`
+	Amount            string                      `json:"amount"`
+	Symbol            string                      `json:"symbol"`
+	CantonPartyID     string                      `json:"canton_party_id"`
+	AdminPartyID      string                      `json:"admin_party_id"`
+	IssuerContractID  string                      `json:"issuer_contract_id"`
+	TemplateID        string                      `json:"template_id"`
+	CommandID         string                      `json:"command_id"`
+	Diagnostics       *canton.FaucetMintDiagnostics `json:"diagnostics,omitempty"`
 }
 
 type completeFaucetClaimRequest struct {
@@ -123,6 +124,8 @@ func (h *FaucetHandler) PrepareClaim(w http.ResponseWriter, r *http.Request) {
 
 	commandID := fmt.Sprintf("faucet-%s-%d", cantonPartyID, time.Now().UnixNano())
 
+	diagnostics := h.buildPrepareDiagnostics(cantonPartyID, issuerContractID, commandID)
+
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(prepareFaucetClaimResponse{
 		Amount:           h.mintAmount,
@@ -132,6 +135,7 @@ func (h *FaucetHandler) PrepareClaim(w http.ResponseWriter, r *http.Request) {
 		IssuerContractID: issuerContractID,
 		TemplateID:       h.cantonClient.TemplateUSDCIssuerID(),
 		CommandID:        commandID,
+		Diagnostics:      &diagnostics,
 	})
 }
 
@@ -239,7 +243,7 @@ func (h *FaucetHandler) CompleteClaim(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *FaucetHandler) ensureFaucetEligible(ctx context.Context, cantonPartyID string) error {
-	claimedRecently, lastClaim, err := h.store.HasRecentFaucetClaim(ctx, cantonPartyID, h.rateWindow)
+	claimedRecently, lastClaim, err := h.store.HasRecentFaucetClaimByParty(ctx, cantonPartyID, h.rateWindow)
 	if err != nil {
 		return fmt.Errorf("verify faucet eligibility: %w", err)
 	}
@@ -352,17 +356,18 @@ func (h *FaucetHandler) ClaimUSDC(w http.ResponseWriter, r *http.Request) {
 		CommandID:    fmt.Sprintf("faucet-%s-%d", cantonPartyID, time.Now().UnixNano()),
 	})
 	if err != nil {
+		_, _, detail := canton.ProblemForSubmitError(err)
 		problems.WriteCode(
 			w,
 			http.StatusBadGateway,
 			"RV-4002",
 			"Bad Gateway",
-			"Failed to mint test USDC on Canton",
+			detail,
 		)
 		return
 	}
 
-	audit, err := h.store.InsertFaucetClaimAudit(r.Context(), cantonPartyID, db.FaucetClaimEventData{
+	audit, err := h.recordFaucetClaim(r.Context(), cantonPartyID, db.FaucetClaimEventData{
 		Amount:              h.mintAmount,
 		CantonPartyID:       cantonPartyID,
 		CantonCommandID:     mintResult.CommandID,
@@ -398,8 +403,34 @@ func (h *FaucetHandler) ClaimUSDC(w http.ResponseWriter, r *http.Request) {
 		CantonPartyID:           cantonPartyID,
 		CantonHoldingContractID: mintResult.HoldingContractID,
 		CantonCommandID:         mintResult.CommandID,
-		ClaimedAt:               audit.CreatedAt,
+		ClaimedAt:               audit.claimedAt,
 	})
+}
+
+type faucetClaimRecord struct {
+	claimedAt time.Time
+}
+
+func (h *FaucetHandler) recordFaucetClaim(
+	ctx context.Context,
+	cantonPartyID string,
+	eventData db.FaucetClaimEventData,
+) (*faucetClaimRecord, error) {
+	if userID, err := h.store.LookupUserIDByCantonParty(ctx, cantonPartyID); err == nil {
+		audit, insertErr := h.store.InsertFaucetClaimAudit(ctx, userID, eventData)
+		if insertErr != nil {
+			return nil, insertErr
+		}
+		return &faucetClaimRecord{claimedAt: audit.CreatedAt}, nil
+	} else if !errors.Is(err, db.ErrUserCantonPartyMissing) {
+		return nil, err
+	}
+
+	claim, insertErr := h.store.InsertFaucetPartyClaim(ctx, cantonPartyID, eventData)
+	if insertErr != nil {
+		return nil, insertErr
+	}
+	return &faucetClaimRecord{claimedAt: claim.CreatedAt}, nil
 }
 
 func (h *FaucetHandler) resolveCantonPartyID(r *http.Request) (string, error) {

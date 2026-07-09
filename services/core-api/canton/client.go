@@ -16,6 +16,7 @@ import (
 )
 
 const defaultSubmitPath = "/v2/commands/submit-and-wait"
+const submitForTransactionPath = "/v2/commands/submit-and-wait-for-transaction"
 
 type Client struct {
 	baseURL              string
@@ -97,6 +98,10 @@ type submitRequest struct {
 	UserID    string        `json:"userId,omitempty"`
 	CommandID string        `json:"commandId"`
 	Commands  []interface{} `json:"commands"`
+}
+
+type submitForTransactionRequest struct {
+	Commands submitRequest `json:"commands"`
 }
 
 type exerciseCommand struct {
@@ -368,6 +373,10 @@ func (c *Client) AdminPartyID() string {
 	return strings.TrimSpace(c.adminParty)
 }
 
+func (c *Client) TemplatePropertyPoolID() string {
+	return strings.TrimSpace(c.templatePoolID)
+}
+
 func (c *Client) RefreshUSDCIssuer(ctx context.Context) (string, error) {
 	return c.refreshUSDCIssuerFromLedger(ctx)
 }
@@ -420,7 +429,7 @@ func (c *Client) SubmitMint(ctx context.Context, cmd MintCommand) (*MintResult, 
 		},
 	}
 
-	responseBody, err := c.submitAndWait(ctx, body)
+	responseBody, err := c.submitAndWaitForTransaction(ctx, body)
 	if err != nil {
 		var submitErr *SubmitError
 		if errors.As(err, &submitErr) && submitErr.StatusCode == http.StatusNotFound &&
@@ -441,7 +450,7 @@ func (c *Client) SubmitMint(ctx context.Context, cmd MintCommand) (*MintResult, 
 						},
 					},
 				}
-				responseBody, err = c.submitAndWait(ctx, body)
+				responseBody, err = c.submitAndWaitForTransaction(ctx, body)
 				issuerContractID = refreshed
 			}
 		}
@@ -501,6 +510,50 @@ func (c *Client) submitAndWait(ctx context.Context, body submitRequest) ([]byte,
 	responseBody, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
 		return nil, fmt.Errorf("read canton submit response: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, NewSubmitError(resp.StatusCode, string(responseBody))
+	}
+
+	return responseBody, nil
+}
+
+func (c *Client) submitAndWaitForTransaction(ctx context.Context, body submitRequest) ([]byte, error) {
+	token, err := c.resolveToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	payload, err := json.Marshal(submitForTransactionRequest{Commands: body})
+	if err != nil {
+		return nil, fmt.Errorf("marshal canton submit-for-transaction request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		c.baseURL+submitForTransactionPath,
+		bytes.NewReader(payload),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("build canton submit-for-transaction request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	if strings.TrimSpace(token) != "" {
+		req.Header.Set("Authorization", "Bearer "+strings.TrimSpace(token))
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("submit canton command for transaction: %w", err)
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
+	if err != nil {
+		return nil, fmt.Errorf("read canton submit-for-transaction response: %w", err)
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {

@@ -26,6 +26,10 @@ const nextConfig = {
         source: '/faucet/:path*',
         destination: `${coreApiUrl}/faucet/:path*`,
       },
+      {
+        source: '/api/:path*',
+        destination: `${coreApiUrl}/api/:path*`,
+      },
     ];
   },
 };

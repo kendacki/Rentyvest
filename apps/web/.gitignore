@@ -1,0 +1,11 @@
+# Local secrets — never commit
+.env
+.env.local
+.env.*.local
+
+# Canton M2M tokens (if copied here for scripts)
+token.txt
+
+# Next.js build output (also covered by root .gitignore)
+.next/
+out/

@@ -1,0 +1,36 @@
+# Makefile override for Docker-based daml execution
+# This wraps the actual Makefile but replaces `daml` with `/tmp/daml`
+
+build-contracts:
+	@echo "==> Building RentyVest Daml contracts in daml/ (SDK 3.4.x / DevNet)"
+	cd daml && /tmp/daml build
+	@echo "==> Packaging canonical artifact as daml/.daml/dist/RentyVest.dar"
+	@cp "daml/.daml/dist/rentyvest-0.1.0.dar" "daml/.daml/dist/RentyVest.dar"
+	@echo "==> Build complete."
+	@echo "    Source DAR : daml/.daml/dist/rentyvest-0.1.0.dar"
+	@echo "    Deploy DAR : daml/.daml/dist/RentyVest.dar"
+
+deploy-devnet: build-contracts
+	@echo "==> Deploying daml/.daml/dist/RentyVest.dar to Canton devnet"
+	@echo "    gRPC host: 127.0.0.1"
+	@echo "    gRPC port: 7575"
+	@echo "    JSON API : http://127.0.0.1:7575"
+	cd daml && /tmp/daml ledger upload-dar "$$(pwd)/../daml/.daml/dist/RentyVest.dar" \
+		--host 127.0.0.1 \
+		--port 7575 \
+		--timeout 120
+	@echo "==> DAR uploaded successfully."
+
+init-devnet: build-contracts
+	@echo "==> Initializing parties on Canton $(CANTON_NETWORK)"
+	cd daml && /tmp/daml script --ledger-host 127.0.0.1 --ledger-port 7575 --dar ".daml/dist/RentyVest.dar" --script-name RentyVest.Init:setupDevnet
+	@echo "==> Initialization complete."
+
+deploy-contracts: deploy-devnet
+	@echo "==> Deploying RentyVest contract instances"
+	cd daml && /tmp/daml script --ledger-host 127.0.0.1 --ledger-port 7575 --dar ".daml/dist/RentyVest.dar" --script-name RentyVest.Init:deployDevnet
+	@echo "==> Deployment complete."
+
+deploy-all: deploy-devnet deploy-contracts
+
+.PHONY: build-contracts deploy-devnet init-devnet deploy-contracts deploy-all

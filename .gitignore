@@ -1,7 +1,10 @@
 # Secrets and local env (single file at repo root)
 .env
+.env.local
 .env.*.local
 !.env.example
+token.txt
+apps/web/.env.local
 
 # Dependencies
 node_modules/
@@ -33,3 +36,6 @@ npm-debug.log*
 coverage/
 dist/
 .turbo/
+.cache/
+*.dar
+**/tsconfig.tsbuildinfo

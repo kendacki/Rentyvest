@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { formatTokenBalance } from '../../lib/format';
-import { claimFaucetViaLoop } from '../../lib/faucet/loopMint';
-import { useLoopWallet } from '../providers/LoopWalletProvider';
+import { claimFaucetViaBackend } from '../../lib/faucet/backendMint';
+import { useCantonWallet } from '../../providers/WalletConnectProvider';
 import { sumAssetBalances } from '../../types/asset';
 import type { UserTokenAsset } from '../../types/asset';
 
@@ -82,7 +82,7 @@ async function readFaucetError(
   return fallback;
 }
 
-async function fetchLoopPartyAssets(partyId: string): Promise<UserTokenAsset[]> {
+async function fetchPartyAssets(partyId: string): Promise<UserTokenAsset[]> {
   try {
     const response = await fetch(
       `${getApiUrl()}${FAUCET_ASSETS_PATH}?canton_party_id=${encodeURIComponent(partyId)}`,
@@ -166,13 +166,12 @@ function FaucetToast({ toast, onDismiss }: FaucetToastProps) {
 
 export function FaucetCard() {
   const {
-    isReady: isLoopReady,
+    isReady: isWalletReady,
     isConnected,
     isConnecting,
     partyId,
-    provider,
     connect,
-  } = useLoopWallet();
+  } = useCantonWallet();
 
   const [assets, setAssets] = useState<UserTokenAsset[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -194,7 +193,7 @@ export function FaucetCard() {
     setBalanceError(null);
 
     try {
-      const nextAssets = await fetchLoopPartyAssets(partyId);
+      const nextAssets = await fetchPartyAssets(partyId);
       setAssets(nextAssets);
     } catch (fetchError) {
       const message =
@@ -233,28 +232,31 @@ export function FaucetCard() {
   }, [toast]);
 
   const handleClaim = useCallback(async () => {
-    const activeProvider = provider ?? (await connect());
-    if (!activeProvider?.party_id) {
+    let activePartyId = partyId;
+
+    if (!activePartyId) {
+      activePartyId = await connect();
+    }
+
+    if (!activePartyId) {
       setToast({
         type: 'error',
-        message: 'Connect your Loop wallet to claim test USDC.',
+        message: 'Connect your Canton wallet to claim test USDC.',
       });
       return;
     }
-
-    const activePartyId = partyId ?? activeProvider.party_id;
 
     setIsClaiming(true);
     setToast(null);
 
     try {
-      await claimFaucetViaLoop(getApiUrl(), activePartyId, activeProvider);
+      await claimFaucetViaBackend(getApiUrl(), activePartyId);
 
       await refetchBalance();
 
       setToast({
         type: 'success',
-        message: 'Successfully claimed test USDC to your Loop wallet.',
+        message: 'Successfully claimed test USDC to your connected party.',
       });
     } catch (claimError) {
       const message = formatFetchError(claimError, 'claim test USDC').message;
@@ -266,7 +268,7 @@ export function FaucetCard() {
     } finally {
       setIsClaiming(false);
     }
-  }, [connect, partyId, provider, refetchBalance]);
+  }, [connect, partyId, refetchBalance]);
 
   return (
     <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -276,8 +278,8 @@ export function FaucetCard() {
         </p>
         <h2 className="mt-1 text-xl font-bold text-slate-900">Test USDC</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Claim Canton test tokens to your connected Loop wallet on DevNet.
-          One claim per Loop party every 24 hours.
+          Connect your Canton wallet, then claim test USDC minted directly to
+          your party. One claim per party every 24 hours.
         </p>
       </div>
 
@@ -286,7 +288,7 @@ export function FaucetCard() {
 
         {partyId && (
           <p className="truncate rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-            <span className="font-medium text-slate-800">Loop party:</span>{' '}
+            <span className="font-medium text-slate-800">Canton party:</span>{' '}
             {partyId}
           </p>
         )}
@@ -312,7 +314,7 @@ export function FaucetCard() {
           onClick={() => {
             void handleClaim();
           }}
-          disabled={!isLoopReady || isBusy || (isConnected && isLoading)}
+          disabled={!isWalletReady || isBusy || (isConnected && isLoading)}
           className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
         >
           {isClaiming ? (
@@ -323,12 +325,12 @@ export function FaucetCard() {
           ) : isConnected ? (
             CLAIM_BUTTON_LABEL
           ) : (
-            'Connect Loop Wallet to Claim'
+            'Connect Wallet to Claim'
           )}
         </button>
 
         <p className="text-center text-xs text-slate-500">
-          Tokens are minted on Canton DevNet to the Loop party shown above.
+          Tokens are minted on Canton sandbox to the party shown above.
         </p>
       </div>
     </article>

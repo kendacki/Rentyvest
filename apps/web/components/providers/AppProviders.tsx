@@ -3,7 +3,7 @@
 import { PrivyProvider } from '@privy-io/react-auth';
 import type { ReactNode } from 'react';
 import { SupabaseAuthProvider } from '../../hooks/useSupabaseAuth';
-import { LoopWalletProvider } from './LoopWalletProvider';
+import { WalletConnectProvider } from '../../providers/WalletConnectProvider';
 
 type AppProvidersProps = {
   children: ReactNode;
@@ -23,7 +23,7 @@ export function AppProviders({ children }: AppProvidersProps) {
   }
 
   const content = (
-    <LoopWalletProvider>{children}</LoopWalletProvider>
+    <WalletConnectProvider>{children}</WalletConnectProvider>
   );
 
   if (!privyAppId) {

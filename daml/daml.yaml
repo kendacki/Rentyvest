@@ -1,5 +1,5 @@
 sdk-version: 3.4.11
-name: rentyvest
+name: rentyvest-faucet
 version: 0.1.0
 source: src
 build-options:

@@ -2,12 +2,12 @@
 
 import * as Dialog from '@radix-ui/react-dialog';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { usePrivy } from '@privy-io/react-auth';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { formatNaira, truncatePartyId } from '../../lib/format';
-import { transferNFT } from '../../lib/nft-transfer';
+import { transferNFTWithWallet } from '../../lib/nft-transfer';
+import { useCantonWallet } from '../../providers/WalletConnectProvider';
 import type { TransferableNFT } from '../../types/nft';
 
 const PRIMARY_ORANGE = '#F97316';
@@ -35,7 +35,7 @@ function createTransferSchema(userPartyId: string) {
       .string()
       .trim()
       .min(1, 'Recipient Party ID is required')
-      .regex(/^party::.+$/, 'Party ID must start with party::')
+      .regex(/^.+::.+$/, 'Enter a valid Canton party ID (hint::1220…)')
       .refine(
         (value) => value !== userPartyId,
         'Recipient Party ID cannot match your own Party ID',
@@ -77,7 +77,7 @@ export function TransferModal({
   onClaimYield,
   onTransferSuccess,
 }: TransferModalProps) {
-  const { getAccessToken } = usePrivy();
+  const { partyId, prepareSignExecute } = useCantonWallet();
   const [step, setStep] = useState<TransferStep>(
     nft.pendingYield > 0 ? 'warning' : 'input',
   );
@@ -160,18 +160,22 @@ export function TransferModal({
     setIsSubmitting(true);
 
     try {
-      const accessToken = await getAccessToken();
-      if (!accessToken) {
-        throw new Error('Authentication is required to transfer this NFT');
+      if (!partyId) {
+        throw new Error('Connect your Canton wallet before transferring');
       }
 
-      const response = await transferNFT(
-        nft.id,
+      const contractId = nft.contractId || nft.id;
+      if (!contractId) {
+        throw new Error('NFT contract id is missing');
+      }
+
+      const response = await transferNFTWithWallet(
         {
-          recipient_party_id: values.recipient_party_id.trim(),
-          yield_transfer_acknowledged: true,
+          ownerPartyId: userPartyId,
+          contractId,
+          recipientPartyId: values.recipient_party_id.trim(),
         },
-        accessToken,
+        prepareSignExecute,
       );
 
       onTransferSuccess?.(response.transfer_id);
@@ -195,7 +199,8 @@ export function TransferModal({
               Transfer NFT
             </Dialog.Title>
             <Dialog.Description className="mt-1 text-sm text-slate-600">
-              Send slot ownership to another Canton party on the secondary market.
+              Core-api prepares the TransferNFT command; your wallet signs via
+              WalletConnect.
             </Dialog.Description>
           </div>
 
@@ -276,7 +281,7 @@ export function TransferModal({
                     id="recipient_party_id"
                     type="text"
                     autoComplete="off"
-                    placeholder="party::1220abcd..."
+                    placeholder="hint::1220abcd…"
                     disabled={isSubmitting}
                     className="h-11 w-full rounded-xl border border-slate-300 px-3 text-sm text-slate-900 outline-none ring-[#F97316] focus:border-[#F97316] focus:ring-2 disabled:cursor-not-allowed disabled:bg-slate-100"
                     {...register('recipient_party_id')}
@@ -356,7 +361,7 @@ export function TransferModal({
                   {isSubmitting ? (
                     <>
                       <Spinner />
-                      Submitting transfer…
+                      Awaiting wallet signature…
                     </>
                   ) : (
                     'Confirm Transfer'

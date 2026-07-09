@@ -29,8 +29,8 @@ type cumulativeFilter struct {
 }
 
 type templateFilter struct {
-	TemplateID               string `json:"templateId"`
-	IncludeCreatedEventBlob  bool   `json:"includeCreatedEventBlob"`
+	TemplateID              interface{} `json:"templateId"`
+	IncludeCreatedEventBlob bool        `json:"includeCreatedEventBlob"`
 }
 
 func (c *Client) resolveUSDCIssuerContractID(ctx context.Context, preferred string) (string, error) {
@@ -54,10 +54,22 @@ func (c *Client) refreshUSDCIssuerFromLedger(ctx context.Context) (string, error
 		return "", err
 	}
 
+	templateFilters := []templateFilter{{IncludeCreatedEventBlob: false}}
+	if parts := strings.SplitN(c.templateUSDCIssuerID, ":", 3); len(parts) == 3 {
+		templateFilters = []templateFilter{{
+			TemplateID: map[string]string{
+				"packageId":  parts[0],
+				"moduleName": parts[1],
+				"entityName": parts[2],
+			},
+			IncludeCreatedEventBlob: false,
+		}}
+	}
+
 	body := activeContractsRequest{
 		Filter: activeContractsFilter{
 			FiltersByParty: map[string]partyFilter{
-				party: {Cumulative: []cumulativeFilter{{TemplateFilters: []templateFilter{}}}},
+				party: {Cumulative: []cumulativeFilter{{TemplateFilters: templateFilters}}},
 			},
 		},
 		Verbose:        true,
@@ -135,12 +147,32 @@ func (c *Client) ledgerEndOffset(ctx context.Context) (string, error) {
 		return "", NewSubmitError(resp.StatusCode, string(responseBody))
 	}
 
-	offset, ok := extractStringField(responseBody, "offset")
-	if !ok || offset == "" {
-		return "", fmt.Errorf("ledger-end response missing offset")
+	offset, err := parseLedgerOffset(responseBody)
+	if err != nil {
+		return "", err
 	}
 
 	return offset, nil
+}
+
+func parseLedgerOffset(body []byte) (string, error) {
+	var decoded map[string]interface{}
+	if err := json.Unmarshal(body, &decoded); err != nil {
+		return "", fmt.Errorf("decode ledger-end response: %w", err)
+	}
+
+	switch value := decoded["offset"].(type) {
+	case string:
+		if value != "" {
+			return value, nil
+		}
+	case float64:
+		return fmt.Sprintf("%.0f", value), nil
+	case json.Number:
+		return value.String(), nil
+	}
+
+	return "", fmt.Errorf("ledger-end response missing offset")
 }
 
 func pickUSDCIssuerContractID(body []byte, qualifiedTemplateID string) (string, error) {
@@ -192,14 +224,8 @@ func issuerContractFromCreatedEvent(value map[string]interface{}) (contractID st
 		return "", "", 0, false
 	}
 
-	switch template := value["templateId"].(type) {
-	case string:
-		templateID = template
-	default:
-		return "", "", 0, false
-	}
-
-	if !strings.Contains(templateID, "RentyVest.TestUSDC:USDCIssuer") {
+	templateID = templateIDString(value["templateId"])
+	if templateID == "" || !strings.Contains(templateID, "RentyVest.TestUSDC:USDCIssuer") {
 		return "", "", 0, false
 	}
 
@@ -208,6 +234,21 @@ func issuerContractFromCreatedEvent(value map[string]interface{}) (contractID st
 	}
 
 	return contractID, templateID, supply, true
+}
+
+func templateIDString(raw interface{}) string {
+	switch template := raw.(type) {
+	case string:
+		return template
+	case map[string]interface{}:
+		packageID, _ := template["packageId"].(string)
+		moduleName, _ := template["moduleName"].(string)
+		entityName, _ := template["entityName"].(string)
+		if packageID != "" && moduleName != "" && entityName != "" {
+			return packageID + ":" + moduleName + ":" + entityName
+		}
+	}
+	return ""
 }
 
 func parseDecimalField(args map[string]interface{}, field string) float64 {

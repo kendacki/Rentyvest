@@ -1,43 +1,51 @@
-import type { TransferNFTRequest, TransferNFTResponse } from '../types/nft';
+import type {
+  PrepareExecuteAndWaitResult,
+  PrepareExecuteParams,
+} from '@canton-network/dapp-sdk';
 
-function getCoreApiUrl(): string {
-  const base = process.env.NEXT_PUBLIC_CORE_API_URL ?? 'http://localhost:8080';
-  return base.replace(/\/$/, '');
-}
+import { prepareTransferNFT } from './api/ledger';
+import { resolvePrepareExecuteParams } from './canton/prepare-execute';
+import type { TransferNFTResponse } from '../types/nft';
 
-export async function transferNFT(
-  nftId: string,
-  body: TransferNFTRequest,
-  accessToken: string,
+export type TransferNFTWithWalletInput = {
+  ownerPartyId: string;
+  contractId: string;
+  recipientPartyId: string;
+  transferId?: string;
+};
+
+/**
+ * Prepare TransferNFT via core-api, then sign and submit with WalletConnect.
+ */
+export async function transferNFTWithWallet(
+  input: TransferNFTWithWalletInput,
+  prepareSignExecute: (
+    params: PrepareExecuteParams,
+  ) => Promise<PrepareExecuteAndWaitResult>,
 ): Promise<TransferNFTResponse> {
-  const response = await fetch(`${getCoreApiUrl()}/nfts/${nftId}/transfer`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(body),
+  const transferId =
+    input.transferId ??
+    (typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `transfer-${Date.now()}`);
+
+  const { prepared, prepare_execute } = await prepareTransferNFT({
+    ownerPartyId: input.ownerPartyId,
+    contractId: input.contractId,
+    newOwnerPartyId: input.recipientPartyId,
+    transferId,
   });
 
-  if (!response.ok) {
-    let message = `Transfer failed (${response.status})`;
+  const wcParams = resolvePrepareExecuteParams(prepared, prepare_execute);
+  await prepareSignExecute(wcParams);
 
-    try {
-      const problem = (await response.json()) as {
-        detail?: string;
-        title?: string;
-      };
-      if (problem.detail) {
-        message = problem.detail;
-      } else if (problem.title) {
-        message = problem.title;
-      }
-    } catch {
-      // Response was not JSON.
-    }
+  const resolvedTransferId = String(
+    prepared.choice_argument?.transfer_id ?? transferId,
+  );
 
-    throw new Error(message);
-  }
-
-  return (await response.json()) as TransferNFTResponse;
+  return {
+    transfer_id: resolvedTransferId,
+    nft_id: input.contractId,
+    recipient_party_id: input.recipientPartyId,
+  };
 }
