@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { executeBackendPledge, fetchUserNFTs } from '../lib/api/ledger';
+import {
+  executeBackendPledge,
+  fetchUserNFTs,
+  type ExecutePledgeParams,
+  type PledgeExecutionResult,
+  type UserEquityToken,
+} from '@rentyvest/ledger-client';
 import { useCantonWallet } from '../providers/WalletConnectProvider';
-import type {
-  ExecutePledgeParams,
-  PledgeExecutionResult,
-  UserEquityToken,
-} from '../types/ledger';
 
 type UseLedgerPortfolioOptions = {
   enabled?: boolean;

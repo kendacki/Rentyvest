@@ -3,8 +3,10 @@ import type {
   PrepareExecuteParams,
 } from '@canton-network/dapp-sdk';
 
-import { prepareTransferNFT } from './api/ledger';
-import { resolvePrepareExecuteParams } from './canton/prepare-execute';
+import {
+  prepareTransferNFT,
+  resolvePrepareExecuteParams,
+} from '@rentyvest/ledger-client';
 import type { TransferNFTResponse } from '../types/nft';
 
 export type TransferNFTWithWalletInput = {

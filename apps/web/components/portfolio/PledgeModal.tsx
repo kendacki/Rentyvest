@@ -2,9 +2,13 @@
 
 import * as Dialog from '@radix-ui/react-dialog';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { fetchLedgerProperties, getLedgerApiUrl } from '../../lib/api/ledger';
+import {
+  fetchLedgerProperties,
+  getLedgerApiUrl,
+  type ExecutePledgeParams,
+  type LedgerPropertyPool,
+} from '@rentyvest/ledger-client';
 import { formatTokenBalance } from '../../lib/format';
-import type { ExecutePledgeParams, LedgerPropertyPool } from '../../types/ledger';
 import type { UserTokenAsset } from '../../types/asset';
 import { parseAssetBalance } from '../../types/asset';
 

@@ -20,6 +20,7 @@ const coreApiUrl = (
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: ['@rentyvest/ledger-client'],
   async rewrites() {
     return [
       {

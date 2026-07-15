@@ -7,7 +7,7 @@ import type {
   PreparePledgeResponse,
   PrepareTransferNFTRequest,
   PrepareTransferNFTResponse,
-} from '../../types/ledger';
+} from '../types';
 
 type ProblemDetails = {
   title?: string;

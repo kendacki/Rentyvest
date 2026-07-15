@@ -5,8 +5,17 @@ RentyVest uses a **single root `.env` locally** for Go services and scripts. In 
 ## Local development
 
 1. Copy `.env.example` → `.env` at the **repo root**.
-2. Start the Go API with root env loaded (see `services/core-api`).
-3. Start Next.js from `apps/web` — `npm run dev` syncs `NEXT_PUBLIC_*` into `apps/web/.env.local` automatically.
+2. Install dependencies from the monorepo root:
+   ```bash
+   pnpm install
+   ```
+3. Start all JS workspaces (Next.js):
+   ```bash
+   pnpm dev
+   ```
+   Or only the web app: `pnpm turbo dev --filter=web`
+4. Start the Go API separately from `services/core-api` (not part of the pnpm workspace).
+5. Next.js syncs `NEXT_PUBLIC_*` into `apps/web/.env.local` via `predev` / `prebuild`.
 
 Manual sync:
 
@@ -18,7 +27,9 @@ npm run sync-env
 ## Vercel (Next.js frontend)
 
 1. Import the repo; set **Root Directory** to `apps/web`.
-2. Add environment variables in **Project → Settings → Environment Variables**.
+2. Set **Install Command** to `pnpm install` (from repo root — Vercel detects the monorepo).
+3. Set **Build Command** to `cd ../.. && pnpm turbo build --filter=web` or use Vercel's Turborepo preset with root at repo root and output `apps/web/.next`.
+4. Add environment variables in **Project → Settings → Environment Variables**.
 3. Set every `NEXT_PUBLIC_*` key from `.env.example` (Production, Preview, Development as needed).
 4. Set `NEXT_PUBLIC_CORE_API_URL` to your deployed Go API URL (not `localhost`).
 

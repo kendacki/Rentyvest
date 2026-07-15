@@ -9,7 +9,7 @@ import { PortfolioPledgeModal } from '../../components/portfolio/PledgeModal';
 import { useCantonWallet } from '../../providers/WalletConnectProvider';
 import { useLedgerPortfolio } from '../../hooks/useLedgerPortfolio';
 import { formatTokenBalance, truncatePartyId } from '../../lib/format';
-import type { UserEquityToken } from '../../types/ledger';
+import type { UserEquityToken } from '@rentyvest/ledger-client';
 import type { TransferableNFT } from '../../types/nft';
 
 function toTransferableNFT(token: UserEquityToken): TransferableNFT {

@@ -1,9 +1,10 @@
 import type { PrepareExecuteParams } from '@canton-network/dapp-sdk';
+
 import type {
   LoopWalletSubmitPayload,
   PrepareExecutePayload,
   PreparedLedgerCommand,
-} from '../../types/ledger';
+} from '../types';
 
 function normalizeCommands(
   commands: LoopWalletSubmitPayload['commands'],

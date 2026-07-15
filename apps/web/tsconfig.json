@@ -20,7 +20,10 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "paths": {
+      "@rentyvest/ledger-client": ["../../packages/ledger-client/src/index.ts"]
+    }
   },
   "include": [
     "next-env.d.ts",
@@ -29,6 +32,9 @@
     "**/*.tsx"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "components/providers/LoopWalletProvider.tsx",
+    "components/wallet/LoopWalletSignIn.tsx",
+    "lib/faucet/loopMint.ts"
   ]
 }

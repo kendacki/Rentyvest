@@ -1,5 +1,5 @@
 {
-  "name": "@rentyvest/web",
+  "name": "web",
   "private": true,
   "version": "0.1.0",
   "scripts": {
@@ -9,6 +9,7 @@
     "prebuild": "node scripts/sync-env-local.mjs",
     "build": "next build",
     "start": "next start",
+    "lint": "tsc --noEmit",
     "generate-daml": "dpm codegen-js ../../daml/.daml/dist/RentyVest-1.0.0.dar -o src/generated",
     "probe-ledger": "node --env-file=../../.env scripts/probe-ledger.mjs",
     "probe-m2m": "node --env-file=../../.env scripts/probe-m2m.mjs",
@@ -20,6 +21,7 @@
     "@hookform/resolvers": "^3.9.1",
     "@privy-io/react-auth": "^1.98.0",
     "@radix-ui/react-dialog": "^1.1.2",
+    "@rentyvest/ledger-client": "workspace:*",
     "@supabase/supabase-js": "^2.47.10",
     "@walletconnect/modal": "^2.7.0",
     "@walletconnect/sign-client": "^2.23.10",

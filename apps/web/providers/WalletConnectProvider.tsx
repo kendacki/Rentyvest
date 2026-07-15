@@ -20,7 +20,7 @@ import {
   getCantonWalletChainId,
   getWalletConnectMetadata,
   getWalletConnectProjectId,
-} from '../lib/canton/wallet-config';
+} from '@rentyvest/ledger-client';
 import { WalletConnectQrModal } from '../components/wallet/WalletConnectQrModal';
 
 type CantonProvider = ReturnType<WalletConnectAdapter['provider']>;

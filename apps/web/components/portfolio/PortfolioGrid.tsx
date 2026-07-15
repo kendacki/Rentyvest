@@ -1,7 +1,7 @@
 'use client';
 
 import { formatTokenBalance } from '../../lib/format';
-import type { UserEquityToken } from '../../types/ledger';
+import type { UserEquityToken } from '@rentyvest/ledger-client';
 
 type PortfolioGridProps = {
   tokens: UserEquityToken[];
