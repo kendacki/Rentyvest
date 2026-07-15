@@ -39,6 +39,27 @@ Inject the **non-`NEXT_PUBLIC_*`** variables from `.env.example`:
 - `SUPABASE_JWT_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 - Canton / faucet vars (`CANTON_*`, `FAUCET_*`, …)
 
+### Railway (core-api)
+
+Railpack cannot auto-detect this monorepo from `/` because `go.mod` lives in `services/core-api/`.
+
+**Recommended setup**
+
+1. Create a Railway service from [kendacki/Rentyvest](https://github.com/kendacki/Rentyvest).
+2. Open **Service → Settings → Root Directory** and set:
+   ```
+   services/core-api
+   ```
+3. Under **Settings → Config-as-code**, point to:
+   ```
+   /services/core-api/railway.toml
+   ```
+4. Add all Go env vars from `.env.example` in **Variables** (never commit `.env`).
+5. Set `CORS_ALLOWED_ORIGINS` to your Vercel frontend URL, e.g. `https://rentyvest.vercel.app`.
+6. Deploy — Railway builds via `services/core-api/Dockerfile`.
+
+**Alternative (repo root build):** leave Root Directory empty; the root `Dockerfile` and `railway.toml` build `services/core-api` from the monorepo root.
+
 Example Docker run:
 
 ```bash
