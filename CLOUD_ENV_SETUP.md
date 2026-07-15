@@ -29,7 +29,7 @@ npm run sync-env
 1. Import the repo; set **Root Directory** to `apps/web`.
 2. Set **Install Command** to `pnpm install` (from repo root — Vercel detects the monorepo).
 3. Set **Build Command** to `cd ../.. && pnpm turbo build --filter=web` or use Vercel's Turborepo preset with root at repo root and output `apps/web/.next`.
-4. Add environment variables in **Project → Settings → Environment Variables**.
+4. Add **frontend-only** `NEXT_PUBLIC_*` variables in **Project → Settings → Environment Variables** (do not rely on a root `.env` file on Vercel — `prebuild` syncs them from the Vercel environment).
 3. Set every `NEXT_PUBLIC_*` key from `.env.example` (Production, Preview, Development as needed).
 4. Set `NEXT_PUBLIC_CORE_API_URL` to your deployed Go API URL (not `localhost`).
 
