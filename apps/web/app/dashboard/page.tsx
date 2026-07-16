@@ -73,9 +73,9 @@ export default function DashboardPage() {
       <main className="page-canvas">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
           <Reveal as="header" className="mb-8 text-center">
-            {!isSignedIn ? <p className="section-label">Portfolio</p> : null}
+            {!isWalletConnected ? <p className="section-label">Portfolio</p> : null}
             <h1
-              className={`heading-section text-brand-black ${isSignedIn ? '' : 'mt-2'}`}
+              className={`heading-section text-brand-black ${isWalletConnected ? '' : 'mt-2'}`}
             >
               Your holdings
             </h1>
