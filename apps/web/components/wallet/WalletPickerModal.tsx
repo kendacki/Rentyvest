@@ -59,11 +59,10 @@ export function WalletPickerModal({
               id="wallet-picker-title"
               className="mt-1 text-lg font-bold text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.45)]"
             >
-              Choose your Canton wallet
+              Connect your wallet
             </h2>
             <p className="mt-1 text-sm text-neutral-200">
-              Loop is recommended for DevNet. Other Canton wallets are supported
-              via WalletConnect.
+              Loop is recommended. Other wallets work too.
             </p>
           </div>
           <button
@@ -71,7 +70,7 @@ export function WalletPickerModal({
             onClick={onClose}
             disabled={isConnecting}
             className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
-            aria-label="Cancel wallet connection"
+            aria-label="Close"
           >
             <svg
               className="h-5 w-5"
@@ -103,14 +102,14 @@ export function WalletPickerModal({
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-white">
-                  Connect with Loop
+                  Loop
                 </span>
                 <span className="rounded-full bg-brand-orange px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
                   Recommended
                 </span>
               </span>
               <span className="mt-1 block text-xs text-neutral-300">
-                Opens Loop in a popup — no QR scan in RentyVest.
+                Fastest way to sign in.
               </span>
             </span>
           </button>
@@ -144,10 +143,10 @@ export function WalletPickerModal({
             </span>
             <span className="min-w-0 flex-1">
               <span className="text-sm font-semibold text-white">
-                Other Canton wallet
+                Another wallet
               </span>
               <span className="mt-1 block text-xs text-neutral-300">
-                Connect via WalletConnect-compatible wallets and extensions.
+                Browser extension or mobile app.
               </span>
             </span>
           </button>
