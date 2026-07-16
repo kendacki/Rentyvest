@@ -79,7 +79,7 @@ export default function PledgePage() {
               {property.title}
             </h1>
             <p className="mt-2 text-sm text-neutral-600">
-              Complete your on-chain pledge with CIP-0056 Test USDC.
+              Complete your on chain pledge with CIP 0056 Test USDC.
             </p>
           </div>
 

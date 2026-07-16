@@ -14,7 +14,7 @@ export function ConnectWalletFallback() {
         Connect wallet to view portfolio
       </h1>
       <p className="mt-3 text-sm leading-relaxed text-neutral-600">
-        Your on-chain equity tokens (PropertyNFT slots) and pending yield are
+        Your on chain equity tokens (PropertyNFT slots) and pending yield are
         tied to your Canton party. Connect via WalletConnect to load holdings
         from the ledger.
       </p>

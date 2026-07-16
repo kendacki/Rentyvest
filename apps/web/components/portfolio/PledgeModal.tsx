@@ -235,7 +235,7 @@ export function PortfolioPledgeModal({
               Pledge tUSDC to a pool
             </Dialog.Title>
             <Dialog.Description className="mt-1 text-sm text-slate-600">
-              Pledge requires platform co-signing. Core-api executes on Canton
+              Pledge requires platform cosigning. Core api executes on Canton
               with your buyer party and admin M2M authorization.
             </Dialog.Description>
           </div>
@@ -251,7 +251,7 @@ export function PortfolioPledgeModal({
                 </p>
                 {isSubmitting && (
                   <p className="text-xs text-slate-500">
-                    Backend is co-signing with the platform admin party.
+                    Backend is cosigning with the platform admin party.
                   </p>
                 )}
               </div>
@@ -277,7 +277,7 @@ export function PortfolioPledgeModal({
                   ) : (
                     pools.map((pool) => (
                       <option key={pool.contract_id} value={pool.contract_id}>
-                        {pool.payload.property_title} ·{' '}
+                        {pool.payload.property_title},{' '}
                         {formatTokenBalance(
                           Number.parseFloat(pool.payload.slot_price) || 0,
                           pool.payload.currency,
@@ -310,7 +310,7 @@ export function PortfolioPledgeModal({
                 />
                 {selectedPool && slotCount > 0 && (
                   <p className="text-xs text-slate-500">
-                    ≈ {slotCount} slot{slotCount === 1 ? '' : 's'} · total{' '}
+                    ≈ {slotCount} slot{slotCount === 1 ? '' : 's'}, total{' '}
                     {formatTokenBalance(totalCost, selectedPool.payload.currency)}
                   </p>
                 )}
@@ -389,7 +389,7 @@ export function PortfolioPledgeModal({
                   {isSubmitting ? 'Submitting pledge…' : 'Processing'}
                 </>
               ) : (
-                `Pledge ${slotCount || '—'} slot${slotCount === 1 ? '' : 's'}`
+                `Pledge ${slotCount || '0'} slot${slotCount === 1 ? '' : 's'}`
               )}
             </button>
           </div>

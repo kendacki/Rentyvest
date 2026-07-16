@@ -23,7 +23,7 @@ export function SiteFooter() {
             <BrandLogo size="sm" variant="light" showWordmark />
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-neutral-500">
               Fractional real estate on Canton Network. Pledge per slot, hold
-              verifiable equity NFTs, and track yield with full on-chain
+              verifiable equity NFTs, and track yield with full on chain
               transparency.
             </p>
           </div>
@@ -51,10 +51,10 @@ export function SiteFooter() {
 
         <div className="mt-12 flex flex-col gap-4 border-t border-neutral-900 pt-8 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-neutral-600">
-            © {new Date().getFullYear()} RentyVest. Built on Canton DevNet.
+            © {new Date().getFullYear()} RentyVest. Built on Canton Dev Net.
           </p>
           <p className="text-sm text-neutral-600">
-            Testnet only — not financial advice.
+            Testnet only. Not financial advice.
           </p>
         </div>
       </div>

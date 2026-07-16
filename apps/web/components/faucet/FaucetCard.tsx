@@ -46,7 +46,7 @@ function getApiUrl(): string {
 function formatFetchError(error: unknown, action: string): Error {
   if (error instanceof TypeError && error.message === 'Failed to fetch') {
     return new Error(
-      `Cannot reach core-api for ${action}. Ensure core-api is running on port 8080 and restart Next.js after config changes.`,
+      `Cannot reach core api for ${action}. Ensure core api is running on port 8080 and restart Next.js after config changes.`,
     );
   }
 
@@ -273,7 +273,7 @@ export function FaucetCard() {
   return (
     <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="border-b border-neutral-200 bg-brand-orange-light px-5 py-5 sm:px-6">
-        <p className="section-label">DevNet Faucet</p>
+        <p className="section-label">Dev Net Faucet</p>
         <h2 className="mt-1 text-xl font-bold text-black">Test USDC</h2>
         <p className="mt-2 text-sm text-neutral-600">
           Connect your Canton wallet, then claim test USDC minted directly to

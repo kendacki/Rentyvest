@@ -7,12 +7,12 @@ const FAQS = [
   {
     question: 'What exactly is RentyVest?',
     answer:
-      'A fractional real estate platform on Canton Network. You browse property pools, pledge test USDC per slot, and receive on-chain PropertyNFTs that represent your equity stake.',
+      'A fractional real estate platform on Canton Network. You browse property pools, pledge test USDC per slot, and receive on chain PropertyNFTs that represent your equity stake.',
   },
   {
     question: 'What wallet do I need?',
     answer:
-      'Any CIP-103 compatible Canton wallet. Connect through WalletConnect on the sandbox network, then claim test USDC from our faucet before making your first pledge.',
+      'Any CIP 103 compatible Canton wallet. Connect through WalletConnect on the sandbox network, then claim test USDC from our faucet before making your first pledge.',
   },
   {
     question: 'How does a property pool work?',
@@ -22,12 +22,12 @@ const FAQS = [
   {
     question: 'Is this real money?',
     answer:
-      'No. RentyVest runs on Canton DevNet with test USDC (tUSDC). This is a demonstration environment — not a regulated investment product.',
+      'No. RentyVest runs on Canton Dev Net with test USDC (tUSDC). This is a demonstration environment, not a regulated investment product.',
   },
   {
     question: 'Can I sell or transfer my stake?',
     answer:
-      'Yes. From your portfolio, transfer a PropertyNFT to another Canton party. Transfers and future yield claims are wallet-signed ledger actions.',
+      'Yes. From your portfolio, transfer a PropertyNFT to another Canton party. Transfers and future yield claims are wallet signed ledger actions.',
   },
 ] as const;
 
@@ -89,7 +89,7 @@ export function CtaSection() {
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-white/90">
           Connect your wallet, grab test USDC, and explore live property pools
-          on Canton DevNet — no minimum beyond a single slot.
+          on Canton Dev Net with no minimum beyond a single slot.
         </p>
         <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
           <Link href="/marketplace" className="btn-inverse">

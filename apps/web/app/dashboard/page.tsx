@@ -118,7 +118,7 @@ export default function DashboardPage() {
                 Network
               </p>
               <p className="mt-2 text-lg font-semibold text-brand-black">
-                Canton DevNet
+                Canton Dev Net
               </p>
               <p className="text-xs text-neutral-500">
                 Signed via WalletConnect

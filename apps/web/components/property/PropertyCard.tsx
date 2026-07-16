@@ -62,7 +62,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-xl border border-neutral-100 bg-neutral-50 p-3">
             <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-              Per-Slot
+              Per slot
             </p>
             <p className="mt-1 text-xl font-bold text-brand-black">
               {formatCurrency(property.unit_price)}

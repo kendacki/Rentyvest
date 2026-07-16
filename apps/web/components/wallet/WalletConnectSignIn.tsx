@@ -107,7 +107,7 @@ export function WalletConnectSignIn() {
         <p className="section-label">Sign in</p>
         <h2 className="mt-1 text-2xl font-bold">Connect Canton Wallet</h2>
         <p className="mt-3 text-sm text-neutral-400">
-          Pair any CIP-103 wallet through WalletConnect on the Canton sandbox
+          Pair any CIP 103 wallet through WalletConnect on the Canton sandbox
           network.
         </p>
       </div>

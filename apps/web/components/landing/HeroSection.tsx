@@ -6,15 +6,14 @@ export function HeroSection() {
     <section className="bg-black px-4 pb-16 pt-14 text-white sm:px-6 sm:pb-24 sm:pt-20 lg:px-8">
       <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16">
         <div>
-          <p className="section-label">Fractional real estate, reimagined</p>
-          <h1 className="heading-display mt-5 max-w-3xl">
+          <h1 className="heading-display max-w-3xl">
             Invest in property
             <span className="text-brand-orange"> one slot at a time.</span>
           </h1>
           <p className="body-lead mt-6 max-w-xl text-neutral-400">
-            RentyVest turns real estate into transparent on-chain pools. Browse
+            RentyVest turns real estate into transparent on chain pools. Browse
             live listings, pledge with test USDC, and hold equity NFTs that
-            prove your stake — settled on Canton Network.
+            prove your stake, settled on Canton Network.
           </p>
 
           <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -25,10 +24,6 @@ export function HeroSection() {
               Connect wallet
             </Link>
           </div>
-
-          <p className="mt-8 text-xs uppercase tracking-[0.2em] text-neutral-600">
-            DevNet demo · Test USDC only
-          </p>
         </div>
 
         <div className="flex justify-center lg:justify-end">
@@ -53,13 +48,13 @@ export function HeroSection() {
               <div className="rounded-xl border border-neutral-900 bg-black px-3 py-4">
                 <p className="text-lg font-bold text-white">NFTs</p>
                 <p className="mt-1 text-[10px] uppercase tracking-wider text-neutral-500">
-                  On-chain proof
+                  On chain proof
                 </p>
               </div>
               <div className="rounded-xl border border-neutral-900 bg-black px-3 py-4">
                 <p className="text-lg font-bold text-white">Live</p>
                 <p className="mt-1 text-[10px] uppercase tracking-wider text-neutral-500">
-                  Real-time fill
+                  Real time fill
                 </p>
               </div>
             </div>
@@ -73,7 +68,7 @@ export function HeroSection() {
 export function StatsSection() {
   const stats = [
     {
-      value: 'On-ledger',
+      value: 'On ledger',
       label: 'Every pledge settles on Canton with auditable contract IDs.',
     },
     {
@@ -81,11 +76,11 @@ export function StatsSection() {
       label: 'Slot availability updates the moment another investor commits.',
     },
     {
-      value: 'Wallet-native',
-      label: 'Connect once via WalletConnect — sign transfers from your party.',
+      value: 'Wallet native',
+      label: 'Connect once via WalletConnect and sign transfers from your party.',
     },
     {
-      value: 'Per-slot',
+      value: 'Per slot',
       label: 'Enter at the unit price that fits your budget, not a full deed.',
     },
   ];

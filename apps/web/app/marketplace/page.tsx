@@ -20,7 +20,7 @@ export default function MarketplacePage() {
                   Fractional real estate opportunities
                 </h1>
                 <p className="mt-3 max-w-2xl text-base text-neutral-600">
-                  Invest per-slot in vetted properties. Slot availability updates
+                  Invest per slot in vetted properties. Slot availability updates
                   in real time as investors pledge on Canton.
                 </p>
               </div>

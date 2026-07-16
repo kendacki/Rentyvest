@@ -269,7 +269,7 @@ export function PledgeModal({
               Pledge with Test USDC
             </Dialog.Title>
             <Dialog.Description className="mt-1 text-sm text-slate-600">
-              {property.title} · {formatCurrency(property.unit_price)} per slot
+              {property.title}, {formatCurrency(property.unit_price)} per slot
             </Dialog.Description>
           </div>
 

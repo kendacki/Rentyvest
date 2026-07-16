@@ -152,7 +152,7 @@ export function PortfolioGrid({
       <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
         <h2 className="text-lg font-semibold text-slate-900">No equity tokens yet</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Pledge tUSDC into an active property pool to mint your first on-chain
+          Pledge tUSDC into an active property pool to mint your first on chain
           equity slot NFT.
         </p>
       </section>
