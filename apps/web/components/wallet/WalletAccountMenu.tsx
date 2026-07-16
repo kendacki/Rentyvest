@@ -144,10 +144,8 @@ export function WalletAccountMenu({ variant = 'light' }: WalletAccountMenuProps)
               setMenuOpen(false);
               void disconnect();
             }}
-            className={`w-full px-4 py-3 text-left text-sm font-semibold transition-colors ${
-              isDark
-                ? 'text-red-300 hover:bg-white/5'
-                : 'text-red-600 hover:bg-red-50'
+            className={`w-full px-4 py-3 text-left text-sm font-semibold text-brand-orange transition-colors ${
+              isDark ? 'hover:bg-white/5' : 'hover:bg-brand-orange-light'
             }`}
           >
             Disconnect wallet
