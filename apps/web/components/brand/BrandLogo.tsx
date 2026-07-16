@@ -29,7 +29,7 @@ export function BrandLogo({
       aria-label="RentyVest home"
     >
       <Image
-        src="/logo.png"
+        src="/logo-transparent.png"
         alt="RentyVest"
         width={config.icon}
         height={config.icon}
