@@ -68,8 +68,8 @@ export function HeroSection() {
             <Link href="/marketplace" className="btn-primary">
               View live pools
             </Link>
-            <Link href="/wallet" className="btn-outline-light">
-              Open faucet
+            <Link href="/marketplace" className="btn-outline-light">
+              Connect wallet
             </Link>
           </motion.div>
         </div>

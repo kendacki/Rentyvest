@@ -62,14 +62,14 @@ export function SiteHeader({ variant = 'light' }: SiteHeaderProps) {
         <div className="flex flex-1 items-center justify-end gap-3">
           <div className="hidden items-center gap-3 md:flex">
             <Link
-              href="/wallet"
+              href="/marketplace"
               className={
                 isDark
                   ? 'text-sm font-medium text-neutral-400 transition-colors hover:text-white'
                   : 'text-sm font-medium text-neutral-600 transition-colors hover:text-black'
               }
             >
-              Open faucet
+              Connect wallet
             </Link>
             <Link href="/marketplace" className="btn-primary h-10 px-5 text-sm">
               Explore pools
