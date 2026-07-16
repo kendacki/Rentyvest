@@ -128,32 +128,32 @@ export function FeaturesSection() {
         src="/why-rentyvest-bg.png"
         alt=""
         fill
-        quality={90}
+        quality={92}
         sizes="100vw"
-        className="object-cover object-[center_35%]"
+        className="object-cover object-[center_30%] brightness-[1.08] contrast-[1.06] saturate-[1.12]"
         aria-hidden
       />
 
       <div
-        className="absolute inset-0 bg-black/65"
+        className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/15 to-black/55"
         aria-hidden
       />
       <div
-        className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/75 to-black/95"
+        className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40"
         aria-hidden
       />
       <div
-        className="absolute inset-0 bg-[radial-gradient(ellipse_70%_55%_at_50%_20%,rgba(255,85,0,0.12),transparent)]"
+        className="absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_50%_40%,transparent_0%,rgba(0,0,0,0.35)_100%)]"
         aria-hidden
       />
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Reveal className="max-w-2xl">
           <p className="section-label drop-shadow-sm">Why RentyVest</p>
-          <h2 className="heading-section mt-4 drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
+          <h2 className="heading-section mt-4 drop-shadow-[0_2px_16px_rgba(0,0,0,0.85)]">
             Infrastructure for the next generation of property investing
           </h2>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-neutral-200 drop-shadow-[0_1px_10px_rgba(0,0,0,0.45)]">
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-white drop-shadow-[0_1px_12px_rgba(0,0,0,0.8)]">
             Not another listing site. A full stack fractional platform with
             ledger settlement, wallet native signing, and investor grade
             transparency built in.
