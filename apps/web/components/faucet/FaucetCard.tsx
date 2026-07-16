@@ -236,7 +236,7 @@ export function FaucetCard() {
       openConnect();
       setToast({
         type: 'error',
-        message: 'Connect your Canton wallet to claim tUSDC.',
+        message: 'Connect your wallet to claim tUSDC.',
       });
       return;
     }
@@ -273,8 +273,9 @@ export function FaucetCard() {
         <p className="section-label">DevNet Faucet</p>
         <h2 className="mt-1 text-xl font-bold text-black">tUSDC</h2>
         <p className="mt-2 text-sm text-neutral-600">
-          Connect your Canton wallet, then claim tUSDC minted directly to
-          your party. One claim per party every 24 hours.
+          {isConnected && partyId
+            ? 'Your wallet is connected. Claim tUSDC minted directly to your party. One claim per party every 24 hours.'
+            : 'Connect your wallet to claim tUSDC minted directly to your party. One claim per party every 24 hours.'}
         </p>
       </div>
 

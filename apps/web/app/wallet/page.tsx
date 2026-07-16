@@ -24,8 +24,9 @@ export default function WalletPage() {
               tUSDC on Canton DevNet
             </h1>
             <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-neutral-600">
-              Connect Loop or another Canton wallet on DevNet, then claim tUSDC
-              minted directly to your connected party.
+              {isMounted && isConnected
+                ? 'Your wallet is connected. Claim tUSDC minted directly to your party.'
+                : 'Connect your wallet to claim tUSDC minted directly to your party.'}
             </p>
           </Reveal>
 
