@@ -181,6 +181,7 @@ export function FaucetCard() {
 
   const totalBalance = sumAssetBalances(assets);
   const isBusy = isClaiming || isConnecting;
+  const isWalletConnected = Boolean(isConnected && partyId);
 
   const refetchBalance = useCallback(async () => {
     if (!partyId) {
@@ -269,10 +270,20 @@ export function FaucetCard() {
 
   return (
     <article className="card-surface overflow-hidden">
-      <div className="border-b border-neutral-200 bg-brand-orange-light px-5 py-5 sm:px-6">
+      <div
+        className={`border-b px-5 py-5 sm:px-6 ${
+          isWalletConnected
+            ? 'border-white/10 bg-black'
+            : 'border-neutral-200 bg-brand-orange-light'
+        }`}
+      >
         <p className="section-label">DevNet Faucet</p>
-        <p className="mt-2 text-sm text-neutral-600">
-          {isConnected && partyId
+        <p
+          className={`mt-2 text-sm ${
+            isWalletConnected ? 'text-neutral-300' : 'text-neutral-600'
+          }`}
+        >
+          {isWalletConnected
             ? 'Your wallet is connected. Claim tUSDC minted directly to your party. One claim per party every 24 hours.'
             : 'Connect your wallet to claim tUSDC minted directly to your party. One claim per party every 24 hours.'}
         </p>
