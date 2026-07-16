@@ -138,27 +138,14 @@ const FEATURES: Array<{
 
 export function FeaturesSection() {
   return (
-    <section className="relative isolate overflow-hidden py-20 text-white sm:py-28">
+    <section className="relative isolate overflow-hidden bg-black py-20 text-white sm:py-28">
       <Image
-        src="/why-rentyvest-bg.png"
+        src="/why-rentyvest-cityscape.png"
         alt=""
         fill
-        quality={92}
+        quality={100}
         sizes="100vw"
-        className="object-cover object-[center_30%] brightness-[1.08] contrast-[1.06] saturate-[1.12]"
-        aria-hidden
-      />
-
-      <div
-        className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/15 to-black/55"
-        aria-hidden
-      />
-      <div
-        className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40"
-        aria-hidden
-      />
-      <div
-        className="absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_50%_40%,transparent_0%,rgba(0,0,0,0.35)_100%)]"
+        className="object-contain object-center"
         aria-hidden
       />
 
