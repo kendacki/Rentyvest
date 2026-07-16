@@ -24,7 +24,7 @@ const FAQS = [
   {
     question: 'Is this real money?',
     answer:
-      'No. RentyVest runs on Canton Dev Net with test USDC (tUSDC). This is a demonstration environment, not a regulated investment product.',
+      'No. RentyVest runs on Canton DevNet with test USDC (tUSDC). This is a demonstration environment, not a regulated investment product.',
   },
   {
     question: 'Can I sell or transfer my stake?',
@@ -100,7 +100,7 @@ export function CtaSection() {
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-white/90">
           Connect via WalletConnect, grab test USDC from the faucet, and explore
-          live property pools on Canton Dev Net with no minimum beyond a single
+          live property pools on Canton DevNet with no minimum beyond a single
           slot.
         </p>
         <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">

@@ -16,7 +16,7 @@ export default function WalletPage() {
           <Reveal as="header" className="mb-8 text-center">
             <p className="section-label">Faucet</p>
             <h1 className="heading-section mt-2 text-brand-black">
-              Test USDC on Canton Dev Net
+              Test USDC on Canton DevNet
             </h1>
             <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-neutral-600">
               Connect via WalletConnect on the sandbox network, then claim test

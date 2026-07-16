@@ -51,7 +51,7 @@ export function SiteFooter() {
 
         <div className="mt-12 border-t border-neutral-900 pt-8">
           <p className="text-sm text-neutral-600">
-            © {new Date().getFullYear()} RentyVest. Built on Canton Dev Net.
+            © {new Date().getFullYear()} RentyVest. Built on Canton DevNet.
           </p>
         </div>
       </div>
