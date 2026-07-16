@@ -12,7 +12,7 @@ function WalletPortrait({ label }: { label: string }) {
   return (
     <svg
       viewBox="0 0 40 40"
-      className="h-10 w-10"
+      className="h-8 w-8"
       aria-hidden
     >
       <defs>
@@ -96,7 +96,7 @@ export function WalletAccountMenu({ variant = 'light' }: WalletAccountMenuProps)
         onClick={() => {
           setMenuOpen((open) => !open);
         }}
-        className="rounded-full ring-2 ring-brand-orange/30 transition-transform hover:scale-[1.03] focus:outline-none focus-visible:ring-brand-orange"
+        className="rounded-full ring-1 ring-brand-orange/30 transition-transform hover:scale-[1.03] focus:outline-none focus-visible:ring-brand-orange"
         aria-label="Open wallet menu"
         aria-expanded={menuOpen}
         aria-haspopup="menu"
