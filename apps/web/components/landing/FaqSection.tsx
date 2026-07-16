@@ -109,20 +109,20 @@ export function CtaSection() {
       />
 
       <div className="relative z-10 mx-auto flex max-w-7xl justify-center lg:justify-start">
-        <div className="w-full max-w-lg rounded-[1.75rem] border border-white/45 bg-white/55 px-8 py-10 text-center shadow-[0_12px_48px_rgba(0,0,0,0.1)] backdrop-blur-md sm:px-10 lg:max-w-md lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:text-left lg:shadow-none lg:backdrop-blur-none">
-          <h2 className="heading-section text-brand-black [text-shadow:0_1px_12px_rgba(255,255,255,0.85)]">
+        <div className="w-full max-w-xl rounded-[1.75rem] border border-white/15 bg-black/50 px-8 py-10 shadow-[0_12px_48px_rgba(0,0,0,0.4)] backdrop-blur-xl sm:px-10 sm:py-12">
+          <h2 className="heading-section text-white">
             Your first slot is one pledge away
           </h2>
-          <p className="mx-auto mt-4 max-w-md text-base font-medium leading-relaxed text-neutral-800 [text-shadow:0_1px_10px_rgba(255,255,255,0.75)] lg:mx-0">
+          <p className="mt-4 max-w-lg text-base leading-relaxed text-neutral-300">
             Connect via WalletConnect, grab tUSDC from the faucet, and explore
             live property pools on Canton DevNet with no minimum beyond a single
             slot.
           </p>
-          <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row">
             <Link href="/marketplace" className="btn-primary">
               Browse marketplace
             </Link>
-            <Link href="/wallet" className="btn-secondary">
+            <Link href="/wallet" className="btn-outline-light">
               Get tUSDC
             </Link>
           </div>
