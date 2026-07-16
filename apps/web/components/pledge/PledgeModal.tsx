@@ -13,6 +13,8 @@ import { submitPledgeTx } from '../../lib/canton/client';
 import { formatCantonError } from '../../lib/canton/errors';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { useUserAssets } from '../../hooks/useUserAssets';
+import { useCantonWallet } from '../../providers/WalletConnectProvider';
+import { ConnectWalletButton } from '../wallet/ConnectWalletButton';
 import {
   getSlotsRemaining,
   type Property,
@@ -67,8 +69,9 @@ export function PledgeModal({
   property,
   onPledgeConfirmed,
 }: PledgeModalProps) {
-  const { getAccessToken } = usePrivy();
+  const { getAccessToken, authenticated, login, ready: privyReady } = usePrivy();
   const { cantonLedgerToken } = useSupabaseAuth();
+  const { isConnected, partyId } = useCantonWallet();
   const { assets, isLoading, isValidating, error, refetch } = useUserAssets({
     enabled: open,
   });
@@ -291,6 +294,44 @@ export function PledgeModal({
             )}
 
             <div className="space-y-6">
+              {privyReady && !authenticated ? (
+                <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-center">
+                  <p className="text-sm font-semibold text-amber-950">
+                    Sign in to submit a pledge
+                  </p>
+                  <p className="mt-2 text-sm text-amber-900">
+                    Connect your account so we can load tUSDC holdings and record
+                    your pledge on Canton.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void login();
+                    }}
+                    className="btn-primary mt-4 h-11 px-6 text-sm"
+                  >
+                    Sign in to continue
+                  </button>
+                </section>
+              ) : null}
+
+              {authenticated && (!isConnected || !partyId) ? (
+                <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-center">
+                  <p className="text-sm font-semibold text-slate-900">
+                    Connect your Canton wallet
+                  </p>
+                  <p className="mt-2 text-sm text-slate-600">
+                    Approve a WalletConnect session to sign the on chain pledge
+                    from your party.
+                  </p>
+                  <div className="mt-4 flex justify-center">
+                    <ConnectWalletButton className="btn-primary h-11 px-6 text-sm" />
+                  </div>
+                </section>
+              ) : null}
+
+              {authenticated && isConnected && partyId ? (
+                <>
               <section className="glass-inset p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div>
@@ -442,6 +483,8 @@ export function PledgeModal({
                   {submitError}
                 </div>
               )}
+                </>
+              ) : null}
             </div>
           </div>
 
@@ -451,6 +494,9 @@ export function PledgeModal({
               onClick={() => void handleSubmit()}
               disabled={
                 isBusy ||
+                !authenticated ||
+                !isConnected ||
+                !partyId ||
                 !selectedAsset ||
                 !canAffordAsset(selectedAsset, totalCost) ||
                 slotsRemaining <= 0

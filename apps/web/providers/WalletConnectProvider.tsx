@@ -176,6 +176,12 @@ export function WalletConnectProvider({ children }: { children: ReactNode }) {
 
       const accounts = await client.listAccounts();
       return resolvePartyId(accounts);
+    } catch (error) {
+      setShowQrModal(false);
+      setWcUri(null);
+      throw error instanceof Error
+        ? error
+        : new Error('WalletConnect session was not approved');
     } finally {
       setIsConnecting(false);
       setShowQrModal(false);
@@ -244,8 +250,9 @@ export function WalletConnectProvider({ children }: { children: ReactNode }) {
       {children}
       {isMounted && (
         <WalletConnectQrModal
-          open={showQrModal && Boolean(wcUri)}
+          open={showQrModal}
           uri={wcUri}
+          isConnecting={isConnecting}
           onClose={() => {
             if (!isConnecting) {
               setShowQrModal(false);

@@ -1,10 +1,16 @@
 'use client';
 
+import { Suspense } from 'react';
 import { FaucetCard } from '../../components/faucet/FaucetCard';
 import { PageShell } from '../../components/layout/PageShell';
 import { Reveal } from '../../components/motion/Reveal';
+import { AccountSetupBanner } from '../../components/wallet/AccountSetupBanner';
 import { WalletConnectSignIn } from '../../components/wallet/WalletConnectSignIn';
 import { useCantonWallet } from '../../providers/WalletConnectProvider';
+
+const HAS_PRIVY = Boolean(
+  (process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? '').trim(),
+);
 
 export default function WalletPage() {
   const { isMounted, isConnected } = useCantonWallet();
@@ -24,6 +30,12 @@ export default function WalletPage() {
             </p>
           </Reveal>
 
+          {HAS_PRIVY ? (
+            <Suspense fallback={null}>
+              <AccountSetupBanner variant="card" />
+            </Suspense>
+          ) : null}
+
           <Reveal className="space-y-6" delay={0.08}>
             <WalletConnectSignIn />
 
@@ -32,8 +44,7 @@ export default function WalletPage() {
             ) : (
               <section className="card-surface border-dashed p-8 text-center">
                 <p className="text-sm text-neutral-600">
-                  Connect via WalletConnect above to unlock the tUSDC
-                  faucet.
+                  Connect via WalletConnect above to unlock the tUSDC faucet.
                 </p>
               </section>
             )}

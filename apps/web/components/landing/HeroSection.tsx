@@ -2,13 +2,16 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
 import { HeroBlob } from './HeroBlob';
+import { ConnectWalletButton } from '../wallet/ConnectWalletButton';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
 export function HeroSection() {
   const prefersReducedMotion = useReducedMotion();
+  const router = useRouter();
 
   return (
     <section className="relative isolate min-h-[calc(100vh-4rem)] overflow-hidden text-white">
@@ -67,9 +70,12 @@ export function HeroSection() {
             <Link href="/marketplace" className="btn-primary">
               View live pools
             </Link>
-            <Link href="/marketplace" className="btn-outline-light">
-              Connect wallet
-            </Link>
+            <ConnectWalletButton
+              className="btn-outline-light"
+              onConnected={() => {
+                router.push('/wallet');
+              }}
+            />
           </motion.div>
         </div>
 

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { MarketplaceGrid } from '../../components/marketplace/MarketplaceGrid';
+import { MarketplaceWalletBanner } from '../../components/marketplace/MarketplaceWalletBanner';
 import { PageShell } from '../../components/layout/PageShell';
 import { Reveal } from '../../components/motion/Reveal';
 
@@ -28,6 +29,8 @@ export default function MarketplacePage() {
               </Link>
             </div>
           </Reveal>
+
+          <MarketplaceWalletBanner />
 
           <Reveal delay={0.1}>
             <MarketplaceGrid />

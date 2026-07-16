@@ -5,12 +5,14 @@ import { useEffect, useState } from 'react';
 type WalletConnectQrModalProps = {
   open: boolean;
   uri: string | null;
+  isConnecting?: boolean;
   onClose: () => void;
 };
 
 export function WalletConnectQrModal({
   open,
   uri,
+  isConnecting = false,
   onClose,
 }: WalletConnectQrModalProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -47,7 +49,7 @@ export function WalletConnectQrModal({
     };
   }, [open, uri]);
 
-  if (!open || !uri) {
+  if (!open) {
     return null;
   }
 
@@ -73,7 +75,8 @@ export function WalletConnectQrModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-100"
+            disabled={isConnecting}
+            className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Close WalletConnect modal"
           >
             Close
@@ -89,7 +92,7 @@ export function WalletConnectQrModal({
             />
           ) : (
             <div className="flex h-60 w-60 items-center justify-center glass-inset text-sm text-slate-500">
-              Generating QR…
+              {isConnecting ? 'Preparing WalletConnect…' : 'Generating QR…'}
             </div>
           )}
 
