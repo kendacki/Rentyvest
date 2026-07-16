@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { PageShell } from '../../../components/layout/PageShell';
+import { Reveal } from '../../../components/motion/Reveal';
 import { PledgeModal } from '../../../components/pledge/PledgeModal';
 import { usePropertySlots } from '../../../hooks/usePropertySlots';
 
@@ -66,22 +67,24 @@ export default function PledgePage() {
     <PageShell>
       <main className="bg-neutral-50">
         <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-          <Link
-            href="/marketplace"
-            className="inline-flex text-sm font-medium text-neutral-600 transition-colors hover:text-brand-black"
-          >
-            ← Back to marketplace
-          </Link>
+          <Reveal>
+            <Link
+              href="/marketplace"
+              className="inline-flex text-sm font-medium text-neutral-600 transition-colors hover:text-brand-black"
+            >
+              ← Back to marketplace
+            </Link>
 
-          <div className="card-surface mt-6 p-5 sm:p-6">
-            <p className="section-label">Pledge</p>
-            <h1 className="mt-2 text-2xl font-bold text-brand-black">
-              {property.title}
-            </h1>
-            <p className="mt-2 text-sm text-neutral-600">
-              Complete your on chain pledge with CIP 0056 Test USDC.
-            </p>
-          </div>
+            <div className="card-surface mt-6 p-5 sm:p-6">
+              <p className="section-label">Pledge</p>
+              <h1 className="mt-2 text-2xl font-bold text-brand-black">
+                {property.title}
+              </h1>
+              <p className="mt-2 text-sm text-neutral-600">
+                Complete your on chain pledge with CIP 0056 Test USDC.
+              </p>
+            </div>
+          </Reveal>
 
           <PledgeModal
             open={modalOpen}

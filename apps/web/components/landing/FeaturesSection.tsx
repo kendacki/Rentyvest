@@ -1,4 +1,8 @@
+'use client';
+
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { Reveal, Stagger, staggerItem } from '../motion/Reveal';
 
 const STEPS = [
   {
@@ -31,7 +35,7 @@ export function HowItWorksSection() {
   return (
     <section className="bg-neutral-50 py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="max-w-2xl">
+        <Reveal className="max-w-2xl">
           <p className="section-label">How it works</p>
           <h2 className="heading-section mt-4 text-black">
             Three steps from browser to on chain owner
@@ -40,12 +44,13 @@ export function HowItWorksSection() {
             We stripped away the complexity of tokenized real estate. What
             remains is a clear path: connect, choose, commit.
           </p>
-        </div>
+        </Reveal>
 
-        <div className="mt-16 grid gap-5 lg:grid-cols-3">
+        <Stagger className="mt-16 grid gap-5 lg:grid-cols-3">
           {STEPS.map(({ number, title, description, href, cta }) => (
-            <article
+            <motion.article
               key={number}
+              variants={staggerItem}
               className="card-surface group flex flex-col p-8 transition-colors hover:border-black"
             >
               <span className="text-sm font-bold text-brand-orange">{number}</span>
@@ -62,9 +67,9 @@ export function HowItWorksSection() {
                 {cta}
                 <span aria-hidden>→</span>
               </Link>
-            </article>
+            </motion.article>
           ))}
-        </div>
+        </Stagger>
       </div>
     </section>
   );
@@ -101,7 +106,7 @@ export function FeaturesSection() {
   return (
     <section className="bg-black py-20 text-white sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+        <Reveal className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <p className="section-label">Why RentyVest</p>
             <h2 className="heading-section mt-4">
@@ -116,12 +121,13 @@ export function FeaturesSection() {
           <Link href="/marketplace" className="btn-primary shrink-0">
             Explore pools
           </Link>
-        </div>
+        </Reveal>
 
-        <div className="mt-16 grid gap-5 sm:grid-cols-2">
+        <Stagger className="mt-16 grid gap-5 sm:grid-cols-2">
           {FEATURES.map(({ number, title, description }) => (
-            <article
+            <motion.article
               key={number}
+              variants={staggerItem}
               className="card-dark p-8 transition-colors hover:border-brand-orange"
             >
               <span className="text-sm font-bold text-brand-orange">{number}</span>
@@ -129,9 +135,9 @@ export function FeaturesSection() {
               <p className="mt-3 text-sm leading-relaxed text-neutral-400">
                 {description}
               </p>
-            </article>
+            </motion.article>
           ))}
-        </div>
+        </Stagger>
       </div>
     </section>
   );

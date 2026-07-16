@@ -1,4 +1,7 @@
+'use client';
+
 import Image from 'next/image';
+import { Reveal } from '../motion/Reveal';
 
 type BrandItem = {
   name: string;
@@ -69,10 +72,7 @@ export function BrandMarquee() {
   const items = [...BRANDS, ...BRANDS];
 
   return (
-    <section
-      aria-label="Technology partners"
-      className="overflow-hidden border-y border-neutral-900 bg-black py-10"
-    >
+    <Reveal as="section" className="overflow-hidden border-y border-neutral-900 bg-black py-10">
       <p className="mb-8 text-center text-[11px] font-semibold uppercase tracking-[0.25em] text-neutral-600">
         Built with
       </p>
@@ -81,6 +81,6 @@ export function BrandMarquee() {
           <BrandLogoItem key={`${brand.name}-${index}`} {...brand} />
         ))}
       </div>
-    </section>
+    </Reveal>
   );
 }

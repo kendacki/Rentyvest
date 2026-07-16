@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { PageShell } from '../../components/layout/PageShell';
+import { Reveal } from '../../components/motion/Reveal';
 import { TransferModal } from '../../components/nft/TransferModal';
 import { ConnectWalletFallback } from '../../components/portfolio/ConnectWalletFallback';
 import { PortfolioGrid } from '../../components/portfolio/PortfolioGrid';
@@ -57,7 +58,7 @@ export default function DashboardPage() {
   if (!isConnected || !partyId) {
     return (
       <PageShell>
-        <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
+        <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-neutral-50 px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
           <ConnectWalletFallback />
         </main>
       </PageShell>
@@ -70,21 +71,18 @@ export default function DashboardPage() {
     <PageShell>
       <main className="bg-neutral-50">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-          <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="section-label">Portfolio</p>
-              <h1 className="heading-section mt-2 text-brand-black">
-                Your holdings
-              </h1>
-              <p className="mt-2 text-sm text-neutral-600">
-                Canton party{' '}
-                <span className="font-mono text-xs text-brand-black">
-                  {truncatePartyId(partyId)}
-                </span>
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
+          <Reveal as="header" className="mb-8 text-center">
+            <p className="section-label">Portfolio</p>
+            <h1 className="heading-section mt-2 text-brand-black">
+              Your holdings
+            </h1>
+            <p className="mt-2 text-sm text-neutral-600">
+              Canton party{' '}
+              <span className="font-mono text-xs text-brand-black">
+                {truncatePartyId(partyId)}
+              </span>
+            </p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <Link href="/marketplace" className="btn-secondary h-11">
                 Browse pools
               </Link>
@@ -96,9 +94,9 @@ export default function DashboardPage() {
                 Pledge tUSDC
               </button>
             </div>
-          </header>
+          </Reveal>
 
-          <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Reveal as="section" className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3" delay={0.06}>
             <div className="card-surface p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
                 Equity slots
@@ -124,9 +122,10 @@ export default function DashboardPage() {
                 Signed via WalletConnect
               </p>
             </div>
-          </section>
+          </Reveal>
 
-          <PortfolioGrid
+          <Reveal delay={0.12}>
+            <PortfolioGrid
             tokens={tokens}
             isLoading={isLoading}
             error={error}
@@ -137,6 +136,7 @@ export default function DashboardPage() {
               setTransferOpen(true);
             }}
           />
+          </Reveal>
 
           <PortfolioPledgeModal
             open={pledgeOpen}

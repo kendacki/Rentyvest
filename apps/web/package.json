@@ -27,6 +27,8 @@
     "@walletconnect/modal": "^2.7.0",
     "@walletconnect/sign-client": "^2.23.10",
     "@walletconnect/types": "^2.23.10",
+    "framer-motion": "^12.42.2",
+    "lottie-react": "^2.4.1",
     "next": "^14.2.18",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",

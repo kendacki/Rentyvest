@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Reveal } from '../motion/Reveal';
 
 const FAQS = [
   {
@@ -37,14 +39,14 @@ export function FaqSection() {
   return (
     <section className="bg-white py-20 sm:py-28">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
+        <Reveal className="text-center">
           <p className="section-label">FAQ</p>
           <h2 className="heading-section mt-4 text-black">
             Everything you need to know before your first pledge
           </h2>
-        </div>
+        </Reveal>
 
-        <div className="mt-14 divide-y divide-neutral-200 border-y border-neutral-200">
+        <Reveal className="mt-14 divide-y divide-neutral-200 border-y border-neutral-200" delay={0.1}>
           {FAQS.map(({ question, answer }, index) => {
             const isOpen = openIndex === index;
 
@@ -57,24 +59,33 @@ export function FaqSection() {
                   onClick={() => setOpenIndex(isOpen ? null : index)}
                 >
                   <span className="font-semibold text-black">{question}</span>
-                  <span
-                    className={`shrink-0 text-2xl font-light text-brand-orange transition-transform ${
-                      isOpen ? 'rotate-45' : ''
-                    }`}
+                  <motion.span
+                    className="shrink-0 text-2xl font-light text-brand-orange"
+                    animate={{ rotate: isOpen ? 45 : 0 }}
+                    transition={{ duration: 0.25 }}
                     aria-hidden
                   >
                     +
-                  </span>
+                  </motion.span>
                 </button>
-                {isOpen ? (
-                  <p className="pb-6 text-sm leading-relaxed text-neutral-600">
-                    {answer}
-                  </p>
-                ) : null}
+                <AnimatePresence initial={false}>
+                  {isOpen ? (
+                    <motion.p
+                      key="content"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="overflow-hidden pb-6 text-sm leading-relaxed text-neutral-600"
+                    >
+                      {answer}
+                    </motion.p>
+                  ) : null}
+                </AnimatePresence>
               </div>
             );
           })}
-        </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -82,7 +93,7 @@ export function FaqSection() {
 
 export function CtaSection() {
   return (
-    <section className="bg-brand-orange px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+    <Reveal as="section" className="bg-brand-orange px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
       <div className="mx-auto max-w-4xl text-center">
         <h2 className="heading-section text-white">
           Your first slot is one pledge away
@@ -100,6 +111,6 @@ export function CtaSection() {
           </Link>
         </div>
       </div>
-    </section>
+    </Reveal>
   );
 }

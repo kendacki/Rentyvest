@@ -1,8 +1,10 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { PropertyCard } from '../property/PropertyCard';
 import { PropertyCardSkeletonGrid } from '../property/PropertyCardSkeleton';
 import { usePropertySlots } from '../../hooks/usePropertySlots';
+import { Stagger, staggerItem } from '../motion/Reveal';
 
 export function MarketplaceGrid() {
   const { properties, isLoading, error, isRealtimeConnected, refetch } =
@@ -71,11 +73,13 @@ export function MarketplaceGrid() {
         </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
+      <Stagger className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
         {properties.map((property) => (
-          <PropertyCard key={property.id} property={property} />
+          <motion.div key={property.id} variants={staggerItem}>
+            <PropertyCard property={property} />
+          </motion.div>
         ))}
-      </div>
+      </Stagger>
     </section>
   );
 }

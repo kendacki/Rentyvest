@@ -2,6 +2,7 @@
 
 import { FaucetCard } from '../../components/faucet/FaucetCard';
 import { PageShell } from '../../components/layout/PageShell';
+import { Reveal } from '../../components/motion/Reveal';
 import { WalletConnectSignIn } from '../../components/wallet/WalletConnectSignIn';
 import { useCantonWallet } from '../../providers/WalletConnectProvider';
 
@@ -12,18 +13,18 @@ export default function WalletPage() {
     <PageShell>
       <main className="bg-neutral-50">
         <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-          <header className="mb-8">
+          <Reveal as="header" className="mb-8 text-center">
             <p className="section-label">Wallet</p>
             <h1 className="heading-section mt-2 text-brand-black">
               Canton wallet &amp; test USDC
             </h1>
-            <p className="mt-3 max-w-2xl text-base leading-relaxed text-neutral-600">
+            <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-neutral-600">
               Connect your Canton wallet via WalletConnect on the sandbox
               network. Claim test USDC minted directly to your connected party.
             </p>
-          </header>
+          </Reveal>
 
-          <div className="space-y-6">
+          <Reveal className="space-y-6" delay={0.08}>
             <WalletConnectSignIn />
 
             {isMounted && isConnected ? (
@@ -36,7 +37,7 @@ export default function WalletPage() {
                 </p>
               </section>
             )}
-          </div>
+          </Reveal>
         </div>
       </main>
     </PageShell>
