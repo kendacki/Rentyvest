@@ -162,7 +162,7 @@ export function FeaturesSection() {
             <motion.article
               key={id}
               variants={staggerItem}
-              className="rounded-2xl border border-white/25 bg-black/35 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.35)] backdrop-blur-md transition-colors hover:border-brand-orange hover:bg-black/45"
+              className="rounded-2xl border border-white/15 bg-black/60 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.55)] backdrop-blur-md backdrop-saturate-150 transition-colors hover:border-brand-orange hover:bg-black/75"
             >
               <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-brand-orange/30 bg-brand-orange/15 text-brand-orange shadow-[0_0_24px_rgba(255,85,0,0.15)]">
                 <Icon className="h-8 w-8" />
