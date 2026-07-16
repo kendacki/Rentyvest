@@ -2,11 +2,25 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import type { ComponentType } from 'react';
 import { Reveal, Stagger, staggerItem } from '../motion/Reveal';
+import {
+  StepBuildingIcon,
+  StepOwnershipIcon,
+  StepWalletIcon,
+} from './HowItWorksIcons';
 
-const STEPS = [
+const STEPS: Array<{
+  id: string;
+  Icon: ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  href: string;
+  cta: string;
+}> = [
   {
-    number: '01',
+    id: 'connect',
+    Icon: StepWalletIcon,
     title: 'Connect and fund',
     description:
       'Pair your Canton wallet through WalletConnect, then claim test USDC from the in app faucet. No mainnet funds required.',
@@ -14,7 +28,8 @@ const STEPS = [
     cta: 'Connect wallet',
   },
   {
-    number: '02',
+    id: 'pool',
+    Icon: StepBuildingIcon,
     title: 'Pick your pool',
     description:
       'Compare properties by slot price, projected yield, and fill rate. Every listing shows live availability as investors pledge.',
@@ -22,14 +37,15 @@ const STEPS = [
     cta: 'Browse marketplace',
   },
   {
-    number: '03',
+    id: 'slot',
+    Icon: StepOwnershipIcon,
     title: 'Own your slot',
     description:
       'Pledge tUSDC, receive a PropertyNFT, and track holdings in your portfolio. Transfer equity to another party when you are ready.',
     href: '/dashboard',
     cta: 'Open portfolio',
   },
-] as const;
+];
 
 export function HowItWorksSection() {
   return (
@@ -47,13 +63,15 @@ export function HowItWorksSection() {
         </Reveal>
 
         <Stagger className="mt-16 grid gap-5 lg:grid-cols-3">
-          {STEPS.map(({ number, title, description, href, cta }) => (
+          {STEPS.map(({ id, Icon, title, description, href, cta }) => (
             <motion.article
-              key={number}
+              key={id}
               variants={staggerItem}
               className="card-surface group flex flex-col p-8 transition-colors hover:border-black"
             >
-              <span className="text-sm font-bold text-brand-orange">{number}</span>
+              <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-orange/10 text-brand-orange">
+                <Icon className="h-8 w-8" />
+              </div>
               <h3 className="mt-5 text-xl font-bold tracking-tight text-black">
                 {title}
               </h3>
