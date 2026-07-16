@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect } from 'react';
 
 type WalletPickerModalProps = {
@@ -96,8 +97,14 @@ export function WalletPickerModal({
             disabled={isConnecting}
             className="flex w-full items-center gap-4 rounded-2xl border border-brand-orange/40 bg-brand-orange/15 px-4 py-4 text-left transition-colors hover:border-brand-orange hover:bg-brand-orange/25 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-orange text-sm font-bold text-white">
-              Loop
+            <span className="relative inline-flex h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-black">
+              <Image
+                src="/brands/loop-wallet.png"
+                alt="Loop Wallet"
+                width={48}
+                height={48}
+                className="h-full w-full object-cover"
+              />
             </span>
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-2">
