@@ -261,7 +261,7 @@ export function PledgeModal({
     <Dialog.Root open={open} onOpenChange={handleDialogOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl focus:outline-none sm:left-1/2 sm:max-w-lg sm:-translate-x-1/2">
+        <Dialog.Content className="glass-panel fixed inset-x-0 bottom-0 z-50 flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl focus:outline-none sm:left-1/2 sm:max-w-lg sm:-translate-x-1/2">
           <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-slate-200" aria-hidden="true" />
 
           <div className="border-b border-slate-200 px-5 pb-4 pt-3 sm:px-6">
@@ -291,7 +291,7 @@ export function PledgeModal({
             )}
 
             <div className="space-y-6">
-              <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <section className="glass-inset p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wide text-slate-500">

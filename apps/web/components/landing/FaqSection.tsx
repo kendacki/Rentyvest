@@ -46,7 +46,7 @@ export function FaqSection() {
           </h2>
         </Reveal>
 
-        <Reveal className="mt-14 divide-y divide-neutral-200 border-y border-neutral-200" delay={0.1}>
+        <Reveal className="card-surface mt-14 divide-y divide-white/40 px-6 sm:px-8" delay={0.1}>
           {FAQS.map(({ question, answer }, index) => {
             const isOpen = openIndex === index;
 

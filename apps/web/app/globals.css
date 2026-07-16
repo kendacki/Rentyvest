@@ -38,22 +38,46 @@
   }
 
   .btn-secondary {
-    @apply inline-flex h-12 items-center justify-center rounded-full border border-neutral-300 bg-white px-7 text-sm font-semibold text-brand-black transition-colors hover:border-black hover:bg-neutral-50;
+    @apply inline-flex h-12 items-center justify-center rounded-full border border-white/60 bg-white/50 px-7 text-sm font-semibold text-brand-black shadow-sm backdrop-blur-md transition-colors hover:border-white/80 hover:bg-white/70;
   }
 
   .btn-inverse {
-    @apply inline-flex h-12 items-center justify-center rounded-full bg-white px-7 text-sm font-semibold text-brand-black transition-colors hover:bg-neutral-100;
+    @apply inline-flex h-12 items-center justify-center rounded-full bg-white/90 px-7 text-sm font-semibold text-brand-black backdrop-blur-sm transition-colors hover:bg-white;
   }
 
   .btn-outline-light {
-    @apply inline-flex h-12 items-center justify-center rounded-full border border-white px-7 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-black;
+    @apply inline-flex h-12 items-center justify-center rounded-full border border-white/40 bg-white/10 px-7 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:border-white/60 hover:bg-white/20;
+  }
+
+  .page-canvas {
+    @apply bg-neutral-50 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(255,85,0,0.08),transparent),radial-gradient(ellipse_60%_40%_at_100%_100%,rgba(255,85,0,0.05),transparent)];
   }
 
   .card-surface {
-    @apply rounded-2xl border border-neutral-200 bg-white;
+    @apply rounded-2xl border border-white/60 bg-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.06)] backdrop-blur-xl transition-colors hover:border-white/80 hover:bg-white/60;
   }
 
   .card-dark {
-    @apply rounded-2xl border border-neutral-900 bg-black;
+    @apply rounded-2xl border border-white/10 bg-white/[0.07] shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl;
+  }
+
+  .glass-inset {
+    @apply rounded-xl border border-white/50 bg-white/40 backdrop-blur-md;
+  }
+
+  .glass-accent {
+    @apply rounded-xl border border-brand-orange/25 bg-brand-orange/10 backdrop-blur-md;
+  }
+
+  .glass-panel {
+    @apply border border-white/50 bg-white/75 shadow-[0_8px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl;
+  }
+
+  .glass-header-light {
+    @apply border-white/30 bg-white/70 backdrop-blur-xl;
+  }
+
+  .glass-header-dark {
+    @apply border-white/10 bg-black/50 backdrop-blur-xl;
   }
 }

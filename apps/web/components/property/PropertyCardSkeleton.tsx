@@ -1,7 +1,7 @@
 export function PropertyCardSkeleton() {
   return (
     <article
-      className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+      className="card-surface flex flex-col overflow-hidden"
       aria-hidden="true"
     >
       <div className="relative aspect-[4/3] w-full bg-slate-200 animate-pulse" />

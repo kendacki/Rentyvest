@@ -58,7 +58,7 @@ export default function DashboardPage() {
   if (!isConnected || !partyId) {
     return (
       <PageShell>
-        <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-neutral-50 px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
+        <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center page-canvas px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
           <ConnectWalletFallback />
         </main>
       </PageShell>
@@ -69,7 +69,7 @@ export default function DashboardPage() {
 
   return (
     <PageShell>
-      <main className="bg-neutral-50">
+      <main className="page-canvas">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
           <Reveal as="header" className="mb-8 text-center">
             <p className="section-label">Portfolio</p>

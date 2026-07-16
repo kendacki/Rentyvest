@@ -33,7 +33,7 @@ const STEPS = [
 
 export function HowItWorksSection() {
   return (
-    <section className="bg-neutral-50 py-20 sm:py-28">
+    <section className="page-canvas py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Reveal className="max-w-2xl">
           <p className="section-label">How it works</p>

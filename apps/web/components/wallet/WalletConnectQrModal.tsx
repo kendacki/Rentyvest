@@ -58,7 +58,7 @@ export function WalletConnectQrModal({
       aria-modal="true"
       aria-labelledby="wc-qr-title"
     >
-      <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+      <div className="glass-panel w-full max-w-sm rounded-3xl p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="section-label">WalletConnect</p>
@@ -88,7 +88,7 @@ export function WalletConnectQrModal({
               className="h-60 w-60 rounded-2xl border border-slate-200"
             />
           ) : (
-            <div className="flex h-60 w-60 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-sm text-slate-500">
+            <div className="flex h-60 w-60 items-center justify-center glass-inset text-sm text-slate-500">
               Generating QR…
             </div>
           )}

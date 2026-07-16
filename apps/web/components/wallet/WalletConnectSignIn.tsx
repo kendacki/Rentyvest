@@ -75,7 +75,7 @@ export function WalletConnectSignIn() {
         </div>
 
         <div className="space-y-4 px-5 py-5 sm:px-6">
-          <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+          <div className="glass-inset p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
               Canton party ID
             </p>

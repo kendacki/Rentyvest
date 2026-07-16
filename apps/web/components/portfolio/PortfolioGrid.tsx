@@ -15,7 +15,7 @@ type PortfolioGridProps = {
 function PortfolioCardSkeleton() {
   return (
     <article
-      className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+      className="card-surface flex flex-col overflow-hidden"
       aria-hidden="true"
     >
       <div className="h-2 w-full bg-brand-orange-light animate-pulse" />
@@ -59,7 +59,7 @@ function EquityCard({ token, currency, onTransfer }: EquityCardProps) {
   const symbol = token.currency || currency;
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+    <article className="card-surface flex flex-col overflow-hidden">
       <div className="h-1.5 bg-brand-orange" aria-hidden="true" />
       <div className="flex flex-1 flex-col gap-4 p-5">
         <header>
@@ -73,7 +73,7 @@ function EquityCard({ token, currency, onTransfer }: EquityCardProps) {
         </header>
 
         <dl className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl bg-slate-50 p-3">
+          <div className="glass-inset p-3">
             <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
               Equity share
             </dt>
@@ -81,7 +81,7 @@ function EquityCard({ token, currency, onTransfer }: EquityCardProps) {
               {token.equity_share}
             </dd>
           </div>
-          <div className="rounded-xl bg-slate-50 p-3">
+          <div className="glass-inset p-3">
             <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
               Pending yield
             </dt>
@@ -149,7 +149,7 @@ export function PortfolioGrid({
 
   if (tokens.length === 0) {
     return (
-      <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
+      <section className="card-surface border-dashed p-10 text-center">
         <h2 className="text-lg font-semibold text-slate-900">No equity tokens yet</h2>
         <p className="mt-2 text-sm text-slate-600">
           Pledge tUSDC into an active property pool to mint your first on chain

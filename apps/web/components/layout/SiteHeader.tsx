@@ -24,8 +24,8 @@ export function SiteHeader({ variant = 'light' }: SiteHeaderProps) {
     <header
       className={`sticky top-0 z-50 border-b ${
         isDark
-          ? 'border-neutral-900 bg-black text-white'
-          : 'border-neutral-200 bg-white text-black'
+          ? 'glass-header-dark text-white'
+          : 'glass-header-light text-black'
       }`}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
@@ -114,8 +114,8 @@ export function SiteHeader({ variant = 'light' }: SiteHeaderProps) {
         <div
           className={`border-t px-4 py-4 md:hidden ${
             isDark
-              ? 'border-neutral-900 bg-black'
-              : 'border-neutral-200 bg-white'
+              ? 'glass-header-dark'
+              : 'glass-header-light'
           }`}
         >
           <nav className="flex flex-col gap-3">

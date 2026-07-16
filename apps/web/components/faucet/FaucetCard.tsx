@@ -271,7 +271,7 @@ export function FaucetCard() {
   }, [connect, partyId, refetchBalance]);
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <article className="card-surface overflow-hidden">
       <div className="border-b border-neutral-200 bg-brand-orange-light px-5 py-5 sm:px-6">
         <p className="section-label">Dev Net Faucet</p>
         <h2 className="mt-1 text-xl font-bold text-black">Test USDC</h2>
@@ -285,13 +285,13 @@ export function FaucetCard() {
         <FaucetToast toast={toast} onDismiss={() => setToast(null)} />
 
         {partyId && (
-          <p className="truncate rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+          <p className="truncate glass-inset px-3 py-2 text-xs text-slate-600">
             <span className="font-medium text-slate-800">Canton party:</span>{' '}
             {partyId}
           </p>
         )}
 
-        <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+        <div className="glass-inset p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             Your balance
           </p>

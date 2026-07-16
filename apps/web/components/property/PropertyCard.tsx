@@ -60,7 +60,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border border-neutral-100 bg-neutral-50 p-3">
+          <div className="glass-inset p-3">
             <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
               Per slot
             </p>
@@ -69,7 +69,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             </p>
           </div>
 
-          <div className="rounded-xl border border-orange-100 bg-brand-orange-light p-3">
+          <div className="glass-accent p-3">
             <p className="text-xs font-medium uppercase tracking-wide text-brand-orange-dark">
               Est. Annual Yield
             </p>
