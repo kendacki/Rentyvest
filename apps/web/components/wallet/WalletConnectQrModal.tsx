@@ -49,6 +49,23 @@ export function WalletConnectQrModal({
     };
   }, [open, uri]);
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open, onClose]);
+
   if (!open) {
     return null;
   }
@@ -59,8 +76,14 @@ export function WalletConnectQrModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="wc-qr-title"
+      onClick={onClose}
     >
-      <div className="w-full max-w-sm rounded-[1.75rem] border border-white/20 bg-black/50 p-6 shadow-[0_12px_48px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+      <div
+        className="w-full max-w-sm rounded-[1.75rem] border border-white/20 bg-black/50 p-6 shadow-[0_12px_48px_rgba(0,0,0,0.4)] backdrop-blur-xl"
+        onClick={(event) => {
+          event.stopPropagation();
+        }}
+      >
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="section-label drop-shadow-sm">WalletConnect</p>
@@ -78,11 +101,23 @@ export function WalletConnectQrModal({
           <button
             type="button"
             onClick={onClose}
-            disabled={isConnecting}
-            className="rounded-lg px-2 py-1 text-sm font-semibold text-white/80 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label="Close WalletConnect modal"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+            aria-label="Cancel wallet connection"
           >
-            Close
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+              aria-hidden
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
           </button>
         </div>
 

@@ -61,6 +61,7 @@ export function WalletConnectProvider({ children }: { children: ReactNode }) {
 
   const dappClientRef = useRef<DappClient | null>(null);
   const providerRef = useRef<CantonProvider | null>(null);
+  const connectCancelledRef = useRef(false);
 
   const syncSessionState = useCallback(async () => {
     const client = dappClientRef.current;
@@ -160,32 +161,68 @@ export function WalletConnectProvider({ children }: { children: ReactNode }) {
     };
   }, [isMounted, syncSessionState]);
 
+  const cancelConnect = useCallback(async () => {
+    connectCancelledRef.current = true;
+    setShowQrModal(false);
+    setWcUri(null);
+    setIsConnecting(false);
+
+    const client = dappClientRef.current;
+    if (!client) {
+      return;
+    }
+
+    try {
+      await client.disconnect();
+    } catch {
+      // User dismissed the pairing flow; ignore disconnect errors.
+    }
+  }, []);
+
   const connect = useCallback(async (): Promise<string | null> => {
     const client = dappClientRef.current;
     if (!client) {
       throw new Error(initError ?? 'Canton wallet SDK is not ready');
     }
 
+    connectCancelledRef.current = false;
     setIsConnecting(true);
     setWcUri(null);
     setShowQrModal(true);
 
     try {
       await client.connect();
+
+      if (connectCancelledRef.current) {
+        return null;
+      }
+
       await syncSessionState();
 
       const accounts = await client.listAccounts();
       return resolvePartyId(accounts);
     } catch (error) {
-      setShowQrModal(false);
-      setWcUri(null);
+      if (!connectCancelledRef.current) {
+        setShowQrModal(false);
+        setWcUri(null);
+      }
+
+      if (connectCancelledRef.current) {
+        return null;
+      }
+
       throw error instanceof Error
         ? error
         : new Error('WalletConnect session was not approved');
     } finally {
       setIsConnecting(false);
-      setShowQrModal(false);
-      setWcUri(null);
+
+      if (!connectCancelledRef.current) {
+        setShowQrModal(false);
+        setWcUri(null);
+      }
+
+      connectCancelledRef.current = false;
     }
   }, [initError, syncSessionState]);
 
@@ -254,10 +291,7 @@ export function WalletConnectProvider({ children }: { children: ReactNode }) {
           uri={wcUri}
           isConnecting={isConnecting}
           onClose={() => {
-            if (!isConnecting) {
-              setShowQrModal(false);
-              setWcUri(null);
-            }
+            void cancelConnect();
           }}
         />
       )}
