@@ -12,33 +12,41 @@
   }
 
   ::selection {
-    @apply bg-brand-orange/30 text-brand-black;
+    @apply bg-brand-orange/25 text-brand-black;
   }
 }
 
 @layer components {
   .section-label {
-    @apply text-xs font-semibold uppercase tracking-[0.2em] text-brand-orange;
+    @apply text-[11px] font-semibold uppercase tracking-[0.25em] text-brand-orange;
   }
 
   .heading-display {
-    @apply text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl;
+    @apply text-4xl font-bold leading-[1.02] tracking-[-0.03em] sm:text-5xl lg:text-[4.25rem];
   }
 
   .heading-section {
-    @apply text-3xl font-bold tracking-tight sm:text-4xl;
+    @apply text-3xl font-bold tracking-[-0.02em] sm:text-4xl;
+  }
+
+  .body-lead {
+    @apply text-lg leading-relaxed text-neutral-500 sm:text-xl;
   }
 
   .btn-primary {
-    @apply inline-flex h-12 items-center justify-center rounded-full bg-brand-orange px-6 text-sm font-semibold text-white transition-colors hover:bg-brand-orange-dark;
+    @apply inline-flex h-12 items-center justify-center rounded-full bg-brand-orange px-7 text-sm font-semibold text-white transition-colors hover:bg-brand-orange-dark;
   }
 
   .btn-secondary {
-    @apply inline-flex h-12 items-center justify-center rounded-full border border-neutral-300 bg-white px-6 text-sm font-semibold text-brand-black transition-colors hover:border-brand-black hover:bg-neutral-50;
+    @apply inline-flex h-12 items-center justify-center rounded-full border border-neutral-300 bg-white px-7 text-sm font-semibold text-brand-black transition-colors hover:border-black hover:bg-neutral-50;
   }
 
   .btn-inverse {
-    @apply inline-flex h-12 items-center justify-center rounded-full bg-white px-6 text-sm font-semibold text-brand-black transition-colors hover:bg-neutral-100;
+    @apply inline-flex h-12 items-center justify-center rounded-full bg-white px-7 text-sm font-semibold text-brand-black transition-colors hover:bg-neutral-100;
+  }
+
+  .btn-outline-light {
+    @apply inline-flex h-12 items-center justify-center rounded-full border border-white px-7 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-black;
   }
 
   .card-surface {
@@ -46,6 +54,6 @@
   }
 
   .card-dark {
-    @apply rounded-2xl border border-neutral-800 bg-brand-surface;
+    @apply rounded-2xl border border-neutral-900 bg-black;
   }
 }

@@ -9,11 +9,10 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          orange: '#F97316',
-          'orange-dark': '#EA580C',
-          'orange-light': '#FFF7ED',
-          black: '#0A0A0A',
-          surface: '#111111',
+          orange: '#FF5500',
+          'orange-dark': '#E64D00',
+          'orange-light': '#FFF4ED',
+          black: '#000000',
           muted: '#737373',
         },
       },
@@ -21,7 +20,7 @@ const config: Config = {
         sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
       },
       animation: {
-        marquee: 'marquee 40s linear infinite',
+        marquee: 'marquee 45s linear infinite',
       },
       keyframes: {
         marquee: {

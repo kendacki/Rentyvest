@@ -18,7 +18,7 @@ function PortfolioCardSkeleton() {
       className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
       aria-hidden="true"
     >
-      <div className="h-2 w-full bg-emerald-100 animate-pulse" />
+      <div className="h-2 w-full bg-brand-orange-light animate-pulse" />
       <div className="flex flex-1 flex-col gap-4 p-5">
         <div className="space-y-2">
           <div className="h-4 w-24 rounded bg-slate-200 animate-pulse" />
@@ -60,10 +60,10 @@ function EquityCard({ token, currency, onTransfer }: EquityCardProps) {
 
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md">
-      <div className="h-1.5 bg-emerald-500" aria-hidden="true" />
+      <div className="h-1.5 bg-brand-orange" aria-hidden="true" />
       <div className="flex flex-1 flex-col gap-4 p-5">
         <header>
-          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand-orange">
             Equity slot
           </p>
           <h3 className="mt-1 text-lg font-bold text-slate-900">

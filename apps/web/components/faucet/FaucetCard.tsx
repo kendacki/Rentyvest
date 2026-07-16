@@ -143,7 +143,7 @@ function FaucetToast({ toast, onDismiss }: FaucetToastProps) {
       aria-live="polite"
       className={`flex items-start justify-between gap-3 rounded-xl border px-4 py-3 text-sm shadow-sm ${
         isSuccess
-          ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+          ? 'border-brand-orange/30 bg-brand-orange-light text-black'
           : 'border-red-200 bg-red-50 text-red-900'
       }`}
     >
@@ -153,7 +153,7 @@ function FaucetToast({ toast, onDismiss }: FaucetToastProps) {
         onClick={onDismiss}
         className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold uppercase tracking-wide transition-colors ${
           isSuccess
-            ? 'text-emerald-700 hover:bg-emerald-100'
+            ? 'text-brand-orange hover:bg-brand-orange-light'
             : 'text-red-700 hover:bg-red-100'
         }`}
         aria-label="Dismiss notification"
@@ -272,12 +272,10 @@ export function FaucetCard() {
 
   return (
     <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="border-b border-slate-100 bg-gradient-to-br from-emerald-50 via-white to-slate-50 px-5 py-5 sm:px-6">
-        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-          DevNet Faucet
-        </p>
-        <h2 className="mt-1 text-xl font-bold text-slate-900">Test USDC</h2>
-        <p className="mt-2 text-sm text-slate-600">
+      <div className="border-b border-neutral-200 bg-brand-orange-light px-5 py-5 sm:px-6">
+        <p className="section-label">DevNet Faucet</p>
+        <h2 className="mt-1 text-xl font-bold text-black">Test USDC</h2>
+        <p className="mt-2 text-sm text-neutral-600">
           Connect your Canton wallet, then claim test USDC minted directly to
           your party. One claim per party every 24 hours.
         </p>
@@ -315,7 +313,7 @@ export function FaucetCard() {
             void handleClaim();
           }}
           disabled={!isWalletReady || isBusy || (isConnected && isLoading)}
-          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+          className="btn-primary h-12 w-full disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-500"
         >
           {isClaiming ? (
             <>

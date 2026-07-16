@@ -37,7 +37,7 @@ export function AppProviders({ children }: AppProvidersProps) {
         loginMethods: ['wallet'],
         appearance: {
           theme: 'light',
-          accentColor: '#F97316',
+          accentColor: '#FF5500',
           walletChainType: 'ethereum-and-solana',
         },
       }}

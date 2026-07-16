@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { BrandLogo } from '../brand/BrandLogo';
 
 const NAV_LINKS = [
   { href: '/marketplace', label: 'Marketplace' },
@@ -21,19 +22,18 @@ export function SiteHeader({ variant = 'light' }: SiteHeaderProps) {
 
   return (
     <header
-      className={`sticky top-0 z-50 border-b backdrop-blur-md ${
+      className={`sticky top-0 z-50 border-b ${
         isDark
-          ? 'border-neutral-800 bg-brand-black/90 text-white'
-          : 'border-neutral-200 bg-white/90 text-brand-black'
+          ? 'border-neutral-900 bg-black text-white'
+          : 'border-neutral-200 bg-white text-black'
       }`}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-orange text-sm font-bold text-white">
-            R
-          </span>
-          <span className="text-lg font-bold tracking-tight">RentyVest</span>
-        </Link>
+        <BrandLogo
+          size="sm"
+          variant={isDark ? 'light' : 'dark'}
+          showWordmark
+        />
 
         <nav className="hidden items-center gap-8 md:flex">
           {NAV_LINKS.map(({ href, label }) => {
@@ -47,8 +47,8 @@ export function SiteHeader({ variant = 'light' }: SiteHeaderProps) {
                   active
                     ? 'text-brand-orange'
                     : isDark
-                      ? 'text-neutral-300 hover:text-white'
-                      : 'text-neutral-600 hover:text-brand-black'
+                      ? 'text-neutral-400 hover:text-white'
+                      : 'text-neutral-600 hover:text-black'
                 }`}
               >
                 {label}
@@ -62,8 +62,8 @@ export function SiteHeader({ variant = 'light' }: SiteHeaderProps) {
             href="/wallet"
             className={
               isDark
-                ? 'text-sm font-medium text-neutral-300 transition-colors hover:text-white'
-                : 'text-sm font-medium text-neutral-600 transition-colors hover:text-brand-black'
+                ? 'text-sm font-medium text-neutral-400 transition-colors hover:text-white'
+                : 'text-sm font-medium text-neutral-600 transition-colors hover:text-black'
             }
           >
             Connect wallet
@@ -76,7 +76,7 @@ export function SiteHeader({ variant = 'light' }: SiteHeaderProps) {
         <button
           type="button"
           className={`inline-flex h-10 w-10 items-center justify-center rounded-lg md:hidden ${
-            isDark ? 'text-white' : 'text-brand-black'
+            isDark ? 'text-white' : 'text-black'
           }`}
           aria-label="Toggle menu"
           aria-expanded={menuOpen}
@@ -110,7 +110,7 @@ export function SiteHeader({ variant = 'light' }: SiteHeaderProps) {
         <div
           className={`border-t px-4 py-4 md:hidden ${
             isDark
-              ? 'border-neutral-800 bg-brand-black'
+              ? 'border-neutral-900 bg-black'
               : 'border-neutral-200 bg-white'
           }`}
         >

@@ -53,7 +53,7 @@ export function WalletConnectQrModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 px-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="wc-qr-title"
@@ -61,13 +61,11 @@ export function WalletConnectQrModal({
       <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-              WalletConnect
-            </p>
-            <h2 id="wc-qr-title" className="mt-1 text-lg font-bold text-slate-900">
+            <p className="section-label">WalletConnect</p>
+            <h2 id="wc-qr-title" className="mt-1 text-lg font-bold text-black">
               Scan to connect
             </h2>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-sm text-neutral-600">
               Open a Canton-compatible wallet and approve the session on{' '}
               <span className="font-medium">sandbox</span>.
             </p>

@@ -3,27 +3,27 @@ import Link from 'next/link';
 const STEPS = [
   {
     number: '01',
-    title: 'Connect your Canton wallet',
+    title: 'Connect & fund',
     description:
-      'Link via WalletConnect on DevNet sandbox. Claim test USDC from the built-in faucet to fund pledges.',
+      'Pair your Canton wallet through WalletConnect, then claim test USDC from the in-app faucet. No mainnet funds required.',
     href: '/wallet',
-    cta: 'Open wallet',
+    cta: 'Set up wallet',
   },
   {
     number: '02',
-    title: 'Browse property pools',
+    title: 'Pick your pool',
     description:
-      'Explore fractional listings with live slot availability, per-slot pricing, and estimated annual yield.',
+      'Compare properties by slot price, projected yield, and fill rate. Every listing shows live availability as investors pledge.',
     href: '/marketplace',
-    cta: 'View marketplace',
+    cta: 'Browse marketplace',
   },
   {
     number: '03',
-    title: 'Pledge & hold equity NFTs',
+    title: 'Own your slot',
     description:
-      'Select slots, pay with tUSDC, and receive on-chain PropertyNFTs. Track holdings and transfer stakes from your portfolio.',
+      'Pledge tUSDC, receive a PropertyNFT, and track holdings in your portfolio. Transfer equity to another party when you are ready.',
     href: '/dashboard',
-    cta: 'Go to portfolio',
+    cta: 'Open portfolio',
   },
 ] as const;
 
@@ -33,26 +33,23 @@ export function HowItWorksSection() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl">
           <p className="section-label">How it works</p>
-          <h2 className="heading-section mt-3 text-brand-black">
-            From wallet to ownership in three steps
+          <h2 className="heading-section mt-4 text-black">
+            Three steps from browser to on-chain owner
           </h2>
-          <p className="mt-4 text-base leading-relaxed text-neutral-600">
-            RentyVest combines Canton ledger settlement with a modern investor
-            experience — transparent pools, programmable compliance, and
-            real-time updates.
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-neutral-600">
+            We stripped away the complexity of tokenized real estate. What
+            remains is a clear path: connect, choose, commit.
           </p>
         </div>
 
-        <div className="mt-14 grid gap-6 lg:grid-cols-3">
+        <div className="mt-16 grid gap-5 lg:grid-cols-3">
           {STEPS.map(({ number, title, description, href, cta }) => (
             <article
               key={number}
-              className="card-surface flex flex-col p-6 transition-shadow hover:shadow-lg sm:p-8"
+              className="card-surface group flex flex-col p-8 transition-colors hover:border-black"
             >
-              <span className="text-sm font-semibold text-brand-orange">
-                {number}
-              </span>
-              <h3 className="mt-4 text-xl font-bold tracking-tight text-brand-black">
+              <span className="text-sm font-bold text-brand-orange">{number}</span>
+              <h3 className="mt-5 text-xl font-bold tracking-tight text-black">
                 {title}
               </h3>
               <p className="mt-3 flex-1 text-sm leading-relaxed text-neutral-600">
@@ -60,7 +57,7 @@ export function HowItWorksSection() {
               </p>
               <Link
                 href={href}
-                className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand-orange transition-colors hover:text-brand-orange-dark"
+                className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-black transition-colors group-hover:text-brand-orange"
               >
                 {cta}
                 <span aria-hidden>→</span>
@@ -78,56 +75,57 @@ const FEATURES = [
     number: '01',
     title: 'Property pools',
     description:
-      'Each listing is a Daml PropertyPool with fixed slots, transparent pricing, and fundraising deadlines enforced on-ledger.',
+      'Each asset is a Daml PropertyPool with fixed slots, transparent unit pricing, and deadlines enforced directly on the ledger.',
   },
   {
     number: '02',
-    title: 'Programmable pledges',
+    title: 'Split authorization',
     description:
-      'Split-authorization architecture: users sign wallet actions while the platform co-signs admin-controlled pool exercises securely.',
+      'Investors sign wallet actions. The platform co-signs admin-controlled exercises — so pledges stay secure without sacrificing UX.',
   },
   {
     number: '03',
     title: 'Equity NFTs',
     description:
-      'Every pledged slot mints a PropertyNFT you can view, transfer, and eventually use to claim yield — all verifiable on Canton.',
+      'Every slot you buy mints a PropertyNFT tied to your party. Verifiable ownership, transferable stakes, yield-ready design.',
   },
   {
     number: '04',
-    title: 'Live marketplace data',
+    title: 'Realtime marketplace',
     description:
-      'Supabase Realtime keeps slot fill progress current so investors always see accurate availability before they commit.',
+      'Supabase Realtime pushes slot-fill updates instantly. You always see the true state of a pool before you pledge.',
   },
 ] as const;
 
 export function FeaturesSection() {
   return (
-    <section className="bg-brand-black py-20 text-white sm:py-28">
+    <section className="bg-black py-20 text-white sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <p className="section-label">Platform</p>
-            <h2 className="heading-section mt-3">Built for fractional investors</h2>
-            <p className="mt-4 text-base leading-relaxed text-neutral-400">
-              More than a property listing site — RentyVest is infrastructure
-              for tokenized real estate with Canton-grade settlement.
+            <p className="section-label">Why RentyVest</p>
+            <h2 className="heading-section mt-4">
+              Infrastructure for the next generation of property investing
+            </h2>
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-neutral-400">
+              Not another listing site. A full-stack fractional platform —
+              ledger settlement, wallet-native signing, and investor-grade
+              transparency built in.
             </p>
           </div>
           <Link href="/marketplace" className="btn-primary shrink-0">
-            View all pools
+            Explore pools
           </Link>
         </div>
 
-        <div className="mt-14 grid gap-6 sm:grid-cols-2">
+        <div className="mt-16 grid gap-5 sm:grid-cols-2">
           {FEATURES.map(({ number, title, description }) => (
             <article
               key={number}
-              className="card-dark p-6 transition-colors hover:border-brand-orange/40 sm:p-8"
+              className="card-dark p-8 transition-colors hover:border-brand-orange"
             >
-              <span className="text-sm font-semibold text-brand-orange">
-                {number}
-              </span>
-              <h3 className="mt-4 text-xl font-bold tracking-tight">{title}</h3>
+              <span className="text-sm font-bold text-brand-orange">{number}</span>
+              <h3 className="mt-5 text-xl font-bold tracking-tight">{title}</h3>
               <p className="mt-3 text-sm leading-relaxed text-neutral-400">
                 {description}
               </p>

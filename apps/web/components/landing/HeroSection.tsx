@@ -1,59 +1,69 @@
+import Image from 'next/image';
 import Link from 'next/link';
-
-const TECH_ITEMS = [
-  'Canton Network',
-  'Daml Smart Contracts',
-  'WalletConnect',
-  'Privy Auth',
-  'Supabase Realtime',
-  'On-chain Equity NFTs',
-  'tUSDC Payments',
-  'Property Pools',
-];
-
-export function TechMarquee() {
-  const items = [...TECH_ITEMS, ...TECH_ITEMS];
-
-  return (
-    <section className="overflow-hidden border-y border-neutral-800 bg-brand-surface py-5">
-      <div className="flex animate-marquee whitespace-nowrap">
-        {items.map((item, index) => (
-          <span
-            key={`${item}-${index}`}
-            className="mx-8 text-sm font-medium uppercase tracking-[0.15em] text-neutral-500"
-          >
-            {item}
-          </span>
-        ))}
-      </div>
-    </section>
-  );
-}
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-brand-black px-4 pb-20 pt-16 text-white sm:px-6 sm:pb-28 sm:pt-24 lg:px-8">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(249,115,22,0.18),transparent_45%)]" />
+    <section className="bg-black px-4 pb-16 pt-14 text-white sm:px-6 sm:pb-24 sm:pt-20 lg:px-8">
+      <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16">
+        <div>
+          <p className="section-label">Fractional real estate, reimagined</p>
+          <h1 className="heading-display mt-5 max-w-3xl">
+            Invest in property
+            <span className="text-brand-orange"> one slot at a time.</span>
+          </h1>
+          <p className="body-lead mt-6 max-w-xl text-neutral-400">
+            RentyVest turns real estate into transparent on-chain pools. Browse
+            live listings, pledge with test USDC, and hold equity NFTs that
+            prove your stake — settled on Canton Network.
+          </p>
 
-      <div className="relative mx-auto max-w-7xl">
-        <p className="section-label text-brand-orange">Fractional real estate</p>
-        <h1 className="heading-display mt-4 max-w-4xl">
-          Own property slots
-          <span className="text-brand-orange"> on-chain.</span>
-        </h1>
-        <p className="mt-6 max-w-2xl text-lg leading-relaxed text-neutral-400">
-          RentyVest turns real estate into programmable equity pools on Canton
-          Network. Browse vetted properties, pledge with test USDC, and hold
-          verifiable NFTs that represent your fractional stake.
-        </p>
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Link href="/marketplace" className="btn-primary">
+              View live pools
+            </Link>
+            <Link href="/wallet" className="btn-outline-light">
+              Connect wallet
+            </Link>
+          </div>
 
-        <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-          <Link href="/marketplace" className="btn-primary">
-            Explore marketplace
-          </Link>
-          <Link href="/wallet" className="btn-inverse">
-            Connect wallet
-          </Link>
+          <p className="mt-8 text-xs uppercase tracking-[0.2em] text-neutral-600">
+            DevNet demo · Test USDC only
+          </p>
+        </div>
+
+        <div className="flex justify-center lg:justify-end">
+          <div className="relative w-full max-w-sm">
+            <div className="rounded-3xl border border-neutral-900 bg-black p-10">
+              <Image
+                src="/logo.png"
+                alt="RentyVest logo"
+                width={280}
+                height={280}
+                className="mx-auto h-auto w-full max-w-[220px]"
+                priority
+              />
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-xl border border-neutral-900 bg-black px-3 py-4">
+                <p className="text-lg font-bold text-brand-orange">Slots</p>
+                <p className="mt-1 text-[10px] uppercase tracking-wider text-neutral-500">
+                  Per property
+                </p>
+              </div>
+              <div className="rounded-xl border border-neutral-900 bg-black px-3 py-4">
+                <p className="text-lg font-bold text-white">NFTs</p>
+                <p className="mt-1 text-[10px] uppercase tracking-wider text-neutral-500">
+                  On-chain proof
+                </p>
+              </div>
+              <div className="rounded-xl border border-neutral-900 bg-black px-3 py-4">
+                <p className="text-lg font-bold text-white">Live</p>
+                <p className="mt-1 text-[10px] uppercase tracking-wider text-neutral-500">
+                  Real-time fill
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -62,21 +72,35 @@ export function HeroSection() {
 
 export function StatsSection() {
   const stats = [
-    { value: '100%', label: 'On-chain slot ownership' },
-    { value: 'Real-time', label: 'Pool fill updates' },
-    { value: 'Canton', label: 'Programmable ledger' },
-    { value: 'Per-slot', label: 'Fractional entry points' },
+    {
+      value: 'On-ledger',
+      label: 'Every pledge settles on Canton with auditable contract IDs.',
+    },
+    {
+      value: 'Live data',
+      label: 'Slot availability updates the moment another investor commits.',
+    },
+    {
+      value: 'Wallet-native',
+      label: 'Connect once via WalletConnect — sign transfers from your party.',
+    },
+    {
+      value: 'Per-slot',
+      label: 'Enter at the unit price that fits your budget, not a full deed.',
+    },
   ];
 
   return (
-    <section className="border-b border-neutral-200 bg-white py-16">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-4 lg:px-8">
+    <section className="border-b border-neutral-200 bg-white py-16 sm:py-20">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-4 lg:px-8">
         {stats.map(({ value, label }) => (
-          <div key={label} className="text-center sm:text-left">
-            <p className="text-3xl font-bold tracking-tight text-brand-black sm:text-4xl">
+          <div key={value} className="border-l-2 border-brand-orange pl-5">
+            <p className="text-2xl font-bold tracking-tight text-black sm:text-[1.75rem]">
               {value}
             </p>
-            <p className="mt-2 text-sm text-neutral-600">{label}</p>
+            <p className="mt-3 text-sm leading-relaxed text-neutral-600">
+              {label}
+            </p>
           </div>
         ))}
       </div>

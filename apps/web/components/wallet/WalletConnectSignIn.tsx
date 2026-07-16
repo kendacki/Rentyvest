@@ -54,7 +54,7 @@ export function WalletConnectSignIn() {
 
   if (initError) {
     return (
-      <article className="overflow-hidden rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
+      <article className="overflow-hidden rounded-2xl border border-amber-200 bg-amber-50 p-6">
         <h2 className="text-lg font-semibold text-amber-950">
           WalletConnect not configured
         </h2>
@@ -66,24 +66,21 @@ export function WalletConnectSignIn() {
   if (isConnected && partyId) {
     return (
       <article className="card-surface overflow-hidden">
-        <div className="border-b border-orange-100 bg-gradient-to-br from-brand-orange-light to-white px-5 py-5 sm:px-6">
+        <div className="border-b border-neutral-200 bg-brand-orange-light px-5 py-5 sm:px-6">
           <p className="section-label">Connected</p>
-          <h2 className="mt-1 text-xl font-bold text-brand-black">
-            Canton Wallet
-          </h2>
+          <h2 className="mt-1 text-xl font-bold text-black">Canton Wallet</h2>
           <p className="mt-2 text-sm text-neutral-600">
-            Your party is linked via WalletConnect on{' '}
-            {networkId ?? 'Canton sandbox'}.
+            Linked via WalletConnect on {networkId ?? 'Canton sandbox'}.
           </p>
         </div>
 
         <div className="space-y-4 px-5 py-5 sm:px-6">
-          <div className="rounded-xl border border-neutral-100 bg-neutral-50 p-4">
+          <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
               Canton party ID
             </p>
             <p
-              className="mt-1 break-all font-mono text-sm text-brand-black"
+              className="mt-1 break-all font-mono text-sm text-black"
               title={partyId}
             >
               {truncatePartyId(partyId, 18, 12)}
@@ -106,14 +103,12 @@ export function WalletConnectSignIn() {
 
   return (
     <article className="card-surface overflow-hidden">
-      <div className="border-b border-neutral-800 bg-gradient-to-br from-brand-black via-neutral-900 to-brand-orange/30 px-5 py-6 text-white sm:px-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-orange">
-          Sign in required
-        </p>
+      <div className="border-b border-neutral-900 bg-black px-5 py-6 text-white sm:px-6">
+        <p className="section-label">Sign in</p>
         <h2 className="mt-1 text-2xl font-bold">Connect Canton Wallet</h2>
-        <p className="mt-3 text-sm text-neutral-300">
-          Connect any CIP-103 compatible wallet through WalletConnect. Sessions
-          target the Canton sandbox network.
+        <p className="mt-3 text-sm text-neutral-400">
+          Pair any CIP-103 wallet through WalletConnect on the Canton sandbox
+          network.
         </p>
       </div>
 
@@ -121,15 +116,15 @@ export function WalletConnectSignIn() {
         <ul className="space-y-2 text-sm text-neutral-600">
           <li className="flex gap-2">
             <span className="font-semibold text-brand-orange">1.</span>
-            Open your Canton wallet app or browser extension
+            Open your Canton wallet app or extension
           </li>
           <li className="flex gap-2">
             <span className="font-semibold text-brand-orange">2.</span>
-            Scan the WalletConnect QR code when prompted
+            Scan the WalletConnect QR code
           </li>
           <li className="flex gap-2">
             <span className="font-semibold text-brand-orange">3.</span>
-            Approve the sandbox network session
+            Approve the sandbox session
           </li>
         </ul>
 
@@ -144,7 +139,7 @@ export function WalletConnectSignIn() {
           {isConnecting ? (
             <span className="inline-flex items-center gap-2">
               <Spinner />
-              Waiting for wallet approval…
+              Waiting for approval…
             </span>
           ) : (
             'Connect Wallet'

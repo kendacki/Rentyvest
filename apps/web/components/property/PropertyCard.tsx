@@ -31,7 +31,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             loading="lazy"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-neutral-100 to-neutral-200 text-sm font-medium text-neutral-500">
+          <div className="flex h-full w-full items-center justify-center bg-neutral-100 text-sm font-medium text-neutral-500">
             Property image
           </div>
         )}
