@@ -138,57 +138,44 @@ const FEATURES: Array<{
 
 export function FeaturesSection() {
   return (
-    <section className="relative isolate overflow-hidden py-20 text-white sm:py-28">
+    <section className="relative isolate min-h-[32rem] overflow-hidden py-20 text-white sm:min-h-[36rem] sm:py-28">
       <Image
         src="/why-rentyvest-bg.png"
         alt=""
         fill
-        quality={92}
+        quality={100}
         sizes="100vw"
-        className="object-cover object-[center_30%] brightness-[1.08] contrast-[1.06] saturate-[1.12]"
-        aria-hidden
-      />
-
-      <div
-        className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/15 to-black/55"
-        aria-hidden
-      />
-      <div
-        className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40"
-        aria-hidden
-      />
-      <div
-        className="absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_50%_40%,transparent_0%,rgba(0,0,0,0.35)_100%)]"
+        className="object-cover object-center"
         aria-hidden
       />
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <Reveal className="max-w-2xl">
-          <p className="section-label drop-shadow-sm">Why RentyVest</p>
-          <h2 className="heading-section mt-4 drop-shadow-[0_2px_16px_rgba(0,0,0,0.85)]">
+        <Reveal className="max-w-3xl rounded-[1.75rem] border border-white/15 bg-black/70 px-8 py-8 sm:px-10 sm:py-10">
+          <p className="section-label">Why RentyVest</p>
+          <h2 className="heading-section mt-4 text-balance text-white">
             Infrastructure for the next generation of property investing
           </h2>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-white drop-shadow-[0_1px_12px_rgba(0,0,0,0.8)]">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-neutral-200 sm:text-lg">
             Not another listing site. A full stack fractional platform with
             ledger settlement, wallet native signing, and investor grade
             transparency built in.
           </p>
         </Reveal>
 
-        <Stagger className="mt-16 grid gap-5 sm:grid-cols-2">
+        <Stagger className="mt-10 grid gap-5 sm:mt-12 sm:grid-cols-2">
           {FEATURES.map(({ id, Icon, title, description }) => (
             <motion.article
               key={id}
               variants={staggerItem}
-              className="rounded-2xl border border-white/25 bg-black/35 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.35)] backdrop-blur-md transition-colors hover:border-brand-orange hover:bg-black/45"
+              className="rounded-2xl border border-white/20 bg-black/70 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-colors hover:border-brand-orange hover:bg-black/80"
             >
-              <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-brand-orange/30 bg-brand-orange/15 text-brand-orange shadow-[0_0_24px_rgba(255,85,0,0.15)]">
+              <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-brand-orange/35 bg-brand-orange/20 text-brand-orange">
                 <Icon className="h-8 w-8" />
               </div>
               <h3 className="mt-5 text-xl font-bold tracking-tight text-white">
                 {title}
               </h3>
-              <p className="mt-3 text-sm leading-relaxed text-neutral-300">
+              <p className="mt-3 text-sm leading-relaxed text-neutral-200 sm:text-base">
                 {description}
               </p>
             </motion.article>
