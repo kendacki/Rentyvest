@@ -21,11 +21,11 @@ export function AccountSetupBanner({
   const { ready, authenticated, login } = usePrivy();
 
   useEffect(() => {
-    if (!ready || !authenticated || !redirectPath) {
+    if (!ready || !authenticated) {
       return;
     }
 
-    router.replace(redirectPath);
+    router.replace(redirectPath ?? '/dashboard');
   }, [authenticated, ready, redirectPath, router]);
 
   if (!authRequired || !isConnected || !partyId || authenticated) {

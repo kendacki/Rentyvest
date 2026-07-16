@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePrivy } from '@privy-io/react-auth';
 import { useState } from 'react';
 import { PageShell } from '../../components/layout/PageShell';
 import { Reveal } from '../../components/motion/Reveal';
@@ -27,6 +28,8 @@ function toTransferableNFT(token: UserEquityToken): TransferableNFT {
 
 export default function DashboardPage() {
   const { isMounted, isReady, isConnected, partyId } = useCantonWallet();
+  const { ready: privyReady, authenticated } = usePrivy();
+  const isSignedIn = privyReady && authenticated;
   const {
     tokens,
     count,
@@ -72,8 +75,10 @@ export default function DashboardPage() {
       <main className="page-canvas">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
           <Reveal as="header" className="mb-8 text-center">
-            <p className="section-label">Portfolio</p>
-            <h1 className="heading-section mt-2 text-brand-black">
+            {!isSignedIn ? <p className="section-label">Portfolio</p> : null}
+            <h1
+              className={`heading-section text-brand-black ${isSignedIn ? '' : 'mt-2'}`}
+            >
               Your holdings
             </h1>
             <p className="mt-2 text-sm text-neutral-600">

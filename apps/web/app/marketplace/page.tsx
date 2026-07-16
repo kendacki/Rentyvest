@@ -1,5 +1,4 @@
-import Link from 'next/link';
-import { MarketplaceGrid } from '../../components/marketplace/MarketplaceGrid';
+import { MarketplaceGrid } from '../../components/marketplace/MarketplaceGrid';import { MarketplacePageHeader } from '../../components/marketplace/MarketplacePageHeader';
 import { MarketplaceWalletBanner } from '../../components/marketplace/MarketplaceWalletBanner';
 import { PageShell } from '../../components/layout/PageShell';
 import { Reveal } from '../../components/motion/Reveal';
@@ -14,21 +13,7 @@ export default function MarketplacePage() {
     <PageShell>
       <main className="page-canvas">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-          <Reveal as="header" className="mb-8 text-center">
-            <p className="section-label">Marketplace</p>
-            <h1 className="heading-section mt-2 text-brand-black">
-              Fractional real estate opportunities
-            </h1>
-            <p className="mx-auto mt-3 max-w-2xl text-base text-neutral-600">
-              Invest per slot in vetted properties. Slot availability updates
-              in real time as investors pledge on Canton.
-            </p>
-            <div className="mt-6 flex justify-center">
-              <Link href="/wallet" className="btn-secondary shrink-0">
-                Faucet
-              </Link>
-            </div>
-          </Reveal>
+          <MarketplacePageHeader />
 
           <MarketplaceWalletBanner />
 

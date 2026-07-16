@@ -67,8 +67,8 @@ export function middleware(request: NextRequest): NextResponse {
   }
 
   if (isAuthRoute && authenticated) {
-    const marketplaceUrl = new URL('/marketplace', request.url);
-    return applySecurityHeaders(NextResponse.redirect(marketplaceUrl));
+    const dashboardUrl = new URL('/dashboard', request.url);
+    return applySecurityHeaders(NextResponse.redirect(dashboardUrl));
   }
 
   return applySecurityHeaders(NextResponse.next());
