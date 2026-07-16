@@ -54,9 +54,8 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, ease, delay: 0.1 }}
           >
-            RentyVest turns real estate into transparent on chain pools. Browse
-            live listings, pledge with test USDC, and hold equity NFTs that
-            prove your stake, settled on Canton Network.
+            Browse live property pools, pledge test USDC per slot, and own
+            equity NFTs on Canton.
           </motion.p>
 
           <motion.div
