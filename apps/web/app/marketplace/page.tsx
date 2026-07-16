@@ -1,4 +1,5 @@
-import { MarketplaceGrid } from '../../components/marketplace/MarketplaceGrid';import { MarketplacePageHeader } from '../../components/marketplace/MarketplacePageHeader';
+import { MarketplaceGrid } from '../../components/marketplace/MarketplaceGrid';
+import { MarketplacePageHeader } from '../../components/marketplace/MarketplacePageHeader';
 import { MarketplaceWalletBanner } from '../../components/marketplace/MarketplaceWalletBanner';
 import { PageShell } from '../../components/layout/PageShell';
 import { Reveal } from '../../components/motion/Reveal';
