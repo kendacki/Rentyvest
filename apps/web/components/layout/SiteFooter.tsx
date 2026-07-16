@@ -10,7 +10,7 @@ const FOOTER_LINKS = {
   Platform: [
     { href: '/marketplace', label: 'Property pools' },
     { href: '/wallet', label: 'tUSDC faucet' },
-    { href: '/dashboard', label: 'Equity NFTs' },
+    { href: 'https://devnet.cantonloop.com/', label: 'Loop Wallet' },
   ],
 } as const;
 
@@ -35,12 +35,23 @@ export function SiteFooter() {
                 <ul className="mt-4 space-y-3">
                   {links.map(({ href, label }) => (
                     <li key={`${title}-${label}`}>
-                      <Link
-                        href={href}
-                        className="text-sm text-neutral-500 transition-colors hover:text-brand-black"
-                      >
-                        {label}
-                      </Link>
+                      {href.startsWith('http') ? (
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-neutral-500 transition-colors hover:text-brand-black"
+                        >
+                          {label}
+                        </a>
+                      ) : (
+                        <Link
+                          href={href}
+                          className="text-sm text-neutral-500 transition-colors hover:text-brand-black"
+                        >
+                          {label}
+                        </Link>
+                      )}
                     </li>
                   ))}
                 </ul>
