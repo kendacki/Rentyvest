@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import { HeroBlob } from './HeroBlob';
@@ -10,11 +11,36 @@ export function HeroSection() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <section className="bg-black px-4 pb-16 pt-14 text-white sm:px-6 sm:pb-24 sm:pt-20 lg:px-8">
-      <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10">
+    <section className="relative isolate min-h-[calc(100vh-4rem)] overflow-hidden text-white">
+      <Image
+        src="/hero-architecture.png"
+        alt=""
+        fill
+        priority
+        quality={92}
+        sizes="100vw"
+        className="object-cover object-[center_42%] sm:object-[center_38%]"
+        aria-hidden
+      />
+
+      <div
+        className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/20"
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-transparent"
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_70%_50%,rgba(255,85,0,0.12),transparent)]"
+        aria-hidden
+      />
+      <div className="absolute inset-0 bg-black/15" aria-hidden />
+
+      <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-4 pb-16 pt-14 sm:px-6 sm:pb-24 sm:pt-20 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10 lg:px-8">
         <div>
           <motion.h1
-            className="heading-display max-w-3xl"
+            className="heading-display max-w-3xl drop-shadow-[0_2px_24px_rgba(0,0,0,0.45)]"
             initial={prefersReducedMotion ? false : { opacity: 0, y: 32 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, ease }}
@@ -23,7 +49,7 @@ export function HeroSection() {
             <span className="text-brand-orange"> one slot at a time.</span>
           </motion.h1>
           <motion.p
-            className="body-lead mt-6 max-w-xl text-neutral-400"
+            className="body-lead mt-6 max-w-xl text-neutral-200 drop-shadow-[0_1px_12px_rgba(0,0,0,0.35)]"
             initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, ease, delay: 0.1 }}
