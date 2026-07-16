@@ -60,19 +60,9 @@ export function SiteHeader({ variant = 'light' }: SiteHeaderProps) {
         </nav>
 
         <div className="flex flex-1 items-center justify-end gap-3">
-          <div className="hidden items-center gap-3 md:flex">
-            <Link
-              href="/marketplace"
-              className={
-                isDark
-                  ? 'text-sm font-medium text-neutral-400 transition-colors hover:text-white'
-                  : 'text-sm font-medium text-neutral-600 transition-colors hover:text-black'
-              }
-            >
-              Connect wallet
-            </Link>
+          <div className="hidden items-center md:flex">
             <Link href="/marketplace" className="btn-primary h-10 px-5 text-sm">
-              Explore pools
+              Connect wallet
             </Link>
           </div>
 
@@ -134,7 +124,7 @@ export function SiteHeader({ variant = 'light' }: SiteHeaderProps) {
               className="btn-primary mt-2 w-full"
               onClick={() => setMenuOpen(false)}
             >
-              Explore pools
+              Connect wallet
             </Link>
           </nav>
         </div>
