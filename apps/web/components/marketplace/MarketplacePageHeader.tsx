@@ -1,18 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { usePrivy } from '@privy-io/react-auth';
+import { useCantonWallet } from '../../providers/CantonWalletProvider';
 import { Reveal } from '../motion/Reveal';
 
 export function MarketplacePageHeader() {
-  const { ready, authenticated } = usePrivy();
-  const isSignedIn = ready && authenticated;
+  const { isConnected, partyId } = useCantonWallet();
+  const isWalletConnected = Boolean(isConnected && partyId);
 
   return (
     <Reveal as="header" className="mb-8 text-center">
-      {!isSignedIn ? <p className="section-label">Marketplace</p> : null}
+      {!isWalletConnected ? <p className="section-label">Marketplace</p> : null}
       <h1
-        className={`heading-section text-brand-black ${isSignedIn ? '' : 'mt-2'}`}
+        className={`heading-section text-brand-black ${isWalletConnected ? '' : 'mt-2'}`}
       >
         Fractional real estate opportunities
       </h1>

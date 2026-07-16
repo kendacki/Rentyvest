@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { usePrivy } from '@privy-io/react-auth';
 import { useState } from 'react';
 import { PageShell } from '../../components/layout/PageShell';
 import { Reveal } from '../../components/motion/Reveal';
@@ -28,8 +27,7 @@ function toTransferableNFT(token: UserEquityToken): TransferableNFT {
 
 export default function DashboardPage() {
   const { isMounted, isReady, isConnected, partyId } = useCantonWallet();
-  const { ready: privyReady, authenticated } = usePrivy();
-  const isSignedIn = privyReady && authenticated;
+  const isWalletConnected = Boolean(isConnected && partyId);
   const {
     tokens,
     count,
