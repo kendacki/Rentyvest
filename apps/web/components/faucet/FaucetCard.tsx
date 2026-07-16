@@ -326,7 +326,9 @@ export function FaucetCard() {
         </button>
 
         <p className="text-center text-xs text-slate-500">
-          Tokens are minted on Canton sandbox to the party shown above.
+          {isConnected && partyId
+            ? 'Claimed tUSDC goes directly to your wallet.'
+            : 'Connect a wallet to claim tUSDC.'}
         </p>
       </div>
     </article>
