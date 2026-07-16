@@ -138,14 +138,14 @@ const FEATURES: Array<{
 
 export function FeaturesSection() {
   return (
-    <section className="relative isolate overflow-hidden bg-black py-20 text-white sm:py-28">
+    <section className="relative isolate overflow-hidden bg-black pb-20 pt-12 text-white sm:pb-28 sm:pt-16">
       <Image
         src="/why-rentyvest-cityscape.png"
         alt=""
         fill
         quality={100}
         sizes="100vw"
-        className="object-contain object-center"
+        className="object-contain object-bottom"
         aria-hidden
       />
 
@@ -157,7 +157,7 @@ export function FeaturesSection() {
           </h2>
         </Reveal>
 
-        <Stagger className="mt-16 grid gap-5 sm:grid-cols-2">
+        <Stagger className="mt-24 grid gap-5 sm:mt-28 sm:grid-cols-2 lg:mt-32">
           {FEATURES.map(({ id, Icon, title, description }) => (
             <motion.article
               key={id}
