@@ -54,11 +54,11 @@ export function HowItWorksSection() {
         <Reveal className="max-w-2xl">
           <p className="section-label">How it works</p>
           <h2 className="heading-section mt-4 text-black">
-            Three steps from browser to on chain owner
+            Own your first slot in three steps
           </h2>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-neutral-600">
-            We stripped away the complexity of tokenized real estate. What
-            remains is a clear path: connect, choose, commit.
+            Connect, pick a pool, and pledge. Fractional real estate on Canton,
+            without the complexity.
           </p>
         </Reveal>
 
