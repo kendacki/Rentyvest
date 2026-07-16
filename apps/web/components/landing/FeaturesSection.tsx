@@ -138,7 +138,7 @@ const FEATURES: Array<{
 
 export function FeaturesSection() {
   return (
-    <section className="relative isolate overflow-hidden bg-black pb-20 pt-12 text-white sm:pb-28 sm:pt-16">
+    <section className="relative isolate overflow-hidden bg-black pb-20 pt-16 text-white sm:pb-28 sm:pt-20">
       <Image
         src="/why-rentyvest-cityscape.png"
         alt=""
