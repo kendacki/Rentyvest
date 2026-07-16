@@ -106,21 +106,16 @@ export function FeaturesSection() {
   return (
     <section className="bg-black py-20 text-white sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <Reveal className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <p className="section-label">Why RentyVest</p>
-            <h2 className="heading-section mt-4">
-              Infrastructure for the next generation of property investing
-            </h2>
-            <p className="mt-4 max-w-xl text-base leading-relaxed text-neutral-400">
-              Not another listing site. A full stack fractional platform with
-              ledger settlement, wallet native signing, and investor grade
-              transparency built in.
-            </p>
-          </div>
-          <Link href="/marketplace" className="btn-primary shrink-0">
-            Explore pools
-          </Link>
+        <Reveal className="max-w-2xl">
+          <p className="section-label">Why RentyVest</p>
+          <h2 className="heading-section mt-4">
+            Infrastructure for the next generation of property investing
+          </h2>
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-neutral-400">
+            Not another listing site. A full stack fractional platform with
+            ledger settlement, wallet native signing, and investor grade
+            transparency built in.
+          </p>
         </Reveal>
 
         <Stagger className="mt-16 grid gap-5 sm:grid-cols-2">
