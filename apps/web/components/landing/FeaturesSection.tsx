@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import type { ComponentType } from 'react';
@@ -122,14 +123,37 @@ const FEATURES = [
 
 export function FeaturesSection() {
   return (
-    <section className="bg-black py-20 text-white sm:py-28">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="relative isolate overflow-hidden py-20 text-white sm:py-28">
+      <Image
+        src="/why-rentyvest-bg.png"
+        alt=""
+        fill
+        quality={90}
+        sizes="100vw"
+        className="object-cover object-[center_35%]"
+        aria-hidden
+      />
+
+      <div
+        className="absolute inset-0 bg-black/65"
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/75 to-black/95"
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0 bg-[radial-gradient(ellipse_70%_55%_at_50%_20%,rgba(255,85,0,0.12),transparent)]"
+        aria-hidden
+      />
+
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Reveal className="max-w-2xl">
-          <p className="section-label">Why RentyVest</p>
-          <h2 className="heading-section mt-4">
+          <p className="section-label drop-shadow-sm">Why RentyVest</p>
+          <h2 className="heading-section mt-4 drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
             Infrastructure for the next generation of property investing
           </h2>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-neutral-400">
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-neutral-200 drop-shadow-[0_1px_10px_rgba(0,0,0,0.45)]">
             Not another listing site. A full stack fractional platform with
             ledger settlement, wallet native signing, and investor grade
             transparency built in.
@@ -141,11 +165,13 @@ export function FeaturesSection() {
             <motion.article
               key={number}
               variants={staggerItem}
-              className="card-dark p-8 transition-colors hover:border-brand-orange"
+              className="rounded-2xl border border-white/15 bg-black/50 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-colors hover:border-brand-orange/80 hover:bg-black/60"
             >
               <span className="text-sm font-bold text-brand-orange">{number}</span>
-              <h3 className="mt-5 text-xl font-bold tracking-tight">{title}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-neutral-400">
+              <h3 className="mt-5 text-xl font-bold tracking-tight text-white">
+                {title}
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-neutral-300">
                 {description}
               </p>
             </motion.article>
