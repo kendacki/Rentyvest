@@ -104,8 +104,7 @@ export function WalletConnectSignIn() {
   return (
     <article className="card-surface overflow-hidden">
       <div className="border-b border-neutral-900 bg-black px-5 py-6 text-white sm:px-6">
-        <p className="section-label">Sign in</p>
-        <h2 className="mt-1 text-2xl font-bold">Connect Canton Wallet</h2>
+        <h2 className="text-2xl font-bold">Connect Canton Wallet</h2>
         <p className="mt-3 text-sm text-neutral-400">
           Connect your wallet with WalletConnect to get started.
         </p>
