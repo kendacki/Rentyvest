@@ -12,11 +12,23 @@ loadEnvConfig(repoRoot);
 // core-api uses PORT=8080; Next.js must keep its default (3000).
 delete process.env.PORT;
 
-const coreApiUrl = (
-  process.env.NEXT_PUBLIC_CORE_API_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  'http://localhost:8080'
-).replace(/\/$/, '');
+function normalizeCoreApiUrl(raw) {
+  const trimmed = (raw ?? '').trim();
+  if (!trimmed) {
+    return 'http://localhost:8080';
+  }
+
+  const withProtocol =
+    trimmed.startsWith('http://') || trimmed.startsWith('https://')
+      ? trimmed
+      : `https://${trimmed}`;
+
+  return withProtocol.replace(/\/$/, '');
+}
+
+const coreApiUrl = normalizeCoreApiUrl(
+  process.env.NEXT_PUBLIC_CORE_API_URL ?? process.env.NEXT_PUBLIC_API_URL,
+);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
