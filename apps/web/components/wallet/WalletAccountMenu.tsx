@@ -12,7 +12,7 @@ function WalletPortrait({ label }: { label: string }) {
   return (
     <svg
       viewBox="0 0 40 40"
-      className="h-8 w-8"
+      className="block h-full w-full"
       aria-hidden
     >
       <defs>
@@ -22,9 +22,9 @@ function WalletPortrait({ label }: { label: string }) {
         </linearGradient>
       </defs>
       <circle cx="20" cy="20" r="20" fill="url(#wallet-portrait-gradient)" />
-      <circle cx="20" cy="15" r="5.5" fill="white" fillOpacity="0.95" />
+      <circle cx="20" cy="16" r="5.25" fill="white" fillOpacity="0.95" />
       <path
-        d="M9 33c0-5.5 4.5-10 11-10s11 4.5 11 10"
+        d="M10 33.5c0-5 4.5-9 10-9s10 4 10 9"
         fill="white"
         fillOpacity="0.95"
       />
