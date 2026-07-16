@@ -10,6 +10,12 @@ import {
   StepOwnershipIcon,
   StepWalletIcon,
 } from './HowItWorksIcons';
+import {
+  FeatureAuthIcon,
+  FeatureNftIcon,
+  FeaturePoolsIcon,
+  FeatureRealtimeIcon,
+} from './WhyRentyVestIcons';
 
 const STEPS: Array<{
   id: string;
@@ -94,32 +100,41 @@ export function HowItWorksSection() {
   );
 }
 
-const FEATURES = [
+const FEATURES: Array<{
+  id: string;
+  Icon: ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+}> = [
   {
-    number: '01',
+    id: 'pools',
+    Icon: FeaturePoolsIcon,
     title: 'Property pools',
     description:
       'Each asset is a Daml PropertyPool with fixed slots, transparent unit pricing, and deadlines enforced directly on the ledger.',
   },
   {
-    number: '02',
+    id: 'auth',
+    Icon: FeatureAuthIcon,
     title: 'Split authorization',
     description:
       'Investors sign wallet actions. The platform cosigns admin controlled exercises so pledges stay secure without sacrificing UX.',
   },
   {
-    number: '03',
+    id: 'nft',
+    Icon: FeatureNftIcon,
     title: 'Equity NFTs',
     description:
       'Every slot you buy mints a PropertyNFT tied to your party. Verifiable ownership, transferable stakes, yield ready design.',
   },
   {
-    number: '04',
+    id: 'realtime',
+    Icon: FeatureRealtimeIcon,
     title: 'Realtime marketplace',
     description:
       'Supabase Realtime pushes slot fill updates instantly. You always see the true state of a pool before you pledge.',
   },
-] as const;
+];
 
 export function FeaturesSection() {
   return (
@@ -161,13 +176,15 @@ export function FeaturesSection() {
         </Reveal>
 
         <Stagger className="mt-16 grid gap-5 sm:grid-cols-2">
-          {FEATURES.map(({ number, title, description }) => (
+          {FEATURES.map(({ id, Icon, title, description }) => (
             <motion.article
-              key={number}
+              key={id}
               variants={staggerItem}
-              className="rounded-2xl border border-white/15 bg-black/50 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-colors hover:border-brand-orange/80 hover:bg-black/60"
+              className="rounded-2xl border border-white/25 bg-black/35 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.35)] backdrop-blur-md transition-colors hover:border-brand-orange hover:bg-black/45"
             >
-              <span className="text-sm font-bold text-brand-orange">{number}</span>
+              <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-brand-orange/30 bg-brand-orange/15 text-brand-orange shadow-[0_0_24px_rgba(255,85,0,0.15)]">
+                <Icon className="h-8 w-8" />
+              </div>
               <h3 className="mt-5 text-xl font-bold tracking-tight text-white">
                 {title}
               </h3>
