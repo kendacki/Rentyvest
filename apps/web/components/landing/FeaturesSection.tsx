@@ -7,7 +7,7 @@ import type { ComponentType } from 'react';
 import { Reveal, Stagger, staggerItem } from '../motion/Reveal';
 import {
   StepBuildingIcon,
-  StepOwnershipIcon,
+  StepBuyPropertyIcon,
   StepWalletIcon,
 } from './HowItWorksIcons';
 import {
@@ -44,9 +44,9 @@ const STEPS: Array<{
     cta: 'Browse marketplace',
   },
   {
-    id: 'slot',
-    Icon: StepOwnershipIcon,
-    title: 'Own your slot',
+    id: 'buy',
+    Icon: StepBuyPropertyIcon,
+    title: 'Buy a Property',
     description:
       'Pledge tUSDC, receive a PropertyNFT, and track holdings in your portfolio. Transfer equity to another party when you are ready.',
     href: '/dashboard',

@@ -1,4 +1,4 @@
-/* Lucide Icons (ISC) — wallet + building. Tabler Icons (MIT) ticket + custom ownership marks. */
+/* Lucide Icons (ISC) — wallet + building. Tabler Icons (MIT) — home-dollar. */
 
 type StepIconProps = {
   className?: string;
@@ -45,7 +45,7 @@ export function StepBuildingIcon({ className = 'h-11 w-11' }: StepIconProps) {
   );
 }
 
-export function StepOwnershipIcon({ className = 'h-11 w-11' }: StepIconProps) {
+export function StepBuyPropertyIcon({ className = 'h-11 w-11' }: StepIconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -58,16 +58,10 @@ export function StepOwnershipIcon({ className = 'h-11 w-11' }: StepIconProps) {
       className={className}
       aria-hidden
     >
-      <path d="M15 5v2" />
-      <path d="M15 11v2" />
-      <path d="M15 17v2" />
-      <path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V7a2 2 0 0 1 2-2" />
-      <path
-        d="M12 7.5 10.5 8.75V10.5h3V8.75L12 7.5z"
-        strokeWidth="1.75"
-      />
-      <path d="M10.25 10.5h3.5" strokeWidth="1.75" />
-      <path d="M9.5 16.75 11 18.25 14.75 14.5" strokeWidth="2.25" />
+      <path d="M19 10 12 3 3 12h2v7a2 2 0 0 0 2 2h6" />
+      <path d="M9 21v-6a2 2 0 0 1 2-2h2c.387 0 .748.11 1.054.3" />
+      <path d="M21 15h-2.5a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3H21" />
+      <path d="M19 21v1M19 13v1" />
     </svg>
   );
 }
