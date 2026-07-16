@@ -1,6 +1,5 @@
 'use client';
 
-import { truncatePartyId } from '../../lib/format';
 import { useCantonWallet } from '../../providers/CantonWalletProvider';
 
 function Spinner() {

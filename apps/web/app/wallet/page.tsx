@@ -43,7 +43,7 @@ export default function WalletPage() {
             ) : (
               <section className="card-surface border-dashed p-8 text-center">
                 <p className="text-sm text-neutral-600">
-                  Connect a Canton wallet above to unlock the tUSDC faucet.
+                  Connect a wallet to unlock the tUSDC faucet.
                 </p>
               </section>
             )}
