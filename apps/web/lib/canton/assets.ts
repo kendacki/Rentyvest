@@ -44,7 +44,7 @@ function mapLedgerAsset(
 }
 
 /**
- * Query Test USDC `Asset` holdings from the Seaport participant via `@c7/ledger`.
+ * Query tUSDC `Asset` holdings from the Seaport participant via `@c7/ledger`.
  */
 export async function fetchLedgerUserAssets(
   userToken: string,

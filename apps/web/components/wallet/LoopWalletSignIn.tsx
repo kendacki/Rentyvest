@@ -59,7 +59,7 @@ export function LoopWalletSignIn() {
           </p>
           <h2 className="mt-1 text-xl font-bold text-slate-900">Loop Wallet</h2>
           <p className="mt-2 text-sm text-slate-600">
-            Your Canton party is linked. You can claim test USDC and fund pledges
+            Your Canton party is linked. You can claim tUSDC and fund pledges
             on DevNet.
           </p>
         </div>
@@ -124,7 +124,7 @@ export function LoopWalletSignIn() {
           </li>
           <li className="flex gap-2">
             <span className="font-semibold text-emerald-600">3.</span>
-            Claim test USDC from the faucet to start pledging
+            Claim tUSDC from the faucet to start pledging
           </li>
         </ul>
 

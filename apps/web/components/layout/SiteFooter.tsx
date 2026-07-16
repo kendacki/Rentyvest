@@ -9,7 +9,7 @@ const FOOTER_LINKS = {
   ],
   Platform: [
     { href: '/marketplace', label: 'Property pools' },
-    { href: '/wallet', label: 'Test USDC faucet' },
+    { href: '/wallet', label: 'tUSDC faucet' },
     { href: '/dashboard', label: 'Equity NFTs' },
   ],
 } as const;

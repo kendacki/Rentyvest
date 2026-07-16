@@ -54,7 +54,7 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, ease, delay: 0.1 }}
           >
-            Browse live property pools, pledge test USDC per slot, and own
+            Browse live property pools, pledge tUSDC per slot, and own
             equity NFTs on Canton.
           </motion.p>
 

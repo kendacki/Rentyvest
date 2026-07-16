@@ -9,12 +9,12 @@ const FAQS = [
   {
     question: 'What exactly is RentyVest?',
     answer:
-      'A fractional real estate platform on Canton Network. You browse property pools, pledge test USDC per slot, and receive on chain PropertyNFTs that represent your equity stake.',
+      'A fractional real estate platform on Canton Network. You browse property pools, pledge tUSDC per slot, and receive on chain PropertyNFTs that represent your equity stake.',
   },
   {
     question: 'What wallet do I need?',
     answer:
-      'Any CIP 103 compatible Canton wallet. Connect through WalletConnect on the sandbox network, then claim test USDC from our faucet before making your first pledge.',
+      'Any CIP 103 compatible Canton wallet. Connect through WalletConnect on the sandbox network, then claim tUSDC from our faucet before making your first pledge.',
   },
   {
     question: 'How does a property pool work?',
@@ -24,7 +24,7 @@ const FAQS = [
   {
     question: 'Is this real money?',
     answer:
-      'No. RentyVest runs on Canton DevNet with test USDC (tUSDC). This is a demonstration environment, not a regulated investment product.',
+    'No. RentyVest runs on Canton DevNet with tUSDC. This is a demonstration environment, not a regulated investment product.',
   },
   {
     question: 'Can I sell or transfer my stake?',
@@ -99,7 +99,7 @@ export function CtaSection() {
           Your first slot is one pledge away
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-white/90">
-          Connect via WalletConnect, grab test USDC from the faucet, and explore
+          Connect via WalletConnect, grab tUSDC from the faucet, and explore
           live property pools on Canton DevNet with no minimum beyond a single
           slot.
         </p>
@@ -108,7 +108,7 @@ export function CtaSection() {
             Browse marketplace
           </Link>
           <Link href="/wallet" className="btn-outline-light border-white/80">
-            Get test USDC
+            Get tUSDC
           </Link>
         </div>
       </div>

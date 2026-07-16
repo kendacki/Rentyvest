@@ -32,7 +32,7 @@ export function ConnectWalletFallback() {
           href="/wallet"
           className="font-semibold text-brand-orange hover:underline"
         >
-          Get test USDC
+          Get tUSDC
         </Link>
       </p>
     </section>

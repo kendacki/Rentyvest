@@ -14,7 +14,7 @@ type ProblemDetails = {
 };
 
 /**
- * Mint test USDC via core-api M2M (admin signs on Canton).
+ * Mint tUSDC via core-api M2M (admin signs on Canton).
  * Loop wallet is used only to connect and supply the recipient party id.
  */
 export async function claimFaucetViaBackend(

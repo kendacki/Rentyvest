@@ -12,7 +12,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'RentyVest | Fractional Real Estate on Canton',
   description:
-    'Browse property pools, pledge per slot with test USDC, and hold on chain equity NFTs on Canton Network.',
+    'Browse property pools, pledge per slot with tUSDC, and hold on chain equity NFTs on Canton Network.',
   icons: {
     icon: [{ url: '/logo.png', type: 'image/png' }],
     apple: [{ url: '/logo.png', type: 'image/png' }],

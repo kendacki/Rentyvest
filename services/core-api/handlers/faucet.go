@@ -94,7 +94,7 @@ func (h *FaucetHandler) PrepareClaim(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if h.cantonClient == nil || !h.cantonClient.USDCIssuerConfigured() {
-		problems.WriteCode(w, http.StatusServiceUnavailable, "RV-5001", "Service Unavailable", "Test USDC faucet is not configured on this deployment")
+		problems.WriteCode(w, http.StatusServiceUnavailable, "RV-5001", "Service Unavailable", "tUSDC faucet is not configured on this deployment")
 		return
 	}
 
@@ -117,7 +117,7 @@ func (h *FaucetHandler) PrepareClaim(w http.ResponseWriter, r *http.Request) {
 		if fallback := strings.TrimSpace(h.issuerCID); fallback != "" {
 			issuerContractID = fallback
 		} else {
-			problems.WriteCode(w, http.StatusBadGateway, "RV-4002", "Bad Gateway", "Unable to resolve test USDC issuer on Canton")
+			problems.WriteCode(w, http.StatusBadGateway, "RV-4002", "Bad Gateway", "Unable to resolve tUSDC issuer on Canton")
 			return
 		}
 	}
@@ -301,7 +301,7 @@ func (h *FaucetHandler) ListAssetsByParty(w http.ResponseWriter, r *http.Request
 func (h *FaucetHandler) ClaimUSDC(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.Header().Set("Allow", http.MethodPost)
-		problems.Write(w, http.StatusMethodNotAllowed, "Method Not Allowed", "Use POST to claim DevNet test USDC")
+		problems.Write(w, http.StatusMethodNotAllowed, "Method Not Allowed", "Use POST to claim DevNet tUSDC")
 		return
 	}
 
@@ -311,7 +311,7 @@ func (h *FaucetHandler) ClaimUSDC(w http.ResponseWriter, r *http.Request) {
 			http.StatusServiceUnavailable,
 			"RV-5001",
 			"Service Unavailable",
-			"Test USDC faucet is not configured on this deployment",
+			"tUSDC faucet is not configured on this deployment",
 		)
 		return
 	}

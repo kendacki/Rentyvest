@@ -119,7 +119,7 @@ export async function claimFaucetViaLoop(
         },
       ],
     },
-    { message: 'Approve test USDC faucet claim in Loop' },
+    { message: 'Approve tUSDC faucet claim in Loop' },
   );
 
   const holdingContractId = findCreatedAssetContractId(loopResult.update_data);

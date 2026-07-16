@@ -179,7 +179,7 @@ export function PledgeModal({
 
   const handleSubmit = async () => {
     if (!selectedAsset) {
-      setSubmitError('Select a Test USDC holding with sufficient balance');
+      setSubmitError('Select a tUSDC holding with sufficient balance');
       return;
     }
 
@@ -266,7 +266,7 @@ export function PledgeModal({
 
           <div className="border-b border-slate-200 px-5 pb-4 pt-3 sm:px-6">
             <Dialog.Title className="text-lg font-semibold text-slate-900">
-              Pledge with Test USDC
+              Pledge with tUSDC
             </Dialog.Title>
             <Dialog.Description className="mt-1 text-sm text-slate-600">
               {property.title}, {formatCurrency(property.unit_price)} per slot
@@ -354,7 +354,7 @@ export function PledgeModal({
 
                 {isLoading ? (
                   <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                    Loading Test USDC holdings...
+                    Loading tUSDC holdings...
                   </div>
                 ) : error ? (
                   <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
@@ -362,7 +362,7 @@ export function PledgeModal({
                   </div>
                 ) : assets.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                    No Test USDC holdings found. Claim test tokens from the faucet
+                    No tUSDC holdings found. Claim tUSDC from the faucet
                     first.
                   </div>
                 ) : (

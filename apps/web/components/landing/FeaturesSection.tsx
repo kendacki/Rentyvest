@@ -23,7 +23,7 @@ const STEPS: Array<{
     Icon: StepWalletIcon,
     title: 'Connect and fund',
     description:
-      'Pair your Canton wallet through WalletConnect, then claim test USDC from the in app faucet. No mainnet funds required.',
+      'Pair your Canton wallet through WalletConnect, then claim tUSDC from the in app faucet. No mainnet funds required.',
     href: '/marketplace',
     cta: 'Connect wallet',
   },

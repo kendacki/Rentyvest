@@ -24,7 +24,7 @@ export type SubmitPledgeTxParams = {
   poolContractId: string;
   /** Buyer's ledger party ID (from token exchange or Privy-linked profile). */
   buyerPartyId: string;
-  /** Buyer's unlocked Test USDC `Asset` contract ID. */
+  /** Buyer's unlocked tUSDC `Asset` contract ID. */
   paymentAssetCid: string;
   /** Number of fractional slots to pledge. */
   slotCount: number;
