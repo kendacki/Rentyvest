@@ -118,9 +118,6 @@ export default function DashboardPage() {
               <p className="mt-2 text-lg font-semibold text-brand-black">
                 Canton DevNet
               </p>
-              <p className="text-xs text-neutral-500">
-                Signed via WalletConnect
-              </p>
             </div>
           </Reveal>
 
