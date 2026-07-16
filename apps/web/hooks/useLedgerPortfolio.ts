@@ -9,7 +9,7 @@ import {
   type PledgeExecutionResult,
   type UserEquityToken,
 } from '@rentyvest/ledger-client';
-import { useCantonWallet } from '../providers/WalletConnectProvider';
+import { useCantonWallet } from '../providers/CantonWalletProvider';
 
 type UseLedgerPortfolioOptions = {
   enabled?: boolean;

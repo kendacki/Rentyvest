@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { formatNaira, truncatePartyId } from '../../lib/format';
 import { transferNFTWithWallet } from '../../lib/nft-transfer';
-import { useCantonWallet } from '../../providers/WalletConnectProvider';
+import { useCantonWallet } from '../../providers/CantonWalletProvider';
 import type { TransferableNFT } from '../../types/nft';
 
 const PRIMARY_ORANGE = '#F97316';

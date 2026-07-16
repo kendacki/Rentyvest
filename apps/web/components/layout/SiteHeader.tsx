@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { BrandLogo } from '../brand/BrandLogo';
-import { ConnectWalletButton } from '../wallet/ConnectWalletButton';
+import { WalletAccountMenu } from '../wallet/WalletAccountMenu';
 
 const NAV_LINKS = [
   { href: '/marketplace', label: 'Marketplace' },
@@ -62,7 +62,7 @@ export function SiteHeader({ variant = 'light' }: SiteHeaderProps) {
 
         <div className="flex flex-1 items-center justify-end gap-3">
           <div className="hidden items-center md:flex">
-            <ConnectWalletButton className="btn-primary h-10 px-5 text-sm" />
+            <WalletAccountMenu variant={isDark ? 'dark' : 'light'} />
           </div>
 
           <button
@@ -118,10 +118,9 @@ export function SiteHeader({ variant = 'light' }: SiteHeaderProps) {
                 {label}
               </Link>
             ))}
-            <ConnectWalletButton
-              className="btn-primary mt-2 w-full"
-              onConnected={() => setMenuOpen(false)}
-            />
+            <div className="mt-2">
+              <WalletAccountMenu variant={isDark ? 'dark' : 'light'} />
+            </div>
           </nav>
         </div>
       ) : null}

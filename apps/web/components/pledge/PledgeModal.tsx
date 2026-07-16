@@ -13,7 +13,7 @@ import { submitPledgeTx } from '../../lib/canton/client';
 import { formatCantonError } from '../../lib/canton/errors';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { useUserAssets } from '../../hooks/useUserAssets';
-import { useCantonWallet } from '../../providers/WalletConnectProvider';
+import { useCantonWallet } from '../../providers/CantonWalletProvider';
 import { ConnectWalletButton } from '../wallet/ConnectWalletButton';
 import {
   getSlotsRemaining,

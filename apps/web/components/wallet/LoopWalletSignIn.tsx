@@ -1,7 +1,7 @@
 'use client';
 
 import { truncatePartyId } from '../../lib/format';
-import { useLoopWallet } from '../providers/LoopWalletProvider';
+import { useCantonWallet } from '../../providers/CantonWalletProvider';
 
 function Spinner() {
   return (
@@ -30,21 +30,24 @@ function Spinner() {
 
 export function LoopWalletSignIn() {
   const {
+    isMounted,
     isReady,
     isConnecting,
     isConnected,
     partyId,
     email,
-    connect,
+    walletLabel,
+    walletSource,
+    openConnect,
     disconnect,
-  } = useLoopWallet();
+  } = useCantonWallet();
 
-  if (!isReady) {
+  if (!isMounted || !isReady) {
     return (
       <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-center gap-3 py-8 text-sm text-slate-600">
           <Spinner />
-          <span>Preparing Loop wallet…</span>
+          <span>Preparing wallet session…</span>
         </div>
       </article>
     );
@@ -57,7 +60,9 @@ export function LoopWalletSignIn() {
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
             Connected
           </p>
-          <h2 className="mt-1 text-xl font-bold text-slate-900">Loop Wallet</h2>
+          <h2 className="mt-1 text-xl font-bold text-slate-900">
+            {walletLabel ?? 'Canton Wallet'}
+          </h2>
           <p className="mt-2 text-sm text-slate-600">
             Your Canton party is linked. You can claim tUSDC and fund pledges
             on DevNet.
@@ -65,14 +70,14 @@ export function LoopWalletSignIn() {
         </div>
 
         <div className="space-y-4 px-5 py-5 sm:px-6">
-          {email && (
+          {email ? (
             <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                Loop account
+                {walletSource === 'loop' ? 'Loop account' : 'Account'}
               </p>
               <p className="mt-1 text-sm font-medium text-slate-900">{email}</p>
             </div>
-          )}
+          ) : null}
 
           <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
@@ -88,10 +93,12 @@ export function LoopWalletSignIn() {
 
           <button
             type="button"
-            onClick={disconnect}
+            onClick={() => {
+              void disconnect();
+            }}
             className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
           >
-            Disconnect Loop wallet
+            Disconnect wallet
           </button>
         </div>
       </article>
@@ -104,11 +111,10 @@ export function LoopWalletSignIn() {
         <p className="text-xs font-semibold uppercase tracking-wide text-emerald-300">
           Sign in required
         </p>
-        <h2 className="mt-1 text-2xl font-bold">Connect Loop Wallet</h2>
+        <h2 className="mt-1 text-2xl font-bold">Connect your Canton wallet</h2>
         <p className="mt-3 text-sm text-slate-200">
-          RentyVest uses Loop on Canton DevNet for identity and on-ledger
-          actions. Scan the QR code or approve the connection in your Loop
-          browser extension.
+          Loop is recommended on DevNet. You can also connect any Canton wallet
+          via WalletConnect — no QR scan inside RentyVest.
         </p>
       </div>
 
@@ -116,11 +122,11 @@ export function LoopWalletSignIn() {
         <ul className="space-y-2 text-sm text-slate-600">
           <li className="flex gap-2">
             <span className="font-semibold text-emerald-600">1.</span>
-            Install Loop on mobile or desktop at cantonloop.com
+            Choose Loop (recommended) or another Canton wallet
           </li>
           <li className="flex gap-2">
             <span className="font-semibold text-emerald-600">2.</span>
-            Tap connect below and approve the DevNet session
+            Approve the connection in your wallet popup or extension
           </li>
           <li className="flex gap-2">
             <span className="font-semibold text-emerald-600">3.</span>
@@ -130,19 +136,17 @@ export function LoopWalletSignIn() {
 
         <button
           type="button"
-          onClick={() => {
-            void connect();
-          }}
+          onClick={openConnect}
           disabled={isConnecting}
           className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
         >
           {isConnecting ? (
             <>
               <Spinner />
-              <span>Waiting for Loop approval…</span>
+              <span>Waiting for wallet approval…</span>
             </>
           ) : (
-            'Connect Loop Wallet'
+            'Connect wallet'
           )}
         </button>
       </div>

@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { ConnectWalletButton } from '../wallet/ConnectWalletButton';
-import { useWalletConnect } from '../../providers/WalletConnectProvider';
+import { useCantonWallet } from '../../providers/CantonWalletProvider';
 
 export function MarketplaceWalletBanner() {
-  const { isMounted, isReady, isConnected, partyId } = useWalletConnect();
+  const { isMounted, isReady, isConnected, partyId } = useCantonWallet();
 
   if (!isMounted || !isReady || (isConnected && partyId)) {
     return null;
@@ -18,7 +18,7 @@ export function MarketplaceWalletBanner() {
           Connect your Canton wallet to get started
         </p>
         <p className="mt-1 text-sm text-neutral-600">
-          Link WalletConnect, claim tUSDC from the faucet, then pledge on any
+          Link Loop or another Canton wallet, claim tUSDC from the faucet, then pledge on any
           live property pool.
         </p>
       </div>

@@ -8,7 +8,7 @@ import { TransferModal } from '../../components/nft/TransferModal';
 import { ConnectWalletFallback } from '../../components/portfolio/ConnectWalletFallback';
 import { PortfolioGrid } from '../../components/portfolio/PortfolioGrid';
 import { PortfolioPledgeModal } from '../../components/portfolio/PledgeModal';
-import { useCantonWallet } from '../../providers/WalletConnectProvider';
+import { useCantonWallet } from '../../providers/CantonWalletProvider';
 import { useLedgerPortfolio } from '../../hooks/useLedgerPortfolio';
 import { formatTokenBalance, truncatePartyId } from '../../lib/format';
 import type { UserEquityToken } from '@rentyvest/ledger-client';

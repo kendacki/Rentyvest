@@ -48,7 +48,13 @@ function resolvePartyId(accounts: Array<{ partyId?: string }>): string | null {
   return accounts.find((account) => account.partyId)?.partyId ?? null;
 }
 
-export function WalletConnectProvider({ children }: { children: ReactNode }) {
+export function WalletConnectProvider({
+  children,
+  suppressQrModal = false,
+}: {
+  children: ReactNode;
+  suppressQrModal?: boolean;
+}) {
   const [isMounted, setIsMounted] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -126,7 +132,9 @@ export function WalletConnectProvider({ children }: { children: ReactNode }) {
           metadata: getWalletConnectMetadata(),
           onUri: (uri) => {
             setWcUri(uri);
-            setShowQrModal(true);
+            if (!suppressQrModal) {
+              setShowQrModal(true);
+            }
           },
         });
 
@@ -159,7 +167,7 @@ export function WalletConnectProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [isMounted, syncSessionState]);
+  }, [isMounted, syncSessionState, suppressQrModal]);
 
   const cancelConnect = useCallback(async () => {
     connectCancelledRef.current = true;
@@ -188,7 +196,9 @@ export function WalletConnectProvider({ children }: { children: ReactNode }) {
     connectCancelledRef.current = false;
     setIsConnecting(true);
     setWcUri(null);
-    setShowQrModal(true);
+    if (!suppressQrModal) {
+      setShowQrModal(true);
+    }
 
     try {
       await client.connect();
@@ -224,7 +234,7 @@ export function WalletConnectProvider({ children }: { children: ReactNode }) {
 
       connectCancelledRef.current = false;
     }
-  }, [initError, syncSessionState]);
+  }, [initError, syncSessionState, suppressQrModal]);
 
   const disconnect = useCallback(async () => {
     const client = dappClientRef.current;
@@ -285,7 +295,7 @@ export function WalletConnectProvider({ children }: { children: ReactNode }) {
   return (
     <WalletConnectContext.Provider value={value}>
       {children}
-      {isMounted && (
+      {isMounted && !suppressQrModal ? (
         <WalletConnectQrModal
           open={showQrModal}
           uri={wcUri}
@@ -294,7 +304,7 @@ export function WalletConnectProvider({ children }: { children: ReactNode }) {
             void cancelConnect();
           }}
         />
-      )}
+      ) : null}
     </WalletConnectContext.Provider>
   );
 }
@@ -310,5 +320,3 @@ export function useWalletConnect(): WalletConnectContextValue {
 
   return context;
 }
-
-export const useCantonWallet = useWalletConnect;

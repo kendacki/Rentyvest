@@ -1,28 +1,16 @@
 'use client';
 
-import Link from 'next/link';
 import { useCallback, useState } from 'react';
-import { truncatePartyId } from '../../lib/format';
-import { useWalletConnect } from '../../providers/WalletConnectProvider';
+import { useCantonWallet } from '../../providers/CantonWalletProvider';
 
 type ConnectWalletButtonProps = {
   className?: string;
-  connectedClassName?: string;
-  connectedHref?: string;
   label?: string;
-  connectedLabel?: string;
-  showPartyWhenConnected?: boolean;
-  onConnected?: (partyId: string) => void;
 };
 
 export function ConnectWalletButton({
   className = 'btn-primary',
-  connectedClassName = 'btn-secondary',
-  connectedHref = '/wallet',
   label = 'Connect wallet',
-  connectedLabel = 'Wallet connected',
-  showPartyWhenConnected = false,
-  onConnected,
 }: ConnectWalletButtonProps) {
   const {
     isMounted,
@@ -31,26 +19,14 @@ export function ConnectWalletButton({
     isConnected,
     partyId,
     initError,
-    connect,
-  } = useWalletConnect();
+    openConnect,
+  } = useCantonWallet();
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const handleConnect = useCallback(async () => {
+  const handleConnect = useCallback(() => {
     setActionError(null);
-
-    try {
-      const resolvedPartyId = await connect();
-      if (resolvedPartyId) {
-        onConnected?.(resolvedPartyId);
-      }
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Unable to start WalletConnect session';
-      setActionError(message);
-    }
-  }, [connect, onConnected]);
+    openConnect();
+  }, [openConnect]);
 
   if (!isMounted || !isReady) {
     return (
@@ -62,31 +38,26 @@ export function ConnectWalletButton({
 
   if (initError) {
     return (
-      <Link href="/wallet" className={className} title={initError}>
-        Set up wallet
-      </Link>
+      <button
+        type="button"
+        onClick={handleConnect}
+        className={className}
+        title={initError}
+      >
+        Connect wallet
+      </button>
     );
   }
 
   if (isConnected && partyId) {
-    const text = showPartyWhenConnected
-      ? truncatePartyId(partyId, 8, 6)
-      : connectedLabel;
-
-    return (
-      <Link href={connectedHref} className={connectedClassName} title={partyId}>
-        {text}
-      </Link>
-    );
+    return null;
   }
 
   return (
     <span className="inline-flex flex-col items-stretch gap-1">
       <button
         type="button"
-        onClick={() => {
-          void handleConnect();
-        }}
+        onClick={handleConnect}
         disabled={isConnecting}
         className={`${className} disabled:cursor-not-allowed disabled:opacity-70`}
       >

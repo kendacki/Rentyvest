@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { formatTokenBalance } from '../../lib/format';
 import { claimFaucetViaBackend } from '../../lib/faucet/backendMint';
-import { useCantonWallet } from '../../providers/WalletConnectProvider';
+import { useCantonWallet } from '../../providers/CantonWalletProvider';
 import { sumAssetBalances } from '../../types/asset';
 import type { UserTokenAsset } from '../../types/asset';
 
@@ -170,7 +170,7 @@ export function FaucetCard() {
     isConnected,
     isConnecting,
     partyId,
-    connect,
+    openConnect,
   } = useCantonWallet();
 
   const [assets, setAssets] = useState<UserTokenAsset[]>([]);
@@ -232,19 +232,16 @@ export function FaucetCard() {
   }, [toast]);
 
   const handleClaim = useCallback(async () => {
-    let activePartyId = partyId;
-
-    if (!activePartyId) {
-      activePartyId = await connect();
-    }
-
-    if (!activePartyId) {
+    if (!partyId) {
+      openConnect();
       setToast({
         type: 'error',
         message: 'Connect your Canton wallet to claim tUSDC.',
       });
       return;
     }
+
+    const activePartyId = partyId;
 
     setIsClaiming(true);
     setToast(null);
@@ -268,7 +265,7 @@ export function FaucetCard() {
     } finally {
       setIsClaiming(false);
     }
-  }, [connect, partyId, refetchBalance]);
+  }, [openConnect, partyId, refetchBalance]);
 
   return (
     <article className="card-surface overflow-hidden">

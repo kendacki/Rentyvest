@@ -5,8 +5,8 @@ import { FaucetCard } from '../../components/faucet/FaucetCard';
 import { PageShell } from '../../components/layout/PageShell';
 import { Reveal } from '../../components/motion/Reveal';
 import { AccountSetupBanner } from '../../components/wallet/AccountSetupBanner';
-import { WalletConnectSignIn } from '../../components/wallet/WalletConnectSignIn';
-import { useCantonWallet } from '../../providers/WalletConnectProvider';
+import { LoopWalletSignIn } from '../../components/wallet/LoopWalletSignIn';
+import { useCantonWallet } from '../../providers/CantonWalletProvider';
 
 const HAS_PRIVY = Boolean(
   (process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? '').trim(),
@@ -24,7 +24,7 @@ export default function WalletPage() {
               tUSDC on Canton DevNet
             </h1>
             <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-neutral-600">
-              Connect via WalletConnect on the sandbox network, then claim tUSDC
+              Connect Loop or another Canton wallet on DevNet, then claim tUSDC
               minted directly to your connected party.
             </p>
           </Reveal>
@@ -36,14 +36,14 @@ export default function WalletPage() {
           ) : null}
 
           <Reveal className="space-y-6" delay={0.08}>
-            <WalletConnectSignIn />
+            <LoopWalletSignIn />
 
             {isMounted && isConnected ? (
               <FaucetCard />
             ) : (
               <section className="card-surface border-dashed p-8 text-center">
                 <p className="text-sm text-neutral-600">
-                  Connect via WalletConnect above to unlock the tUSDC faucet.
+                  Connect a Canton wallet above to unlock the tUSDC faucet.
                 </p>
               </section>
             )}

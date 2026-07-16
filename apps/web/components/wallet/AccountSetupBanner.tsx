@@ -3,7 +3,7 @@
 import { usePrivy } from '@privy-io/react-auth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
-import { useWalletConnect } from '../../providers/WalletConnectProvider';
+import { useCantonWallet } from '../../providers/CantonWalletProvider';
 
 type AccountSetupBannerProps = {
   variant?: 'inline' | 'card';
@@ -17,7 +17,7 @@ export function AccountSetupBanner({
   const redirectPath = searchParams.get('redirect');
   const authRequired = searchParams.get('reason') === 'auth_required';
 
-  const { isConnected, partyId } = useWalletConnect();
+  const { isConnected, partyId } = useCantonWallet();
   const { ready, authenticated, login } = usePrivy();
 
   useEffect(() => {

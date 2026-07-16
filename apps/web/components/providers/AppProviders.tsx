@@ -3,7 +3,7 @@
 import { PrivyProvider } from '@privy-io/react-auth';
 import type { ReactNode } from 'react';
 import { SupabaseAuthProvider } from '../../hooks/useSupabaseAuth';
-import { WalletConnectProvider } from '../../providers/WalletConnectProvider';
+import { CantonWalletProvider } from '../../providers/CantonWalletProvider';
 
 type AppProvidersProps = {
   children: ReactNode;
@@ -23,7 +23,7 @@ export function AppProviders({ children }: AppProvidersProps) {
   }
 
   const content = (
-    <WalletConnectProvider>{children}</WalletConnectProvider>
+    <CantonWalletProvider>{children}</CantonWalletProvider>
   );
 
   if (!privyAppId) {
