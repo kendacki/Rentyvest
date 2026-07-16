@@ -36,11 +36,11 @@ export function MarketplaceGrid() {
 
   if (properties.length === 0) {
     return (
-      <section className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
-        <h2 className="text-lg font-semibold text-slate-900">
+      <section className="card-surface p-10 text-center">
+        <h2 className="text-lg font-semibold text-brand-black">
           No active listings yet
         </h2>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-neutral-600">
           Check back soon for new fractional real estate opportunities.
         </p>
       </section>
@@ -50,20 +50,20 @@ export function MarketplaceGrid() {
   return (
     <section aria-label="Active property listings">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-neutral-600">
           {properties.length} active{' '}
           {properties.length === 1 ? 'listing' : 'listings'}
         </p>
         <span
           className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ${
             isRealtimeConnected
-              ? 'bg-emerald-50 text-emerald-700'
+              ? 'bg-brand-orange-light text-brand-orange-dark'
               : 'bg-amber-50 text-amber-700'
           }`}
         >
           <span
             className={`h-2 w-2 rounded-full ${
-              isRealtimeConnected ? 'bg-emerald-500' : 'bg-amber-500'
+              isRealtimeConnected ? 'bg-brand-orange' : 'bg-amber-500'
             }`}
             aria-hidden="true"
           />

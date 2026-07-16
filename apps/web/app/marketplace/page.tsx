@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { MarketplaceGrid } from '../../components/marketplace/MarketplaceGrid';
+import { PageShell } from '../../components/layout/PageShell';
 
 export const metadata = {
   title: 'Marketplace | RentyVest',
@@ -8,33 +9,30 @@ export const metadata = {
 
 export default function MarketplacePage() {
   return (
-    <main className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <header className="mb-6 sm:mb-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-sm font-medium uppercase tracking-wide text-emerald-700">
-                Marketplace
-              </p>
-              <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                Fractional real estate opportunities
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm text-slate-600 sm:text-base">
-                Invest per-slot in vetted properties. Slot availability updates in
-                real time as investors pledge.
-              </p>
+    <PageShell>
+      <main className="bg-neutral-50">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+          <header className="mb-8">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="section-label">Marketplace</p>
+                <h1 className="heading-section mt-2 text-brand-black">
+                  Fractional real estate opportunities
+                </h1>
+                <p className="mt-3 max-w-2xl text-base text-neutral-600">
+                  Invest per-slot in vetted properties. Slot availability updates
+                  in real time as investors pledge on Canton.
+                </p>
+              </div>
+              <Link href="/wallet" className="btn-secondary shrink-0">
+                Wallet &amp; faucet
+              </Link>
             </div>
-            <Link
-              href="/wallet"
-              className="inline-flex h-11 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50"
-            >
-              Wallet & faucet
-            </Link>
-          </div>
-        </header>
+          </header>
 
-        <MarketplaceGrid />
-      </div>
-    </main>
+          <MarketplaceGrid />
+        </div>
+      </main>
+    </PageShell>
   );
 }

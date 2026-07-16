@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { PageShell } from '../../../components/layout/PageShell';
 import { PledgeModal } from '../../../components/pledge/PledgeModal';
 import { usePropertySlots } from '../../../hooks/usePropertySlots';
 
@@ -19,60 +20,81 @@ export default function PledgePage() {
 
   if (isLoading) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
-        <p className="text-sm text-slate-600">Loading property...</p>
-      </main>
+      <PageShell>
+        <main className="mx-auto flex min-h-[50vh] max-w-3xl items-center justify-center px-4">
+          <p className="text-sm text-neutral-600">Loading property…</p>
+        </main>
+      </PageShell>
     );
   }
 
   if (error) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-4 px-4 text-center">
-        <p className="text-sm text-red-600">{error}</p>
-        <Link href="/marketplace" className="text-sm font-semibold text-slate-900">
-          Back to marketplace
-        </Link>
-      </main>
+      <PageShell>
+        <main className="mx-auto flex min-h-[50vh] max-w-3xl flex-col items-center justify-center gap-4 px-4 text-center">
+          <p className="text-sm text-red-600">{error}</p>
+          <Link
+            href="/marketplace"
+            className="text-sm font-semibold text-brand-orange"
+          >
+            Back to marketplace
+          </Link>
+        </main>
+      </PageShell>
     );
   }
 
   if (!property) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-4 px-4 text-center">
-        <p className="text-sm text-slate-600">Property not found or no longer active.</p>
-        <Link href="/marketplace" className="text-sm font-semibold text-slate-900">
-          Back to marketplace
-        </Link>
-      </main>
+      <PageShell>
+        <main className="mx-auto flex min-h-[50vh] max-w-3xl flex-col items-center justify-center gap-4 px-4 text-center">
+          <p className="text-sm text-neutral-600">
+            Property not found or no longer active.
+          </p>
+          <Link
+            href="/marketplace"
+            className="text-sm font-semibold text-brand-orange"
+          >
+            Back to marketplace
+          </Link>
+        </main>
+      </PageShell>
     );
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-3xl px-4 py-6">
-      <Link
-        href="/marketplace"
-        className="inline-flex text-sm font-medium text-slate-600 hover:text-slate-900"
-      >
-        ← Back to marketplace
-      </Link>
+    <PageShell>
+      <main className="bg-neutral-50">
+        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+          <Link
+            href="/marketplace"
+            className="inline-flex text-sm font-medium text-neutral-600 transition-colors hover:text-brand-black"
+          >
+            ← Back to marketplace
+          </Link>
 
-      <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h1 className="text-2xl font-semibold text-slate-900">{property.title}</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Complete your on-chain pledge with CIP-0056 Test USDC.
-        </p>
-      </div>
+          <div className="card-surface mt-6 p-5 sm:p-6">
+            <p className="section-label">Pledge</p>
+            <h1 className="mt-2 text-2xl font-bold text-brand-black">
+              {property.title}
+            </h1>
+            <p className="mt-2 text-sm text-neutral-600">
+              Complete your on-chain pledge with CIP-0056 Test USDC.
+            </p>
+          </div>
 
-      <PledgeModal
-        open={modalOpen}
-        onOpenChange={(open) => {
-          setModalOpen(open);
-          if (!open) {
-            window.history.back();
-          }
-        }}
-        property={property}
-      />
-    </main>
+          <PledgeModal
+            open={modalOpen}
+            onOpenChange={(open) => {
+              setModalOpen(open);
+              if (!open) {
+                window.history.back();
+              }
+            }}
+            property={property}
+          />
+        </div>
+      </main>
+    </PageShell>
   );
 }

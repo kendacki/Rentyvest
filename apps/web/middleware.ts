@@ -60,9 +60,10 @@ export function middleware(request: NextRequest): NextResponse {
   const isAuthRoute = matchesRoute(pathname, AUTH_ROUTES);
 
   if (isProtectedRoute && !authenticated) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('reason', 'session_expired');
-    return applySecurityHeaders(NextResponse.redirect(loginUrl));
+    const walletUrl = new URL('/wallet', request.url);
+    walletUrl.searchParams.set('redirect', pathname);
+    walletUrl.searchParams.set('reason', 'auth_required');
+    return applySecurityHeaders(NextResponse.redirect(walletUrl));
   }
 
   if (isAuthRoute && authenticated) {
