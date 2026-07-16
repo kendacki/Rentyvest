@@ -271,7 +271,6 @@ export function FaucetCard() {
     <article className="card-surface overflow-hidden">
       <div className="border-b border-neutral-200 bg-brand-orange-light px-5 py-5 sm:px-6">
         <p className="section-label">DevNet Faucet</p>
-        <h2 className="mt-1 text-xl font-bold text-black">tUSDC</h2>
         <p className="mt-2 text-sm text-neutral-600">
           {isConnected && partyId
             ? 'Your wallet is connected. Claim tUSDC minted directly to your party. One claim per party every 24 hours.'
