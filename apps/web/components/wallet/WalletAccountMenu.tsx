@@ -96,7 +96,7 @@ export function WalletAccountMenu({ variant = 'light' }: WalletAccountMenuProps)
         onClick={() => {
           setMenuOpen((open) => !open);
         }}
-        className="rounded-full ring-1 ring-brand-orange/30 transition-transform hover:scale-[1.03] focus:outline-none focus-visible:ring-brand-orange"
+        className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full p-0 ring-1 ring-brand-orange/30 transition-transform hover:scale-[1.03] focus:outline-none focus-visible:ring-brand-orange"
         aria-label="Open wallet menu"
         aria-expanded={menuOpen}
         aria-haspopup="menu"
