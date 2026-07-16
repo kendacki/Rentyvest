@@ -55,10 +55,9 @@ export function WalletPickerModal({
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="section-label drop-shadow-sm">Connect wallet</p>
             <h2
               id="wallet-picker-title"
-              className="mt-1 text-lg font-bold text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.45)]"
+              className="text-lg font-bold text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.45)]"
             >
               Connect your wallet
             </h2>
