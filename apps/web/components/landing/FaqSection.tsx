@@ -108,17 +108,17 @@ export function CtaSection() {
         aria-hidden
       />
 
-      <div className="relative z-10 mx-auto flex max-w-7xl justify-center">
-        <div className="w-full max-w-xl rounded-[1.75rem] border border-white/15 bg-black/50 px-8 py-10 text-center shadow-[0_12px_48px_rgba(0,0,0,0.4)] backdrop-blur-xl sm:px-10 sm:py-12">
-          <h2 className="heading-section text-white">
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl justify-center">
+        <div className="w-full max-w-4xl rounded-[1.75rem] border border-white/15 bg-black/50 px-8 py-10 text-center shadow-[0_12px_48px_rgba(0,0,0,0.4)] backdrop-blur-xl sm:px-12 sm:py-14 lg:px-16">
+          <h2 className="heading-section mx-auto max-w-3xl text-balance text-white">
             Your first slot is one pledge away
           </h2>
-          <p className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-neutral-300">
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-neutral-300 sm:text-lg sm:leading-relaxed">
             Connect via WalletConnect, grab tUSDC from the faucet, and explore
             live property pools on Canton DevNet with no minimum beyond a single
             slot.
           </p>
-          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
             <Link href="/marketplace" className="btn-primary">
               Browse marketplace
             </Link>
