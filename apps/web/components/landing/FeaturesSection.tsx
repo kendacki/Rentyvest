@@ -150,7 +150,7 @@ export function FeaturesSection() {
       />
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <Reveal className="max-w-2xl">
+        <Reveal className="mt-6 max-w-2xl sm:mt-8">
           <p className="section-label drop-shadow-sm">Why RentyVest</p>
           <h2 className="heading-section mt-4 drop-shadow-[0_2px_16px_rgba(0,0,0,0.85)]">
             Infrastructure for the next generation of property investing
