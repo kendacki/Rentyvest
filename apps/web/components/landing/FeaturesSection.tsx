@@ -155,11 +155,6 @@ export function FeaturesSection() {
           <h2 className="heading-section mt-4 drop-shadow-[0_2px_16px_rgba(0,0,0,0.85)]">
             Infrastructure for the next generation of property investing
           </h2>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-white drop-shadow-[0_1px_12px_rgba(0,0,0,0.8)]">
-            Not another listing site. A full stack fractional platform with
-            ledger settlement, wallet native signing, and investor grade
-            transparency built in.
-          </p>
         </Reveal>
 
         <Stagger className="mt-16 grid gap-5 sm:grid-cols-2">
