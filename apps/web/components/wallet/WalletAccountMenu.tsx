@@ -118,16 +118,9 @@ export function WalletAccountMenu({ variant = 'light' }: WalletAccountMenuProps)
               isDark ? 'border-white/10' : 'border-neutral-200'
             }`}
           >
-            <p
-              className={`text-xs font-semibold uppercase tracking-wide ${
-                isDark ? 'text-brand-orange' : 'text-brand-orange'
-              }`}
-            >
-              {walletLabel ?? 'Connected'}
-            </p>
             {email ? (
               <p
-                className={`mt-1 truncate text-sm font-medium ${
+                className={`truncate text-sm font-medium ${
                   isDark ? 'text-white' : 'text-brand-black'
                 }`}
               >
@@ -135,7 +128,7 @@ export function WalletAccountMenu({ variant = 'light' }: WalletAccountMenuProps)
               </p>
             ) : null}
             <p
-              className={`mt-1 break-all font-mono text-xs ${
+              className={`${email ? 'mt-1' : ''} break-all font-mono text-xs ${
                 isDark ? 'text-neutral-400' : 'text-neutral-600'
               }`}
               title={partyId}
