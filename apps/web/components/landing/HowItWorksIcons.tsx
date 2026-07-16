@@ -1,4 +1,4 @@
-/* Lucide Icons (ISC) — https://lucide.dev/license */
+/* Lucide Icons (ISC) — wallet + building. Tabler Icons (MIT) ticket + custom ownership marks. */
 
 type StepIconProps = {
   className?: string;
@@ -58,8 +58,16 @@ export function StepOwnershipIcon({ className = 'h-11 w-11' }: StepIconProps) {
       className={className}
       aria-hidden
     >
-      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
-      <path d="m9 12 2 2 4-4" />
+      <path d="M15 5v2" />
+      <path d="M15 11v2" />
+      <path d="M15 17v2" />
+      <path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V7a2 2 0 0 1 2-2" />
+      <path
+        d="M12 7.5 10.5 8.75V10.5h3V8.75L12 7.5z"
+        strokeWidth="1.75"
+      />
+      <path d="M10.25 10.5h3.5" strokeWidth="1.75" />
+      <path d="M9.5 16.75 11 18.25 14.75 14.5" strokeWidth="2.25" />
     </svg>
   );
 }
