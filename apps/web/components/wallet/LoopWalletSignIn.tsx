@@ -34,11 +34,7 @@ export function LoopWalletSignIn() {
     isConnecting,
     isConnected,
     partyId,
-    email,
-    walletLabel,
-    walletSource,
     openConnect,
-    disconnect,
   } = useCantonWallet();
 
   if (!isMounted || !isReady) {
@@ -53,55 +49,7 @@ export function LoopWalletSignIn() {
   }
 
   if (isConnected && partyId) {
-    return (
-      <article className="overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-sm">
-        <div className="border-b border-emerald-100 bg-gradient-to-br from-emerald-50 to-white px-5 py-5 sm:px-6">
-          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-            Connected
-          </p>
-          <h2 className="mt-1 text-xl font-bold text-slate-900">
-            {walletLabel ?? 'Canton Wallet'}
-          </h2>
-          <p className="mt-2 text-sm text-slate-600">
-            Your Canton party is linked. You can claim tUSDC and fund pledges
-            on DevNet.
-          </p>
-        </div>
-
-        <div className="space-y-4 px-5 py-5 sm:px-6">
-          {email ? (
-            <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                {walletSource === 'loop' ? 'Loop account' : 'Account'}
-              </p>
-              <p className="mt-1 text-sm font-medium text-slate-900">{email}</p>
-            </div>
-          ) : null}
-
-          <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              Canton party ID
-            </p>
-            <p
-              className="mt-1 break-all font-mono text-sm text-slate-900"
-              title={partyId}
-            >
-              {truncatePartyId(partyId, 18, 12)}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              void disconnect();
-            }}
-            className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-          >
-            Disconnect wallet
-          </button>
-        </div>
-      </article>
-    );
+    return null;
   }
 
   return (
