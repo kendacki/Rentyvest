@@ -49,12 +49,9 @@ export function SiteFooter() {
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col gap-4 border-t border-neutral-900 pt-8 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-12 border-t border-neutral-900 pt-8">
           <p className="text-sm text-neutral-600">
             © {new Date().getFullYear()} RentyVest. Built on Canton Dev Net.
-          </p>
-          <p className="text-sm text-neutral-600">
-            Testnet only. Not financial advice.
           </p>
         </div>
       </div>
