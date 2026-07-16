@@ -99,8 +99,9 @@ export function CtaSection() {
           Your first slot is one pledge away
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-white/90">
-          Connect your wallet, grab test USDC, and explore live property pools
-          on Canton Dev Net with no minimum beyond a single slot.
+          Connect via WalletConnect, grab test USDC from the faucet, and explore
+          live property pools on Canton Dev Net with no minimum beyond a single
+          slot.
         </p>
         <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
           <Link href="/marketplace" className="btn-inverse">

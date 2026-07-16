@@ -69,7 +69,7 @@ export function HeroSection() {
               View live pools
             </Link>
             <Link href="/wallet" className="btn-outline-light">
-              Connect wallet
+              Open faucet
             </Link>
           </motion.div>
         </div>

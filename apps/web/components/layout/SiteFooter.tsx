@@ -5,11 +5,11 @@ const FOOTER_LINKS = {
   Product: [
     { href: '/marketplace', label: 'Marketplace' },
     { href: '/dashboard', label: 'Portfolio' },
-    { href: '/wallet', label: 'Wallet & faucet' },
+    { href: '/wallet', label: 'Faucet' },
   ],
   Platform: [
     { href: '/marketplace', label: 'Property pools' },
-    { href: '/wallet', label: 'Canton wallet' },
+    { href: '/wallet', label: 'Test USDC faucet' },
     { href: '/dashboard', label: 'Equity NFTs' },
   ],
 } as const;

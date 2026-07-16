@@ -33,7 +33,7 @@ export function ConnectWalletFallback() {
           href="/wallet"
           className="font-semibold text-brand-orange hover:underline"
         >
-          Open wallet &amp; faucet
+          Open faucet
         </Link>
       </p>
     </section>

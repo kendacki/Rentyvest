@@ -8,7 +8,7 @@ import { BrandLogo } from '../brand/BrandLogo';
 const NAV_LINKS = [
   { href: '/marketplace', label: 'Marketplace' },
   { href: '/dashboard', label: 'Portfolio' },
-  { href: '/wallet', label: 'Wallet' },
+  { href: '/wallet', label: 'Faucet' },
 ] as const;
 
 type SiteHeaderProps = {
@@ -69,7 +69,7 @@ export function SiteHeader({ variant = 'light' }: SiteHeaderProps) {
                   : 'text-sm font-medium text-neutral-600 transition-colors hover:text-black'
               }
             >
-              Connect wallet
+              Open faucet
             </Link>
             <Link href="/marketplace" className="btn-primary h-10 px-5 text-sm">
               Explore pools

@@ -14,13 +14,13 @@ export default function WalletPage() {
       <main className="page-canvas">
         <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
           <Reveal as="header" className="mb-8 text-center">
-            <p className="section-label">Wallet</p>
+            <p className="section-label">Faucet</p>
             <h1 className="heading-section mt-2 text-brand-black">
-              Canton wallet &amp; test USDC
+              Test USDC on Canton Dev Net
             </h1>
             <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-neutral-600">
-              Connect your Canton wallet via WalletConnect on the sandbox
-              network. Claim test USDC minted directly to your connected party.
+              Connect via WalletConnect on the sandbox network, then claim test
+              USDC minted directly to your connected party.
             </p>
           </Reveal>
 
@@ -32,7 +32,7 @@ export default function WalletPage() {
             ) : (
               <section className="card-surface border-dashed p-8 text-center">
                 <p className="text-sm text-neutral-600">
-                  Connect your Canton wallet above to unlock the test USDC
+                  Connect via WalletConnect above to unlock the test USDC
                   faucet.
                 </p>
               </section>

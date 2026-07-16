@@ -323,7 +323,7 @@ export function FaucetCard() {
           ) : isConnected ? (
             CLAIM_BUTTON_LABEL
           ) : (
-            'Connect Wallet to Claim'
+            'Connect to claim tUSDC'
           )}
         </button>
 

@@ -24,7 +24,7 @@ export default function MarketplacePage() {
             </p>
             <div className="mt-6 flex justify-center">
               <Link href="/wallet" className="btn-secondary shrink-0">
-                Wallet &amp; faucet
+                Faucet
               </Link>
             </div>
           </Reveal>

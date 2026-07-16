@@ -11,7 +11,7 @@ const STEPS = [
     description:
       'Pair your Canton wallet through WalletConnect, then claim test USDC from the in app faucet. No mainnet funds required.',
     href: '/wallet',
-    cta: 'Set up wallet',
+    cta: 'Open faucet',
   },
   {
     number: '02',
