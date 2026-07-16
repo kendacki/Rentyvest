@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -93,21 +94,43 @@ export function FaqSection() {
 
 export function CtaSection() {
   return (
-    <Reveal as="section" className="bg-brand-orange px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
-      <div className="mx-auto max-w-4xl text-center">
-        <h2 className="heading-section text-white">
+    <Reveal
+      as="section"
+      className="relative isolate overflow-hidden px-4 py-20 sm:px-6 sm:py-24 lg:px-8"
+    >
+      <Image
+        src="/cta-sphere-bg.png"
+        alt=""
+        fill
+        quality={92}
+        sizes="100vw"
+        className="object-cover object-[75%_center] sm:object-[right_center]"
+        aria-hidden
+      />
+
+      <div
+        className="absolute inset-0 bg-gradient-to-r from-[#f7ece4]/70 via-[#f7ece4]/30 to-transparent"
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0 bg-gradient-to-t from-[#f7ece4]/40 via-transparent to-white/10"
+        aria-hidden
+      />
+
+      <div className="relative z-10 mx-auto max-w-4xl text-center">
+        <h2 className="heading-section text-brand-black drop-shadow-[0_1px_8px_rgba(255,255,255,0.6)]">
           Your first slot is one pledge away
         </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-white/90">
+        <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-neutral-700 drop-shadow-[0_1px_6px_rgba(255,255,255,0.5)]">
           Connect via WalletConnect, grab tUSDC from the faucet, and explore
           live property pools on Canton DevNet with no minimum beyond a single
           slot.
         </p>
         <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
-          <Link href="/marketplace" className="btn-inverse">
+          <Link href="/marketplace" className="btn-primary">
             Browse marketplace
           </Link>
-          <Link href="/wallet" className="btn-outline-light border-white/80">
+          <Link href="/wallet" className="btn-secondary">
             Get tUSDC
           </Link>
         </div>
