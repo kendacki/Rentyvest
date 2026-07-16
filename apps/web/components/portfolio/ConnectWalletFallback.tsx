@@ -9,8 +9,7 @@ export function ConnectWalletFallback() {
 
   return (
     <section className="card-surface mx-auto max-w-lg p-8 text-center shadow-sm">
-      <p className="section-label">Portfolio</p>
-      <h1 className="mt-2 text-2xl font-bold text-brand-black">
+      <h1 className="text-2xl font-bold text-brand-black">
         Connect wallet to view portfolio
       </h1>
       <p className="mt-3 text-sm leading-relaxed text-neutral-600">

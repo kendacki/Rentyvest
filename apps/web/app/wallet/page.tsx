@@ -20,8 +20,7 @@ export default function WalletPage() {
       <main className="page-canvas">
         <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
           <Reveal as="header" className="mb-8 text-center">
-            <p className="section-label">Faucet</p>
-            <h1 className="heading-section mt-2 text-brand-black">
+            <h1 className="heading-section text-brand-black">
               tUSDC on Canton DevNet
             </h1>
             <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-neutral-600">
