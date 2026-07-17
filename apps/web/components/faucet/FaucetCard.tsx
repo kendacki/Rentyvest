@@ -179,10 +179,6 @@ export function FaucetCard() {
   const handleClaim = useCallback(async () => {
     if (!partyId) {
       openConnect();
-      setToast({
-        type: 'error',
-        message: 'Connect your wallet to claim tUSDC.',
-      });
       return;
     }
 
@@ -214,19 +210,9 @@ export function FaucetCard() {
 
   return (
     <article className="card-surface overflow-hidden">
-      <div
-        className={`border-b px-5 py-5 sm:px-6 ${
-          isWalletConnected
-            ? 'border-white/10 bg-black'
-            : 'border-neutral-200 bg-brand-orange-light'
-        }`}
-      >
+      <div className="border-b border-white/10 bg-black px-5 py-5 sm:px-6">
         <p className="section-label">DevNet Faucet</p>
-        <p
-          className={`mt-2 text-sm ${
-            isWalletConnected ? 'text-neutral-300' : 'text-neutral-600'
-          }`}
-        >
+        <p className="mt-2 text-sm text-neutral-300">
           {isWalletConnected
             ? 'Your wallet is connected. Claim tUSDC minted directly to your party. One claim per party every 24 hours.'
             : 'Connect your wallet to claim tUSDC minted directly to your party. One claim per party every 24 hours.'}

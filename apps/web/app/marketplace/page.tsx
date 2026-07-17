@@ -1,6 +1,5 @@
 import { MarketplaceGrid } from '../../components/marketplace/MarketplaceGrid';
 import { MarketplacePageHeader } from '../../components/marketplace/MarketplacePageHeader';
-import { MarketplaceWalletBanner } from '../../components/marketplace/MarketplaceWalletBanner';
 import { PageShell } from '../../components/layout/PageShell';
 import { Reveal } from '../../components/motion/Reveal';
 
@@ -15,8 +14,6 @@ export default function MarketplacePage() {
       <main className="page-canvas">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
           <MarketplacePageHeader />
-
-          <MarketplaceWalletBanner />
 
           <Reveal delay={0.1}>
             <MarketplaceGrid />
