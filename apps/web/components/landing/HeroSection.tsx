@@ -52,7 +52,7 @@ export function HeroSection() {
             <span className="text-brand-orange"> one slot at a time.</span>
           </motion.h1>
           <motion.p
-            className="body-lead mt-6 max-w-xl text-neutral-200 drop-shadow-[0_1px_12px_rgba(0,0,0,0.35)]"
+            className="mt-6 max-w-xl text-sm leading-relaxed text-neutral-200 drop-shadow-[0_1px_12px_rgba(0,0,0,0.35)] sm:text-base"
             initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, ease, delay: 0.1 }}
