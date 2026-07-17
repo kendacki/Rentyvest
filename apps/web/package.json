@@ -25,6 +25,7 @@
     "@radix-ui/react-dialog": "^1.1.2",
     "@rentyvest/ledger-client": "workspace:*",
     "@supabase/supabase-js": "^2.47.10",
+    "@vercel/blob": "^2.6.1",
     "@walletconnect/modal": "^2.7.0",
     "@walletconnect/sign-client": "^2.23.10",
     "@walletconnect/types": "^2.23.10",

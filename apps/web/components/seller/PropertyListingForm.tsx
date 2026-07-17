@@ -4,8 +4,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { COUNTRY_OPTIONS } from '../../lib/countries';
 import { useCantonWallet } from '../../providers/CantonWalletProvider';
 import type { PropertyListingFormValues, PropertyListingType } from '../../types/listing';
+import { GlassInput, GlassSelect, GlassTextarea } from './GlassField';
+import { HeroImageUpload } from './HeroImageUpload';
 
 const listingSchema = z.object({
   contact_name: z.string().trim().min(2, 'Enter your full name'),
@@ -49,7 +52,7 @@ const listingSchema = z.object({
     .transform((value) => value ?? '')
     .refine(
       (value) => value === '' || /^https?:\/\/.+/i.test(value),
-      'Image URL must start with http:// or https://',
+      'Uploaded image URL is invalid',
     ),
   additional_notes: z
     .string()
@@ -60,11 +63,12 @@ const listingSchema = z.object({
 
 type FormValues = z.infer<typeof listingSchema>;
 
-const INPUT_CLASS =
-  'glass-inset h-11 w-full rounded-xl px-3 text-sm text-brand-black placeholder:text-neutral-400 focus:border-brand-orange/40 focus:outline-none focus:ring-2 focus:ring-brand-orange/20';
-
-const TEXTAREA_CLASS =
-  'glass-inset min-h-[120px] w-full rounded-xl px-3 py-2.5 text-sm text-brand-black placeholder:text-neutral-400 focus:border-brand-orange/40 focus:outline-none focus:ring-2 focus:ring-brand-orange/20';
+const PROPERTY_TYPE_OPTIONS = [
+  { value: 'residential', label: 'Residential' },
+  { value: 'commercial', label: 'Commercial' },
+  { value: 'mixed_use', label: 'Mixed use' },
+  { value: 'other', label: 'Other' },
+];
 
 const LABEL_CLASS =
   'text-xs font-semibold uppercase tracking-wide text-neutral-500';
@@ -116,6 +120,8 @@ export function PropertyListingForm() {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isValid },
   } = useForm<FormValues>({
     resolver: zodResolver(listingSchema),
@@ -139,6 +145,8 @@ export function PropertyListingForm() {
       additional_notes: '',
     },
   });
+
+  const imageUrl = watch('image_url');
 
   const onSubmit = useCallback(
     async (values: FormValues) => {
@@ -281,11 +289,10 @@ export function PropertyListingForm() {
               <label className={LABEL_CLASS} htmlFor="contact_name">
                 Full name
               </label>
-              <input
+              <GlassInput
                 id="contact_name"
                 type="text"
                 autoComplete="name"
-                className={`${INPUT_CLASS} mt-1.5`}
                 {...register('contact_name')}
               />
               <FieldError message={errors.contact_name?.message} />
@@ -294,11 +301,10 @@ export function PropertyListingForm() {
               <label className={LABEL_CLASS} htmlFor="contact_email">
                 Email
               </label>
-              <input
+              <GlassInput
                 id="contact_email"
                 type="email"
                 autoComplete="email"
-                className={`${INPUT_CLASS} mt-1.5`}
                 {...register('contact_email')}
               />
               <FieldError message={errors.contact_email?.message} />
@@ -307,11 +313,10 @@ export function PropertyListingForm() {
               <label className={LABEL_CLASS} htmlFor="contact_phone">
                 Phone (optional)
               </label>
-              <input
+              <GlassInput
                 id="contact_phone"
                 type="tel"
                 autoComplete="tel"
-                className={`${INPUT_CLASS} mt-1.5`}
                 {...register('contact_phone')}
               />
               <FieldError message={errors.contact_phone?.message} />
@@ -326,11 +331,10 @@ export function PropertyListingForm() {
               <label className={LABEL_CLASS} htmlFor="property_title">
                 Property title
               </label>
-              <input
+              <GlassInput
                 id="property_title"
                 type="text"
                 placeholder="e.g. Lagos Marina Tower — Fractional equity"
-                className={`${INPUT_CLASS} mt-1.5`}
                 {...register('property_title')}
               />
               <FieldError message={errors.property_title?.message} />
@@ -339,42 +343,35 @@ export function PropertyListingForm() {
               <label className={LABEL_CLASS} htmlFor="property_type">
                 Property type
               </label>
-              <select
+              <GlassSelect
                 id="property_type"
-                className={`${INPUT_CLASS} mt-1.5`}
+                options={PROPERTY_TYPE_OPTIONS}
                 {...register('property_type')}
-              >
-                <option value="residential">Residential</option>
-                <option value="commercial">Commercial</option>
-                <option value="mixed_use">Mixed use</option>
-                <option value="other">Other</option>
-              </select>
+              />
               <FieldError message={errors.property_type?.message} />
             </div>
             <div>
               <label className={LABEL_CLASS} htmlFor="property_description">
                 Description
               </label>
-              <textarea
+              <GlassTextarea
                 id="property_description"
                 placeholder="Describe the asset, tenant profile, occupancy, and why investors should consider this pool."
-                className={`${TEXTAREA_CLASS} mt-1.5`}
                 {...register('property_description')}
               />
               <FieldError message={errors.property_description?.message} />
             </div>
             <div>
-              <label className={LABEL_CLASS} htmlFor="image_url">
-                Hero image URL (optional)
+              <label className={LABEL_CLASS} htmlFor="hero_image">
+                Hero image (optional)
               </label>
-              <input
-                id="image_url"
-                type="url"
-                placeholder="https://…"
-                className={`${INPUT_CLASS} mt-1.5`}
-                {...register('image_url')}
+              <HeroImageUpload
+                value={imageUrl}
+                onChange={(url) =>
+                  setValue('image_url', url, { shouldValidate: true, shouldDirty: true })
+                }
+                error={errors.image_url?.message}
               />
-              <FieldError message={errors.image_url?.message} />
             </div>
           </div>
         </section>
@@ -386,11 +383,10 @@ export function PropertyListingForm() {
               <label className={LABEL_CLASS} htmlFor="address_line1">
                 Street address
               </label>
-              <input
+              <GlassInput
                 id="address_line1"
                 type="text"
                 autoComplete="street-address"
-                className={`${INPUT_CLASS} mt-1.5`}
                 {...register('address_line1')}
               />
               <FieldError message={errors.address_line1?.message} />
@@ -399,11 +395,10 @@ export function PropertyListingForm() {
               <label className={LABEL_CLASS} htmlFor="city">
                 City
               </label>
-              <input
+              <GlassInput
                 id="city"
                 type="text"
                 autoComplete="address-level2"
-                className={`${INPUT_CLASS} mt-1.5`}
                 {...register('city')}
               />
               <FieldError message={errors.city?.message} />
@@ -412,11 +407,10 @@ export function PropertyListingForm() {
               <label className={LABEL_CLASS} htmlFor="state">
                 State / region
               </label>
-              <input
+              <GlassInput
                 id="state"
                 type="text"
                 autoComplete="address-level1"
-                className={`${INPUT_CLASS} mt-1.5`}
                 {...register('state')}
               />
               <FieldError message={errors.state?.message} />
@@ -425,11 +419,10 @@ export function PropertyListingForm() {
               <label className={LABEL_CLASS} htmlFor="country">
                 Country
               </label>
-              <input
+              <GlassSelect
                 id="country"
-                type="text"
                 autoComplete="country-name"
-                className={`${INPUT_CLASS} mt-1.5`}
+                options={COUNTRY_OPTIONS}
                 {...register('country')}
               />
               <FieldError message={errors.country?.message} />
@@ -438,11 +431,10 @@ export function PropertyListingForm() {
               <label className={LABEL_CLASS} htmlFor="postal_code">
                 Postal code (optional)
               </label>
-              <input
+              <GlassInput
                 id="postal_code"
                 type="text"
                 autoComplete="postal-code"
-                className={`${INPUT_CLASS} mt-1.5`}
                 {...register('postal_code')}
               />
               <FieldError message={errors.postal_code?.message} />
@@ -451,7 +443,7 @@ export function PropertyListingForm() {
         </section>
 
         <section className="glass-accent space-y-4 p-5">
-          <h2 className={SECTION_TITLE_CLASS}>Token economics</h2>
+          <h2 className={SECTION_TITLE_CLASS}>Tokenomics</h2>
           <p className="text-sm leading-relaxed text-neutral-600">
             Investors pledge tUSDC per slot. We use these figures to size your
             PropertyPool before marketplace listing goes live.
@@ -461,12 +453,11 @@ export function PropertyListingForm() {
               <label className={LABEL_CLASS} htmlFor="total_units">
                 Total slots
               </label>
-              <input
+              <GlassInput
                 id="total_units"
                 type="number"
                 min={1}
                 step={1}
-                className={`${INPUT_CLASS} mt-1.5`}
                 {...register('total_units')}
               />
               <FieldError message={errors.total_units?.message} />
@@ -475,12 +466,11 @@ export function PropertyListingForm() {
               <label className={LABEL_CLASS} htmlFor="unit_price">
                 Price per slot (tUSDC)
               </label>
-              <input
+              <GlassInput
                 id="unit_price"
                 type="number"
                 min={1}
                 step="0.01"
-                className={`${INPUT_CLASS} mt-1.5`}
                 {...register('unit_price')}
               />
               <FieldError message={errors.unit_price?.message} />
@@ -489,13 +479,12 @@ export function PropertyListingForm() {
               <label className={LABEL_CLASS} htmlFor="estimated_annual_yield">
                 Est. annual yield (%)
               </label>
-              <input
+              <GlassInput
                 id="estimated_annual_yield"
                 type="number"
                 min={0}
                 max={100}
                 step="0.1"
-                className={`${INPUT_CLASS} mt-1.5`}
                 {...register('estimated_annual_yield')}
               />
               <FieldError message={errors.estimated_annual_yield?.message} />
@@ -505,10 +494,9 @@ export function PropertyListingForm() {
 
         <section className="glass-inset space-y-4 p-5">
           <h2 className={SECTION_TITLE_CLASS}>Additional notes</h2>
-          <textarea
+          <GlassTextarea
             id="additional_notes"
             placeholder="Compliance documents, preferred launch timeline, property manager contact, or other context."
-            className={TEXTAREA_CLASS}
             {...register('additional_notes')}
           />
           <FieldError message={errors.additional_notes?.message} />
