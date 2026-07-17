@@ -227,7 +227,7 @@ export function FaucetCard() {
   return (
     <article className="card-surface overflow-hidden">
       <div className="space-y-4 px-5 py-5 sm:px-6">
-        <div>
+        <div className="px-4 text-left">
           <p className="section-label">DevNet Faucet</p>
           <p className="mt-2 text-sm text-neutral-600">
             {isWalletConnected
@@ -239,13 +239,13 @@ export function FaucetCard() {
         <FaucetToast toast={toast} onDismiss={() => setToast(null)} />
 
         {partyId && (
-          <p className="truncate glass-inset px-3 py-2 text-xs text-slate-600">
+          <p className="truncate glass-inset px-4 py-2 text-left text-xs text-slate-600">
             <span className="font-medium text-slate-800">Canton party:</span>{' '}
             {partyId}
           </p>
         )}
 
-        <div className="glass-inset p-4">
+        <div className="glass-inset p-4 text-left">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             Your balance
           </p>
