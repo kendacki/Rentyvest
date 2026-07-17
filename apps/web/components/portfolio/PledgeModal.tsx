@@ -57,6 +57,10 @@ async function fetchPartyAssets(partyId: string): Promise<UserTokenAsset[]> {
     `${apiUrl}/faucet/assets?canton_party_id=${encodeURIComponent(partyId)}`,
   );
 
+  if (response.status === 404) {
+    return [];
+  }
+
   if (!response.ok) {
     throw new Error(`Unable to load tUSDC balance (${response.status})`);
   }

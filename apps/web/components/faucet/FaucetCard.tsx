@@ -88,6 +88,10 @@ async function fetchPartyAssets(partyId: string): Promise<UserTokenAsset[]> {
       `${getApiUrl()}${FAUCET_ASSETS_PATH}?canton_party_id=${encodeURIComponent(partyId)}`,
     );
 
+    if (response.status === 404) {
+      return [];
+    }
+
     if (!response.ok) {
       const fallback = `Unable to load balance (${response.status})`;
       throw new Error(await readFaucetError(response, fallback));
