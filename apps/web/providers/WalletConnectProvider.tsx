@@ -48,6 +48,18 @@ function resolvePartyId(accounts: Array<{ partyId?: string }>): string | null {
   return accounts.find((account) => account.partyId)?.partyId ?? null;
 }
 
+function hasPersistedWalletConnectSession(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  try {
+    return Object.keys(window.localStorage).some((key) => key.startsWith('wc@2:'));
+  } catch {
+    return false;
+  }
+}
+
 export function WalletConnectProvider({
   children,
   suppressQrModal = false,
@@ -68,6 +80,56 @@ export function WalletConnectProvider({
   const dappClientRef = useRef<DappClient | null>(null);
   const providerRef = useRef<CantonProvider | null>(null);
   const connectCancelledRef = useRef(false);
+  const bootstrapPromiseRef = useRef<Promise<void> | null>(null);
+
+  const bootstrapWalletSdk = useCallback(async () => {
+    if (dappClientRef.current) {
+      return;
+    }
+
+    if (bootstrapPromiseRef.current) {
+      await bootstrapPromiseRef.current;
+      return;
+    }
+
+    bootstrapPromiseRef.current = (async () => {
+      const projectId = getWalletConnectProjectId();
+      if (!projectId) {
+        setInitError('NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is not configured.');
+        return;
+      }
+
+      const { DappClient, WalletConnectAdapter } = await import(
+        '@canton-network/dapp-sdk'
+      );
+
+      const adapter = WalletConnectAdapter.create({
+        projectId,
+        chainId: getCantonWalletChainId(),
+        metadata: getWalletConnectMetadata(),
+        onUri: (uri) => {
+          setWcUri(uri);
+          if (!suppressQrModal) {
+            setShowQrModal(true);
+          }
+        },
+      });
+
+      const restoredProvider = await adapter.restore();
+      const provider = restoredProvider ?? adapter.provider();
+      providerRef.current = provider;
+
+      const client = new DappClient(provider, { providerType: 'mobile' });
+      dappClientRef.current = client;
+      setInitError(null);
+    })();
+
+    try {
+      await bootstrapPromiseRef.current;
+    } finally {
+      bootstrapPromiseRef.current = null;
+    }
+  }, [suppressQrModal]);
 
   const syncSessionState = useCallback(async () => {
     const client = dappClientRef.current;
@@ -111,44 +173,16 @@ export function WalletConnectProvider({
 
     let cancelled = false;
 
-    async function bootstrapWalletSdk() {
-      const projectId = getWalletConnectProjectId();
-      if (!projectId) {
-        setInitError(
-          'NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is not configured.',
-        );
+    async function maybeRestoreWalletSession() {
+      if (!hasPersistedWalletConnectSession()) {
         setIsReady(true);
         return;
       }
 
       try {
-        const { DappClient, WalletConnectAdapter } = await import(
-          '@canton-network/dapp-sdk'
-        );
-
-        const adapter = WalletConnectAdapter.create({
-          projectId,
-          chainId: getCantonWalletChainId(),
-          metadata: getWalletConnectMetadata(),
-          onUri: (uri) => {
-            setWcUri(uri);
-            if (!suppressQrModal) {
-              setShowQrModal(true);
-            }
-          },
-        });
-
-        const restoredProvider = await adapter.restore();
-        const provider = restoredProvider ?? adapter.provider();
-        providerRef.current = provider;
-
-        const client = new DappClient(provider, { providerType: 'mobile' });
-        dappClientRef.current = client;
-
+        await bootstrapWalletSdk();
         if (!cancelled) {
           await syncSessionState();
-          setInitError(null);
-          setIsReady(true);
         }
       } catch (error) {
         if (!cancelled) {
@@ -157,17 +191,20 @@ export function WalletConnectProvider({
               ? error.message
               : 'Unable to initialize Canton wallet SDK',
           );
+        }
+      } finally {
+        if (!cancelled) {
           setIsReady(true);
         }
       }
     }
 
-    void bootstrapWalletSdk();
+    void maybeRestoreWalletSession();
 
     return () => {
       cancelled = true;
     };
-  }, [isMounted, syncSessionState, suppressQrModal]);
+  }, [bootstrapWalletSdk, isMounted, syncSessionState]);
 
   const cancelConnect = useCallback(async () => {
     connectCancelledRef.current = true;
@@ -188,6 +225,8 @@ export function WalletConnectProvider({
   }, []);
 
   const connect = useCallback(async (): Promise<string | null> => {
+    await bootstrapWalletSdk();
+
     const client = dappClientRef.current;
     if (!client) {
       throw new Error(initError ?? 'Canton wallet SDK is not ready');
@@ -234,7 +273,7 @@ export function WalletConnectProvider({
 
       connectCancelledRef.current = false;
     }
-  }, [initError, syncSessionState, suppressQrModal]);
+  }, [bootstrapWalletSdk, initError, syncSessionState, suppressQrModal]);
 
   const disconnect = useCallback(async () => {
     const client = dappClientRef.current;

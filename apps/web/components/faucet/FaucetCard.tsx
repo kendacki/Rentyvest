@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { formatTokenBalance } from '../../lib/format';
 import { claimFaucetViaBackend } from '../../lib/faucet/backendMint';
 import { fetchFaucetAssets } from '../../lib/api/faucetAssets';
+import { useLoopWallet } from '../providers/LoopWalletProvider';
 import { useCantonWallet } from '../../providers/CantonWalletProvider';
 import { sumAssetBalances } from '../../types/asset';
 import type { UserTokenAsset } from '../../types/asset';
@@ -30,18 +31,20 @@ function getApiUrl(): string {
   return base.replace(/\/$/, '');
 }
 
-function formatFetchError(error: unknown, action: string): Error {
+function formatClaimError(error: unknown): string {
   if (error instanceof TypeError && error.message === 'Failed to fetch') {
-    return new Error(
-      `Cannot reach core api for ${action}. Ensure core api is running on port 8080 and restart Next.js after config changes.`,
-    );
+    return 'Cannot reach the faucet service. Check your connection and try again in a moment.';
   }
 
   if (error instanceof Error) {
-    return error;
+    const message = error.message.trim();
+    if (message.includes('502') || message.toLowerCase().includes('bad gateway')) {
+      return 'Canton could not complete the faucet mint. If you use Loop wallet, confirm your party is whitelisted and the RentyVest package is vetted on DevNet, then retry.';
+    }
+    return message;
   }
 
-  return new Error(`Unable to ${action}`);
+  return 'Unable to claim tUSDC';
 }
 
 function Spinner() {
@@ -114,8 +117,10 @@ export function FaucetCard() {
     isConnected,
     isConnecting,
     partyId,
+    walletSource,
     openConnect,
   } = useCantonWallet();
+  const loop = useLoopWallet();
 
   const [assets, setAssets] = useState<UserTokenAsset[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -188,6 +193,13 @@ export function FaucetCard() {
     setToast(null);
 
     try {
+      if (walletSource === 'loop') {
+        const provider = await loop.connect();
+        if (!provider?.party_id) {
+          throw new Error('Connect Loop wallet before claiming tUSDC.');
+        }
+      }
+
       await claimFaucetViaBackend(getApiUrl(), activePartyId);
 
       await refetchBalance();
@@ -197,16 +209,14 @@ export function FaucetCard() {
         message: 'Successfully claimed tUSDC to your connected party.',
       });
     } catch (claimError) {
-      const message = formatFetchError(claimError, 'claim tUSDC').message;
-
       setToast({
         type: 'error',
-        message,
+        message: formatClaimError(claimError),
       });
     } finally {
       setIsClaiming(false);
     }
-  }, [openConnect, partyId, refetchBalance]);
+  }, [loop, openConnect, partyId, refetchBalance, walletSource]);
 
   return (
     <article className="card-surface overflow-hidden">

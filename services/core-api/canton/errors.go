@@ -65,9 +65,13 @@ func HumanizeSubmitError(err error) string {
 	case strings.Contains(upper, "INVALID_PRESCRIBED_SYNCHRONIZER_ID"),
 		strings.Contains(upper, "NOT KNOWN TO ALL INFORMEES"),
 		strings.Contains(upper, "HAS NOT VETTED"):
+		packageID := PackageIDFromEnv()
+		if packageID == "" {
+			packageID = "<your CANTON_DAML_PACKAGE_ID>"
+		}
 		return "Your Loop wallet network has not vetted the RentyVest tUSDC package yet. " +
-			"FiveNorth DevNet must vet package rentyvest-faucet on the Loop participant before faucet mints can reach Loop parties. " +
-			"Share package ID 628f1d1ab9a89273948d94b0fed617d14e67d8134590ecaab35b36a4055a2767 with FiveNorth support."
+			"FiveNorth DevNet must vet the RentyVest package on the Loop participant before faucet mints can reach Loop parties. " +
+			"Share package ID " + packageID + " with FiveNorth support."
 	case strings.Contains(upper, "UNKNOWN_INFORMEES"):
 		return "Your Loop wallet party is not known on this Canton synchronizer yet. Reconnect Loop and try again, or use a DevNet party that is already onboarded."
 	case strings.Contains(upper, "CONTRACT_NOT_FOUND"):

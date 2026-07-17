@@ -95,6 +95,9 @@ func (s *Store) HasRecentFaucetClaimByParty(
 		ORDER BY created_at DESC
 		LIMIT 1
 	`, cantonPartyID, since).Scan(&lastClaim)
+	if isMissingRelation(err, "faucet_claims") {
+		return false, time.Time{}, nil
+	}
 	if errors.Is(err, pgx.ErrNoRows) {
 		userID, lookupErr := s.lookupUserIDByCantonParty(ctx, cantonPartyID)
 		if lookupErr != nil {
@@ -206,6 +209,9 @@ func (s *Store) InsertFaucetPartyClaim(
 		&claim.CantonIssuerCID,
 		&claim.CreatedAt,
 	)
+	if isMissingRelation(err, "faucet_claims") {
+		return nil, fmt.Errorf("faucet_claims table is missing; apply migration 006_faucet_party_claims.sql")
+	}
 	if err != nil {
 		return nil, fmt.Errorf("insert faucet party claim: %w", err)
 	}
@@ -248,4 +254,11 @@ func (s *Store) TryFaucetUserLock(ctx context.Context, userID string) (func(cont
 	}
 
 	return release, nil
+}
+
+func isMissingRelation(err error, tableName string) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(strings.ToLower(err.Error()), fmt.Sprintf(`relation "%s" does not exist`, tableName))
 }

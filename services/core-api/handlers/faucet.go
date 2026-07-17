@@ -346,7 +346,7 @@ func (h *FaucetHandler) ClaimUSDC(w http.ResponseWriter, r *http.Request) {
 		_ = releaseLock(r.Context())
 	}()
 
-	cantonCtx, cancel := contextWithTimeout(r, 45*time.Second)
+	cantonCtx, cancel := contextWithTimeout(r, 90*time.Second)
 	defer cancel()
 
 	mintResult, err := h.cantonClient.SubmitMint(cantonCtx, canton.MintCommand{
@@ -376,7 +376,11 @@ func (h *FaucetHandler) ClaimUSDC(w http.ResponseWriter, r *http.Request) {
 		CantonIssuerCID:     h.cantonClient.USDCIssuerContractID(),
 	})
 	if err != nil {
-		problems.Write(w, http.StatusInternalServerError, "Internal Server Error", "Mint succeeded but audit logging failed")
+		detail := "Mint succeeded but audit logging failed"
+		if strings.Contains(err.Error(), "faucet_claims table is missing") {
+			detail = "Mint succeeded on Canton but faucet audit storage is not configured. Apply migration 006_faucet_party_claims.sql."
+		}
+		problems.Write(w, http.StatusInternalServerError, "Internal Server Error", detail)
 		return
 	}
 
