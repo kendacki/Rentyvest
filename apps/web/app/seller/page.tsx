@@ -9,21 +9,21 @@ import { useCantonWallet } from '../../providers/CantonWalletProvider';
 const LISTING_STEPS = [
   {
     step: 'Step 1',
-    title: 'Submit details',
+    title: 'Tell us about your property',
     description:
-      'Share property, location, and slot economics for our review team.',
+      'Fill out the form with your property details, location, and how you want to split ownership.',
   },
   {
     step: 'Step 2',
-    title: 'On-chain pool',
+    title: 'We review and prepare',
     description:
-      'We configure your PropertyPool on Canton DevNet with verified metadata.',
+      'Our team checks your submission and gets everything ready for listing.',
   },
   {
     step: 'Step 3',
-    title: 'Go live',
+    title: 'Go live on the marketplace',
     description:
-      'Investors pledge tUSDC per slot and receive equity NFTs in their wallets.',
+      'Your property is listed and investors can buy in to own a share.',
   },
 ] as const;
 
