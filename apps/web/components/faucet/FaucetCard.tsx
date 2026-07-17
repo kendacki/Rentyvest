@@ -230,8 +230,8 @@ export function FaucetCard() {
         <p className="section-label">DevNet Faucet</p>
         <p className="mt-2 text-sm text-neutral-300">
           {isWalletConnected
-            ? 'Your wallet is connected. Claim tUSDC minted directly to your party. One claim per party every 24 hours.'
-            : 'Connect your wallet to claim tUSDC minted directly to your party. One claim per party every 24 hours.'}
+            ? 'Wallet connected. Claim tUSDC — one claim every 24 hours.'
+            : 'Connect your wallet to claim tUSDC — one claim every 24 hours.'}
         </p>
       </div>
 
