@@ -1,7 +1,7 @@
 const ledgerUrl = (process.env.CANTON_JSON_API_URL ?? '').replace(/\/$/, '');
 const pkg = process.env.CANTON_DAML_PACKAGE_ID;
 const templateId = `${pkg}:RentyVest.TestUSDC:USDCIssuer`;
-const party = process.argv[2] ?? 'out-mqdl789t::1220a14ca128063b8dc9d1ebb0bd22633be9f2168500f4dbc1ecaeb1855b14e5acf8';
+const party = process.argv[2] ?? '5nsandbox-devnet-2::1220a14ca128063b8dc9d1ebb0bd22633be9f2168500f4dbc1ecaeb1855b14e5acf8';
 
 async function getToken() {
   const form = new URLSearchParams({
