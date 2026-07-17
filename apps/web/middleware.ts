@@ -4,7 +4,6 @@ const PROTECTED_ROUTES = [
   '/portfolio',
   '/pledge',
   '/yield',
-  '/seller',
   '/manager',
   '/admin',
 ] as const;

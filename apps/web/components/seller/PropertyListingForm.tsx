@@ -1,12 +1,11 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { usePrivy } from '@privy-io/react-auth';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useCantonWallet } from '../../providers/CantonWalletProvider';
-import type { PropertyListingFormValues } from '../../types/listing';
+import type { PropertyListingFormValues, PropertyListingType } from '../../types/listing';
 
 const listingSchema = z.object({
   contact_name: z.string().trim().min(2, 'Enter your full name'),
@@ -103,7 +102,6 @@ function Spinner() {
 }
 
 export function PropertyListingForm() {
-  const { user, getAccessToken } = usePrivy();
   const { partyId } = useCantonWallet();
 
   const [submitState, setSubmitState] = useState<
@@ -115,7 +113,6 @@ export function PropertyListingForm() {
     register,
     handleSubmit,
     reset,
-    setValue,
     formState: { errors, isValid },
   } = useForm<FormValues>({
     resolver: zodResolver(listingSchema),
@@ -140,18 +137,11 @@ export function PropertyListingForm() {
     },
   });
 
-  useEffect(() => {
-    const email = user?.email?.address?.trim();
-    if (email) {
-      setValue('contact_email', email, { shouldValidate: true });
-    }
-  }, [setValue, user?.email?.address]);
-
   const onSubmit = useCallback(
     async (values: FormValues) => {
-      if (!user?.id) {
+      if (!partyId) {
         setSubmitState('error');
-        setSubmitMessage('Sign in is required before submitting a listing.');
+        setSubmitMessage('Connect your Canton wallet before submitting a listing.');
         return;
       }
 
@@ -159,41 +149,32 @@ export function PropertyListingForm() {
       setSubmitMessage(null);
 
       try {
-        const accessToken = await getAccessToken();
-        if (!accessToken) {
-          throw new Error('Sign in session expired. Refresh and try again.');
-        }
-
         const payload: PropertyListingFormValues & {
-          canton_party_id?: string;
+          canton_party_id: string;
         } = {
+          canton_party_id: partyId,
           contact_name: values.contact_name,
           contact_email: values.contact_email,
           contact_phone: values.contact_phone,
-          property_title: values.property_title,
-          property_description: values.property_description,
-          property_type: values.property_type,
-          address_line1: values.address_line1,
-          city: values.city,
-          state: values.state,
-          country: values.country,
-          postal_code: values.postal_code,
+          property_title: values.property_title.trim(),
+          property_description: values.property_description.trim(),
+          property_type: values.property_type as PropertyListingType,
+          address_line1: values.address_line1.trim(),
+          city: values.city.trim(),
+          state: values.state.trim(),
+          country: values.country.trim(),
+          postal_code: values.postal_code.trim(),
           total_units: values.total_units,
           unit_price: values.unit_price,
           estimated_annual_yield: values.estimated_annual_yield,
-          image_url: values.image_url,
-          additional_notes: values.additional_notes,
+          image_url: values.image_url.trim(),
+          additional_notes: values.additional_notes.trim(),
         };
-
-        if (partyId) {
-          payload.canton_party_id = partyId;
-        }
 
         const response = await fetch('/api/listing-requests', {
           method: 'POST',
           headers: {
             Accept: 'application/json',
-            Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(payload),
@@ -241,7 +222,7 @@ export function PropertyListingForm() {
         );
       }
     },
-    [getAccessToken, partyId, reset, user?.id],
+    [partyId, reset],
   );
 
   if (submitState === 'success') {

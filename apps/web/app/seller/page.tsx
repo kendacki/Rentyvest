@@ -1,6 +1,5 @@
 'use client';
 
-import { usePrivy } from '@privy-io/react-auth';
 import { PageShell } from '../../components/layout/PageShell';
 import { Reveal } from '../../components/motion/Reveal';
 import { PropertyListingForm } from '../../components/seller/PropertyListingForm';
@@ -8,30 +7,10 @@ import { SignInRequired } from '../../components/seller/SignInRequired';
 import { truncatePartyId } from '../../lib/format';
 import { useCantonWallet } from '../../providers/CantonWalletProvider';
 
-const HAS_PRIVY = Boolean(
-  (process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? '').trim(),
-);
-
 export default function SellerPage() {
-  const { ready, authenticated } = usePrivy();
-  const { partyId } = useCantonWallet();
+  const { isMounted, isReady, isConnected, partyId } = useCantonWallet();
 
-  if (!HAS_PRIVY) {
-    return (
-      <PageShell>
-        <main className="page-canvas">
-          <div className="mx-auto max-w-3xl px-4 py-16 text-center sm:px-6">
-            <p className="text-sm text-neutral-600">
-              Property listing requires sign-in. Configure NEXT_PUBLIC_PRIVY_APP_ID to
-              enable this feature.
-            </p>
-          </div>
-        </main>
-      </PageShell>
-    );
-  }
-
-  if (!ready) {
+  if (!isMounted || !isReady) {
     return (
       <PageShell>
         <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
@@ -41,13 +20,13 @@ export default function SellerPage() {
     );
   }
 
-  if (!authenticated) {
+  if (!isConnected || !partyId) {
     return (
       <PageShell>
         <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center page-canvas px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
           <SignInRequired
-            title="Sign in to list your property"
-            description="Property owners must sign in with their connected wallet before submitting a fractional listing request."
+            title="Connect wallet to list your property"
+            description="Property owners must connect their Canton wallet before submitting a fractional listing request."
             redirectPath="/seller"
           />
         </main>

@@ -82,7 +82,7 @@ func main() {
 	ledgerReadHandler := handlers.NewLedgerReadHandler(cantonClient)
 	ledgerPrepareHandler := handlers.NewLedgerPrepareHandler(cantonClient)
 	backendExecuteHandler := handlers.NewBackendExecuteHandler(store, cantonClient)
-	listingRequestsHandler := handlers.NewListingRequestsHandler(store, verifier)
+	listingRequestsHandler := handlers.NewListingRequestsHandler(store)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/auth/exchange", authHandler.Exchange)

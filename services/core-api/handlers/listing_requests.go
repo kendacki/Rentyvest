@@ -3,26 +3,21 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/rentyvest/core-api/internal/auth"
 	"github.com/rentyvest/core-api/internal/db"
-	"github.com/rentyvest/core-api/internal/privy"
 	"github.com/rentyvest/core-api/internal/problems"
 )
 
 type ListingRequestsHandler struct {
-	store         *db.Store
-	privyVerifier *privy.Verifier
+	store *db.Store
 }
 
-func NewListingRequestsHandler(store *db.Store, verifier *privy.Verifier) *ListingRequestsHandler {
+func NewListingRequestsHandler(store *db.Store) *ListingRequestsHandler {
 	return &ListingRequestsHandler{
-		store:         store,
-		privyVerifier: verifier,
+		store: store,
 	}
 }
 
@@ -57,12 +52,6 @@ func (h *ListingRequestsHandler) Create(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	userID, err := h.authenticate(r)
-	if err != nil {
-		writeListingAuthError(w, err)
-		return
-	}
-
 	var body createListingRequestBody
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -77,7 +66,7 @@ func (h *ListingRequestsHandler) Create(w http.ResponseWriter, r *http.Request) 
 	}
 
 	created, err := h.store.CreatePropertyListingRequest(r.Context(), db.CreatePropertyListingRequestInput{
-		SubmitterID:          userID,
+		SubmitterID:          strings.TrimSpace(body.CantonPartyID),
 		CantonPartyID:        optionalString(body.CantonPartyID),
 		ContactName:          strings.TrimSpace(body.ContactName),
 		ContactEmail:         strings.TrimSpace(body.ContactEmail),
@@ -110,31 +99,10 @@ func (h *ListingRequestsHandler) Create(w http.ResponseWriter, r *http.Request) 
 	_ = json.NewEncoder(w).Encode(createListingRequestResponse{Request: *created})
 }
 
-func (h *ListingRequestsHandler) authenticate(r *http.Request) (string, error) {
-	token, err := auth.ExtractBearerToken(r)
-	if err != nil {
-		return "", fmt.Errorf("authorization: %w", err)
-	}
-
-	return h.privyVerifier.Verify(r.Context(), token)
-}
-
-func writeListingAuthError(w http.ResponseWriter, err error) {
-	switch {
-	case errors.Is(err, privy.ErrTokenExpired):
-		problems.WriteCode(w, http.StatusUnauthorized, "RV-1002", "Unauthorized", "Privy access token has expired")
-	case errors.Is(err, privy.ErrTokenInvalid), errors.Is(err, privy.ErrSubjectMissing):
-		problems.WriteCode(w, http.StatusUnauthorized, "RV-1003", "Unauthorized", "Privy access token is invalid")
-	default:
-		if strings.Contains(err.Error(), "authorization") {
-			problems.WriteCode(w, http.StatusUnauthorized, "RV-1001", "Unauthorized", err.Error())
-			return
-		}
-		problems.WriteCode(w, http.StatusUnauthorized, "RV-1003", "Unauthorized", "Unable to authenticate request")
-	}
-}
-
 func validateListingRequestBody(body *createListingRequestBody) error {
+	if strings.TrimSpace(body.CantonPartyID) == "" {
+		return errors.New("canton_party_id is required")
+	}
 	if strings.TrimSpace(body.ContactName) == "" {
 		return errors.New("contact_name is required")
 	}

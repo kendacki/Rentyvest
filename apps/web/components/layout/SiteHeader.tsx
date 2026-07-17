@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { usePrivy } from '@privy-io/react-auth';
 import { useState } from 'react';
+import { useCantonWallet } from '../../providers/CantonWalletProvider';
 import { BrandLogo } from '../brand/BrandLogo';
 import { WalletAccountMenu } from '../wallet/WalletAccountMenu';
 
@@ -15,17 +15,13 @@ const PUBLIC_NAV_LINKS = [
 
 const SELLER_NAV_LINK = { href: '/seller', label: 'List property' } as const;
 
-const HAS_PRIVY = Boolean(
-  (process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? '').trim(),
-);
-
 type SiteHeaderProps = {
   variant?: 'light' | 'dark';
 };
 
 type NavLinkItem = { href: string; label: string };
 
-function AuthenticatedSiteHeaderNav({
+function ConnectedSiteHeaderNav({
   pathname,
   isDark,
   onNavigate,
@@ -36,9 +32,9 @@ function AuthenticatedSiteHeaderNav({
   onNavigate?: () => void;
   layout: 'desktop' | 'mobile';
 }) {
-  const { ready, authenticated } = usePrivy();
+  const { isConnected, partyId } = useCantonWallet();
   const navLinks: NavLinkItem[] =
-    ready && authenticated
+    isConnected && partyId
       ? [...PUBLIC_NAV_LINKS, SELLER_NAV_LINK]
       : [...PUBLIC_NAV_LINKS];
 
@@ -74,35 +70,13 @@ function SiteHeaderNav({
   onNavigate?: () => void;
   layout: 'desktop' | 'mobile';
 }) {
-  if (HAS_PRIVY) {
-    return (
-      <AuthenticatedSiteHeaderNav
-        pathname={pathname}
-        isDark={isDark}
-        onNavigate={onNavigate}
-        layout={layout}
-      />
-    );
-  }
-
-  const className =
-    layout === 'desktop'
-      ? 'hidden flex-none items-center gap-8 md:flex'
-      : 'flex flex-col gap-3';
-
   return (
-    <nav className={className}>
-      {PUBLIC_NAV_LINKS.map(({ href, label }) => (
-        <NavLink
-          key={href}
-          href={href}
-          label={label}
-          pathname={pathname}
-          isDark={isDark}
-          onNavigate={onNavigate}
-        />
-      ))}
-    </nav>
+    <ConnectedSiteHeaderNav
+      pathname={pathname}
+      isDark={isDark}
+      onNavigate={onNavigate}
+      layout={layout}
+    />
   );
 }
 
