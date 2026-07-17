@@ -1,6 +1,8 @@
 sdk-version: 3.4.11
-name: rentyvest-faucet
-version: 0.1.1
+# New package name (not an upgrade of rentyvest-faucet 0.1.0). Same-name bumps fail
+# Canton SCU because CIP-0056 interfaces live in this package alongside templates.
+name: rentyvest-devnet
+version: 0.1.0
 source: src
 build-options:
   - -Wno-upgrade-interfaces

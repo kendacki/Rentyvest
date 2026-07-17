@@ -7,7 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const defaultDar = path.resolve(__dirname, '../../../daml/.daml/dist/rentyvest-faucet-0.1.0.dar');
+const defaultDar = path.resolve(__dirname, '../../../daml/.daml/dist/rentyvest-devnet-0.1.0.dar');
 const darPath = path.resolve(process.argv[2] ?? defaultDar);
 
 const ledgerUrl = (process.env.CANTON_JSON_API_URL ?? '').replace(/\/$/, '');

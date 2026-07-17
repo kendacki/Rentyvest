@@ -132,7 +132,7 @@ func HumanizeSubmitError(err error) string {
 			"Rebuild and redeploy the current DAR (Asset is `signatory issuer` only), create a new USDCIssuer, then update CANTON_DAML_PACKAGE_ID and CANTON_USDC_ISSUER_CONTRACT_ID."
 	case strings.Contains(upper, "EXPECTED A PACKAGE NAME"),
 		strings.Contains(upper, "INVALID FIELD PACKAGEID"):
-		return "Canton ACS expects a package name (rentyvest-faucet), not a package-id hash. Set CANTON_DAML_PACKAGE_NAME=rentyvest-faucet."
+		return "Canton ACS expects a package name (rentyvest-devnet), not a package-id hash. Set CANTON_DAML_PACKAGE_NAME=rentyvest-devnet."
 	case cause != "":
 		return cause
 	default:

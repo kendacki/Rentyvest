@@ -2,7 +2,7 @@
  * Find RentyVest USDCIssuer contracts on ledger (one party at a time).
  */
 const ledgerUrl = (process.env.CANTON_JSON_API_URL ?? '').replace(/\/$/, '');
-const pkgName = process.env.CANTON_DAML_PACKAGE_NAME ?? 'rentyvest-faucet';
+const pkgName = process.env.CANTON_DAML_PACKAGE_NAME ?? 'rentyvest-devnet';
 const templateId = `#${pkgName}:RentyVest.TestUSDC:USDCIssuer`;
 
 async function getToken() {

@@ -15,7 +15,7 @@ func PackageIDFromEnv() string {
 func PackageNameFromEnv() string {
 	name := strings.TrimSpace(os.Getenv("CANTON_DAML_PACKAGE_NAME"))
 	if name == "" {
-		name = "rentyvest-faucet"
+		name = "rentyvest-devnet"
 	}
 	return strings.TrimPrefix(name, "#")
 }
@@ -37,7 +37,7 @@ func QualifyTemplateID(packageID, templateID string) string {
 }
 
 // QualifyTemplateIDForFilter builds a package-name template id for ACS queries.
-// Example: #rentyvest-faucet:RentyVest.TestUSDC:USDCIssuer
+// Example: #rentyvest-devnet:RentyVest.TestUSDC:USDCIssuer
 func QualifyTemplateIDForFilter(templateID string) string {
 	templateID = strings.TrimSpace(templateID)
 	if templateID == "" {
