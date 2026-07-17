@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { COUNTRY_OPTIONS } from '../../lib/countries';
@@ -16,8 +16,9 @@ const listingSchema = z.object({
   contact_phone: z
     .string()
     .trim()
-    .optional()
-    .transform((value) => value ?? ''),
+    .min(7, 'Phone number is required')
+    .max(20, 'Enter a valid phone number')
+    .regex(/^[\d\s+().-]+$/, 'Enter a valid phone number'),
   property_title: z.string().trim().min(4, 'Property title is required'),
   property_description: z
     .string()
@@ -75,6 +76,24 @@ const LABEL_CLASS =
 
 const SECTION_TITLE_CLASS = 'text-sm font-semibold text-brand-black';
 
+function RequiredLabel({
+  htmlFor,
+  children,
+}: {
+  htmlFor: string;
+  children: ReactNode;
+}) {
+  return (
+    <label className={LABEL_CLASS} htmlFor={htmlFor}>
+      {children}
+      <span className="text-brand-orange" aria-hidden="true">
+        {' '}
+        *
+      </span>
+    </label>
+  );
+}
+
 function FieldError({ message }: { message?: string }) {
   if (!message) {
     return null;
@@ -126,6 +145,7 @@ export function PropertyListingForm() {
   } = useForm<FormValues>({
     resolver: zodResolver(listingSchema),
     mode: 'onChange',
+    reValidateMode: 'onChange',
     defaultValues: {
       contact_name: '',
       contact_email: '',
@@ -199,6 +219,10 @@ export function PropertyListingForm() {
           } catch {
             // Response was not JSON.
           }
+          if (response.status === 429) {
+            message =
+              'Too many listing requests from this wallet. Please wait before submitting again.';
+          }
           throw new Error(message);
         }
 
@@ -239,13 +263,9 @@ export function PropertyListingForm() {
   if (submitState === 'success') {
     return (
       <article className="card-surface overflow-hidden font-sans">
-        <div className="border-b border-white/10 bg-black px-5 py-5 sm:px-6">
-          <p className="section-label">Listing submitted</p>
-          <p className="mt-2 text-sm leading-relaxed text-neutral-300">
-            {submitMessage}
-          </p>
-        </div>
         <div className="space-y-4 px-5 py-5 sm:px-6">
+          <p className="section-label text-brand-orange">Listing submitted</p>
+          <p className="text-sm leading-relaxed text-neutral-600">{submitMessage}</p>
           <p className="text-sm leading-relaxed text-neutral-600">
             We typically respond within 2–3 business days. You can submit another
             property once review begins.
@@ -267,18 +287,18 @@ export function PropertyListingForm() {
 
   return (
     <article className="card-surface overflow-hidden font-sans">
-      <div className="border-b border-white/10 bg-black px-5 py-5 sm:px-6">
-        <p className="section-label">List on RentyVest</p>
-        <p className="mt-2 text-sm leading-relaxed text-neutral-300">
-          Share your property details to start fractional listing. Our team reviews
-          each submission before creating an on-chain PropertyPool.
-        </p>
-      </div>
-
       <form
-        className="space-y-8 px-5 py-6 sm:px-6"
+        className="space-y-8 px-5 py-5 sm:px-6"
         onSubmit={(event) => {
-          void handleSubmit(onSubmit)(event);
+          void handleSubmit(onSubmit, (invalidFields) => {
+            const firstField = Object.keys(invalidFields)[0];
+            if (firstField) {
+              document
+                .getElementById(firstField)
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              document.getElementById(firstField)?.focus();
+            }
+          })(event);
         }}
         noValidate
       >
@@ -286,37 +306,35 @@ export function PropertyListingForm() {
           <h2 className={SECTION_TITLE_CLASS}>Owner contact</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className={LABEL_CLASS} htmlFor="contact_name">
-                Full name
-              </label>
+              <RequiredLabel htmlFor="contact_name">Full name</RequiredLabel>
               <GlassInput
                 id="contact_name"
                 type="text"
                 autoComplete="name"
+                aria-invalid={Boolean(errors.contact_name)}
                 {...register('contact_name')}
               />
               <FieldError message={errors.contact_name?.message} />
             </div>
             <div>
-              <label className={LABEL_CLASS} htmlFor="contact_email">
-                Email
-              </label>
+              <RequiredLabel htmlFor="contact_email">Email</RequiredLabel>
               <GlassInput
                 id="contact_email"
                 type="email"
                 autoComplete="email"
+                aria-invalid={Boolean(errors.contact_email)}
                 {...register('contact_email')}
               />
               <FieldError message={errors.contact_email?.message} />
             </div>
             <div>
-              <label className={LABEL_CLASS} htmlFor="contact_phone">
-                Phone (optional)
-              </label>
+              <RequiredLabel htmlFor="contact_phone">Phone</RequiredLabel>
               <GlassInput
                 id="contact_phone"
                 type="tel"
                 autoComplete="tel"
+                placeholder="+1 555 123 4567"
+                aria-invalid={Boolean(errors.contact_phone)}
                 {...register('contact_phone')}
               />
               <FieldError message={errors.contact_phone?.message} />
@@ -328,35 +346,32 @@ export function PropertyListingForm() {
           <h2 className={SECTION_TITLE_CLASS}>Property overview</h2>
           <div className="grid gap-4">
             <div>
-              <label className={LABEL_CLASS} htmlFor="property_title">
-                Property title
-              </label>
+              <RequiredLabel htmlFor="property_title">Property title</RequiredLabel>
               <GlassInput
                 id="property_title"
                 type="text"
                 placeholder="e.g. Lagos Marina Tower — Fractional equity"
+                aria-invalid={Boolean(errors.property_title)}
                 {...register('property_title')}
               />
               <FieldError message={errors.property_title?.message} />
             </div>
             <div>
-              <label className={LABEL_CLASS} htmlFor="property_type">
-                Property type
-              </label>
+              <RequiredLabel htmlFor="property_type">Property type</RequiredLabel>
               <GlassSelect
                 id="property_type"
                 options={PROPERTY_TYPE_OPTIONS}
+                aria-invalid={Boolean(errors.property_type)}
                 {...register('property_type')}
               />
               <FieldError message={errors.property_type?.message} />
             </div>
             <div>
-              <label className={LABEL_CLASS} htmlFor="property_description">
-                Description
-              </label>
+              <RequiredLabel htmlFor="property_description">Description</RequiredLabel>
               <GlassTextarea
                 id="property_description"
                 placeholder="Describe the asset, tenant profile, occupancy, and why investors should consider this pool."
+                aria-invalid={Boolean(errors.property_description)}
                 {...register('property_description')}
               />
               <FieldError message={errors.property_description?.message} />
@@ -380,49 +395,45 @@ export function PropertyListingForm() {
           <h2 className={SECTION_TITLE_CLASS}>Location</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className={LABEL_CLASS} htmlFor="address_line1">
-                Street address
-              </label>
+              <RequiredLabel htmlFor="address_line1">Street address</RequiredLabel>
               <GlassInput
                 id="address_line1"
                 type="text"
                 autoComplete="street-address"
+                aria-invalid={Boolean(errors.address_line1)}
                 {...register('address_line1')}
               />
               <FieldError message={errors.address_line1?.message} />
             </div>
             <div>
-              <label className={LABEL_CLASS} htmlFor="city">
-                City
-              </label>
+              <RequiredLabel htmlFor="city">City</RequiredLabel>
               <GlassInput
                 id="city"
                 type="text"
                 autoComplete="address-level2"
+                aria-invalid={Boolean(errors.city)}
                 {...register('city')}
               />
               <FieldError message={errors.city?.message} />
             </div>
             <div>
-              <label className={LABEL_CLASS} htmlFor="state">
-                State / region
-              </label>
+              <RequiredLabel htmlFor="state">State / region</RequiredLabel>
               <GlassInput
                 id="state"
                 type="text"
                 autoComplete="address-level1"
+                aria-invalid={Boolean(errors.state)}
                 {...register('state')}
               />
               <FieldError message={errors.state?.message} />
             </div>
             <div>
-              <label className={LABEL_CLASS} htmlFor="country">
-                Country
-              </label>
+              <RequiredLabel htmlFor="country">Country</RequiredLabel>
               <GlassSelect
                 id="country"
                 autoComplete="country-name"
                 options={COUNTRY_OPTIONS}
+                aria-invalid={Boolean(errors.country)}
                 {...register('country')}
               />
               <FieldError message={errors.country?.message} />
@@ -450,41 +461,40 @@ export function PropertyListingForm() {
           </p>
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="glass-inset p-4">
-              <label className={LABEL_CLASS} htmlFor="total_units">
-                Total slots
-              </label>
+              <RequiredLabel htmlFor="total_units">Total slots</RequiredLabel>
               <GlassInput
                 id="total_units"
                 type="number"
                 min={1}
                 step={1}
+                aria-invalid={Boolean(errors.total_units)}
                 {...register('total_units')}
               />
               <FieldError message={errors.total_units?.message} />
             </div>
             <div className="glass-inset p-4">
-              <label className={LABEL_CLASS} htmlFor="unit_price">
-                Price per slot (tUSDC)
-              </label>
+              <RequiredLabel htmlFor="unit_price">Price per slot (tUSDC)</RequiredLabel>
               <GlassInput
                 id="unit_price"
                 type="number"
                 min={1}
                 step="0.01"
+                aria-invalid={Boolean(errors.unit_price)}
                 {...register('unit_price')}
               />
               <FieldError message={errors.unit_price?.message} />
             </div>
             <div className="glass-accent p-4">
-              <label className={LABEL_CLASS} htmlFor="estimated_annual_yield">
+              <RequiredLabel htmlFor="estimated_annual_yield">
                 Est. annual yield (%)
-              </label>
+              </RequiredLabel>
               <GlassInput
                 id="estimated_annual_yield"
                 type="number"
                 min={0}
                 max={100}
                 step="0.1"
+                aria-invalid={Boolean(errors.estimated_annual_yield)}
                 {...register('estimated_annual_yield')}
               />
               <FieldError message={errors.estimated_annual_yield?.message} />
@@ -524,8 +534,8 @@ export function PropertyListingForm() {
         </button>
 
         <p className="text-center text-xs text-neutral-500">
-          Submissions are reviewed manually. Listing on marketplace requires PropertyPool
-          deployment before going live.
+          Fields marked with <span className="text-brand-orange">*</span> are required.
+          Submissions are reviewed manually before marketplace listing goes live.
         </p>
       </form>
     </article>

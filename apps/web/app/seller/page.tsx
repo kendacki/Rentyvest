@@ -59,8 +59,8 @@ export default function SellerPage() {
   return (
     <PageShell>
       <main className="page-canvas font-sans">
-        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-          <Reveal as="header" className="mb-8 text-center" immediate>
+        <div className="mx-auto max-w-3xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+          <Reveal as="header" className="mb-4 text-center" immediate>
             <h1 className="heading-section text-brand-black">List your property</h1>
             <p className="body-lead mx-auto mt-3 max-w-2xl text-neutral-600">
               Submit your asset for fractional listing on RentyVest. We review each
@@ -69,6 +69,8 @@ export default function SellerPage() {
           </Reveal>
 
           <div className="space-y-6">
+            <PropertyListingForm />
+
             <section className="grid gap-4 sm:grid-cols-3">
               {LISTING_STEPS.map((item) => (
                 <article key={item.step} className="glass-inset p-4 text-left">
@@ -82,8 +84,6 @@ export default function SellerPage() {
                 </article>
               ))}
             </section>
-
-            <PropertyListingForm />
           </div>
         </div>
       </main>

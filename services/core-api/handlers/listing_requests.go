@@ -4,20 +4,45 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/rentyvest/core-api/internal/db"
 	"github.com/rentyvest/core-api/internal/problems"
 )
 
+const (
+	defaultListingRateWindow = 24 * time.Hour
+	defaultListingRateLimitMax = 3
+)
+
 type ListingRequestsHandler struct {
-	store *db.Store
+	store        *db.Store
+	rateWindow   time.Duration
+	rateLimitMax int
 }
 
 func NewListingRequestsHandler(store *db.Store) *ListingRequestsHandler {
+	rateWindow := defaultListingRateWindow
+	if raw := strings.TrimSpace(os.Getenv("LISTING_REQUEST_RATE_LIMIT_WINDOW")); raw != "" {
+		if parsed, err := time.ParseDuration(raw); err == nil && parsed > 0 {
+			rateWindow = parsed
+		}
+	}
+
+	rateLimitMax := defaultListingRateLimitMax
+	if raw := strings.TrimSpace(os.Getenv("LISTING_REQUEST_RATE_LIMIT_MAX")); raw != "" {
+		if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 {
+			rateLimitMax = parsed
+		}
+	}
+
 	return &ListingRequestsHandler{
-		store: store,
+		store:        store,
+		rateWindow:   rateWindow,
+		rateLimitMax: rateLimitMax,
 	}
 }
 
@@ -25,7 +50,7 @@ type createListingRequestBody struct {
 	CantonPartyID        string  `json:"canton_party_id,omitempty"`
 	ContactName          string  `json:"contact_name"`
 	ContactEmail         string  `json:"contact_email"`
-	ContactPhone         string  `json:"contact_phone,omitempty"`
+	ContactPhone         string  `json:"contact_phone"`
 	PropertyTitle        string  `json:"property_title"`
 	PropertyDescription  string  `json:"property_description"`
 	PropertyType         string  `json:"property_type"`
@@ -65,8 +90,25 @@ func (h *ListingRequestsHandler) Create(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	submitterID := strings.TrimSpace(body.CantonPartyID)
+	recentCount, err := h.store.CountRecentListingRequests(r.Context(), submitterID, h.rateWindow)
+	if err != nil {
+		problems.Write(w, http.StatusInternalServerError, "Internal Server Error", "Unable to verify listing submission rate limit")
+		return
+	}
+	if recentCount >= h.rateLimitMax {
+		problems.WriteCode(
+			w,
+			http.StatusTooManyRequests,
+			"RV-4292",
+			"Too Many Requests",
+			"Too many listing requests from this wallet. Please try again later.",
+		)
+		return
+	}
+
 	created, err := h.store.CreatePropertyListingRequest(r.Context(), db.CreatePropertyListingRequestInput{
-		SubmitterID:          strings.TrimSpace(body.CantonPartyID),
+		SubmitterID:          submitterID,
 		CantonPartyID:        optionalString(body.CantonPartyID),
 		ContactName:          strings.TrimSpace(body.ContactName),
 		ContactEmail:         strings.TrimSpace(body.ContactEmail),
@@ -108,6 +150,9 @@ func validateListingRequestBody(body *createListingRequestBody) error {
 	}
 	if strings.TrimSpace(body.ContactEmail) == "" {
 		return errors.New("contact_email is required")
+	}
+	if strings.TrimSpace(body.ContactPhone) == "" {
+		return errors.New("contact_phone is required")
 	}
 	if strings.TrimSpace(body.PropertyTitle) == "" {
 		return errors.New("property_title is required")

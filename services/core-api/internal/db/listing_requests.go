@@ -2,11 +2,15 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+var ErrListingRequestRateLimited = errors.New("listing request rate limit exceeded")
 
 type PropertyListingRequest struct {
 	ID                     uuid.UUID  `json:"id"`
@@ -153,4 +157,28 @@ func (s *Store) CreatePropertyListingRequest(
 	}
 
 	return &created, nil
+}
+
+func (s *Store) CountRecentListingRequests(
+	ctx context.Context,
+	submitterID string,
+	window time.Duration,
+) (int, error) {
+	if strings.TrimSpace(submitterID) == "" {
+		return 0, nil
+	}
+
+	since := time.Now().Add(-window)
+	var count int
+	err := s.pool.QueryRow(ctx, `
+		SELECT COUNT(*)::int
+		FROM public.property_listing_requests
+		WHERE submitter_id = $1
+		  AND created_at > $2
+	`, submitterID, since).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("count recent listing requests: %w", err)
+	}
+
+	return count, nil
 }
