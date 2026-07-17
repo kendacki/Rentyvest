@@ -61,12 +61,15 @@ const listingSchema = z.object({
 type FormValues = z.infer<typeof listingSchema>;
 
 const INPUT_CLASS =
-  'h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-orange focus:outline-none focus:ring-2 focus:ring-brand-orange/20';
+  'glass-inset h-11 w-full rounded-xl px-3 text-sm text-brand-black placeholder:text-neutral-400 focus:border-brand-orange/40 focus:outline-none focus:ring-2 focus:ring-brand-orange/20';
 
 const TEXTAREA_CLASS =
-  'min-h-[120px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-orange focus:outline-none focus:ring-2 focus:ring-brand-orange/20';
+  'glass-inset min-h-[120px] w-full rounded-xl px-3 py-2.5 text-sm text-brand-black placeholder:text-neutral-400 focus:border-brand-orange/40 focus:outline-none focus:ring-2 focus:ring-brand-orange/20';
 
-const LABEL_CLASS = 'text-xs font-semibold uppercase tracking-wide text-slate-500';
+const LABEL_CLASS =
+  'text-xs font-semibold uppercase tracking-wide text-neutral-500';
+
+const SECTION_TITLE_CLASS = 'text-sm font-semibold text-brand-black';
 
 function FieldError({ message }: { message?: string }) {
   if (!message) {
@@ -227,13 +230,15 @@ export function PropertyListingForm() {
 
   if (submitState === 'success') {
     return (
-      <article className="card-surface overflow-hidden">
+      <article className="card-surface overflow-hidden font-sans">
         <div className="border-b border-white/10 bg-black px-5 py-5 sm:px-6">
           <p className="section-label">Listing submitted</p>
-          <p className="mt-2 text-sm text-neutral-300">{submitMessage}</p>
+          <p className="mt-2 text-sm leading-relaxed text-neutral-300">
+            {submitMessage}
+          </p>
         </div>
         <div className="space-y-4 px-5 py-5 sm:px-6">
-          <p className="text-sm text-neutral-600">
+          <p className="text-sm leading-relaxed text-neutral-600">
             We typically respond within 2–3 business days. You can submit another
             property once review begins.
           </p>
@@ -253,12 +258,12 @@ export function PropertyListingForm() {
   }
 
   return (
-    <article className="card-surface overflow-hidden">
+    <article className="card-surface overflow-hidden font-sans">
       <div className="border-b border-white/10 bg-black px-5 py-5 sm:px-6">
         <p className="section-label">List on RentyVest</p>
-        <p className="mt-2 text-sm text-neutral-300">
-          Share your property details to start fractional listing on Canton DevNet.
-          Our team reviews each submission before creating an on-chain PropertyPool.
+        <p className="mt-2 text-sm leading-relaxed text-neutral-300">
+          Share your property details to start fractional listing. Our team reviews
+          each submission before creating an on-chain PropertyPool.
         </p>
       </div>
 
@@ -269,8 +274,8 @@ export function PropertyListingForm() {
         }}
         noValidate
       >
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold text-brand-black">Owner contact</h2>
+        <section className="glass-inset space-y-4 p-5">
+          <h2 className={SECTION_TITLE_CLASS}>Owner contact</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <label className={LABEL_CLASS} htmlFor="contact_name">
@@ -314,8 +319,8 @@ export function PropertyListingForm() {
           </div>
         </section>
 
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold text-brand-black">Property overview</h2>
+        <section className="glass-inset space-y-4 p-5">
+          <h2 className={SECTION_TITLE_CLASS}>Property overview</h2>
           <div className="grid gap-4">
             <div>
               <label className={LABEL_CLASS} htmlFor="property_title">
@@ -374,8 +379,8 @@ export function PropertyListingForm() {
           </div>
         </section>
 
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold text-brand-black">Location</h2>
+        <section className="glass-inset space-y-4 p-5">
+          <h2 className={SECTION_TITLE_CLASS}>Location</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <label className={LABEL_CLASS} htmlFor="address_line1">
@@ -445,10 +450,10 @@ export function PropertyListingForm() {
           </div>
         </section>
 
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold text-brand-black">Token economics</h2>
-          <p className="text-sm text-neutral-600">
-            Investors pledge tUSDC per slot. We use these figures to size your on-chain
+        <section className="glass-accent space-y-4 p-5">
+          <h2 className={SECTION_TITLE_CLASS}>Token economics</h2>
+          <p className="text-sm leading-relaxed text-neutral-600">
+            Investors pledge tUSDC per slot. We use these figures to size your
             PropertyPool before marketplace listing goes live.
           </p>
           <div className="grid gap-4 sm:grid-cols-3">
@@ -498,8 +503,8 @@ export function PropertyListingForm() {
           </div>
         </section>
 
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold text-brand-black">Additional notes</h2>
+        <section className="glass-inset space-y-4 p-5">
+          <h2 className={SECTION_TITLE_CLASS}>Additional notes</h2>
           <textarea
             id="additional_notes"
             placeholder="Compliance documents, preferred launch timeline, property manager contact, or other context."
@@ -508,13 +513,6 @@ export function PropertyListingForm() {
           />
           <FieldError message={errors.additional_notes?.message} />
         </section>
-
-        {partyId ? (
-          <p className="truncate glass-inset px-3 py-2 text-xs text-slate-600">
-            <span className="font-medium text-slate-800">Linked Canton party:</span>{' '}
-            {partyId}
-          </p>
-        ) : null}
 
         {submitState === 'error' && submitMessage ? (
           <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
@@ -537,9 +535,9 @@ export function PropertyListingForm() {
           )}
         </button>
 
-        <p className="text-center text-xs text-slate-500">
+        <p className="text-center text-xs text-neutral-500">
           Submissions are reviewed manually. Listing on marketplace requires PropertyPool
-          deployment on Canton DevNet.
+          deployment before going live.
         </p>
       </form>
     </article>

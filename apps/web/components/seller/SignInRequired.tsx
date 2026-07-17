@@ -11,7 +11,7 @@ type SignInRequiredProps = {
 
 export function SignInRequired({
   title = 'Connect wallet to continue',
-  description = 'Connect your Canton wallet to access this page.',
+  description = 'Connect your wallet to access this page.',
   redirectPath = '/seller',
 }: SignInRequiredProps) {
   return (

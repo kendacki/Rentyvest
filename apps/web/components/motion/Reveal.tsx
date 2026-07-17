@@ -7,6 +7,7 @@ type RevealProps = {
   children: ReactNode;
   className?: string;
   delay?: number;
+  immediate?: boolean;
   as?: 'div' | 'section' | 'article' | 'header' | 'main' | 'footer';
 };
 
@@ -14,6 +15,7 @@ export function Reveal({
   children,
   className = '',
   delay = 0,
+  immediate = false,
   as = 'div',
 }: RevealProps) {
   const prefersReducedMotion = useReducedMotion();
@@ -24,17 +26,32 @@ export function Reveal({
     return <Tag className={className}>{children}</Tag>;
   }
 
+  const transition = {
+    duration: 0.55,
+    delay,
+    ease: [0.22, 1, 0.36, 1] as const,
+  };
+
+  if (immediate) {
+    return (
+      <Component
+        className={className}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={transition}
+      >
+        {children}
+      </Component>
+    );
+  }
+
   return (
     <Component
       className={className}
       initial={{ opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2, margin: '-60px' }}
-      transition={{
-        duration: 0.55,
-        delay,
-        ease: [0.22, 1, 0.36, 1],
-      }}
+      transition={transition}
     >
       {children}
     </Component>
