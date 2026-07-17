@@ -62,7 +62,7 @@ export default function SellerPage() {
         <div className="mx-auto max-w-3xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
           <Reveal as="header" className="mb-4 text-center" immediate>
             <h1 className="heading-section text-brand-black">List your property</h1>
-            <p className="body-lead mx-auto mt-3 max-w-2xl text-neutral-600">
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-neutral-600 sm:text-base">
               Submit your asset for fractional listing on RentyVest. We review each
               request, deploy a PropertyPool, and publish live slots on the marketplace.
             </p>
