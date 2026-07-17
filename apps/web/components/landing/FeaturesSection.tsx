@@ -140,12 +140,14 @@ export function FeaturesSection() {
   return (
     <section className="relative isolate overflow-hidden bg-black pb-20 pt-16 text-white sm:pb-28 sm:pt-20">
       <Image
-        src="/why-rentyvest-cityscape.png"
+        src="/why-rentyvest-architecture.png"
         alt=""
         fill
+        priority
+        unoptimized
         quality={100}
         sizes="100vw"
-        className="object-contain object-bottom"
+        className="object-cover object-center"
         aria-hidden
       />
 
