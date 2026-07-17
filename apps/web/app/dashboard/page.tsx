@@ -8,9 +8,10 @@ import { TransferModal } from '../../components/nft/TransferModal';
 import { ConnectWalletFallback } from '../../components/portfolio/ConnectWalletFallback';
 import { PortfolioGrid } from '../../components/portfolio/PortfolioGrid';
 import { PortfolioPledgeModal } from '../../components/portfolio/PledgeModal';
+import { CopyPartyIdButton } from '../../components/wallet/CopyPartyIdButton';
 import { useCantonWallet } from '../../providers/CantonWalletProvider';
 import { useLedgerPortfolio } from '../../hooks/useLedgerPortfolio';
-import { formatTokenBalance, truncatePartyId } from '../../lib/format';
+import { formatTokenBalance } from '../../lib/format';
 import type { UserEquityToken } from '@rentyvest/ledger-client';
 import type { TransferableNFT } from '../../types/nft';
 
@@ -79,11 +80,9 @@ export default function DashboardPage() {
             >
               Your holdings
             </h1>
-            <p className="mt-2 text-sm text-neutral-600">
-              Canton party{' '}
-              <span className="font-mono text-xs text-brand-black">
-                {truncatePartyId(partyId)}
-              </span>
+            <p className="mt-2 flex items-center justify-center gap-1 text-sm text-neutral-600">
+              <span>Canton party</span>
+              <CopyPartyIdButton partyId={partyId} />
             </p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <Link href="/marketplace" className="btn-secondary h-11">
