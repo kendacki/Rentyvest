@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,7 +17,7 @@ import (
 const (
 	defaultM2MScope          = "daml_ledger_api"
 	defaultM2MRefreshEvery   = 7 * time.Hour
-	m2mRefreshLeadTime       = time.Minute
+	m2mRefreshLeadTime       = 15 * time.Minute
 )
 
 // TokenSource supplies Bearer tokens for Canton JSON Ledger API requests.
@@ -103,6 +104,11 @@ func (m *M2MTokenManager) Start(ctx context.Context) {
 		return
 	}
 
+	// Warm the cache immediately so the first ledger submit does not use a cold token.
+	if _, err := m.AccessToken(ctx); err != nil {
+		log.Printf("canton m2m token warm refresh failed: %v", err)
+	}
+
 	ticker := time.NewTicker(m.refreshEvery)
 	defer ticker.Stop()
 
@@ -111,7 +117,9 @@ func (m *M2MTokenManager) Start(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			_, _ = m.refresh(ctx)
+			if _, err := m.refresh(ctx); err != nil {
+				log.Printf("canton m2m token refresh failed: %v", err)
+			}
 		}
 	}
 }
@@ -130,6 +138,20 @@ func (m *M2MTokenManager) AccessToken(ctx context.Context) (string, error) {
 	if token != "" && time.Now().Before(expiresAt.Add(-m2mRefreshLeadTime)) {
 		return token, nil
 	}
+
+	return m.refresh(ctx)
+}
+
+// ForceRefresh clears the cached token and fetches a new one from OAuth.
+func (m *M2MTokenManager) ForceRefresh(ctx context.Context) (string, error) {
+	if m == nil {
+		return "", fmt.Errorf("canton m2m token manager is not configured")
+	}
+
+	m.mu.Lock()
+	m.token = ""
+	m.expiresAt = time.Time{}
+	m.mu.Unlock()
 
 	return m.refresh(ctx)
 }

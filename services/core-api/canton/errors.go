@@ -48,6 +48,26 @@ func cantonCause(body string) string {
 	return body
 }
 
+// IsAuthSubmitError reports Canton ledger auth failures (expired or invalid bearer token).
+func IsAuthSubmitError(err error) bool {
+	var submitErr *SubmitError
+	if !errors.As(err, &submitErr) {
+		return false
+	}
+
+	if submitErr.StatusCode == http.StatusUnauthorized || submitErr.StatusCode == http.StatusForbidden {
+		return true
+	}
+
+	cause := strings.ToLower(cantonCause(submitErr.Body))
+	body := strings.ToLower(submitErr.Body)
+
+	return strings.Contains(cause, "security-sensitive error") ||
+		strings.Contains(body, "security-sensitive error") ||
+		strings.Contains(cause, "unauthenticated") ||
+		strings.Contains(cause, "permission denied")
+}
+
 // HumanizeSubmitError turns Canton ledger failures into faucet-friendly copy.
 func HumanizeSubmitError(err error) string {
 	var submitErr *SubmitError
@@ -62,6 +82,11 @@ func HumanizeSubmitError(err error) string {
 	upper := strings.ToUpper(cause)
 
 	switch {
+	case strings.Contains(upper, "SECURITY-SENSITIVE ERROR"),
+		strings.Contains(upper, "UNAUTHENTICATED"),
+		submitErr.StatusCode == http.StatusUnauthorized,
+		submitErr.StatusCode == http.StatusForbidden:
+		return "Canton ledger authentication expired. Please retry your claim in a few seconds."
 	case strings.Contains(upper, "INVALID_PRESCRIBED_SYNCHRONIZER_ID"),
 		strings.Contains(upper, "NOT KNOWN TO ALL INFORMEES"),
 		strings.Contains(upper, "HAS NOT VETTED"):

@@ -475,7 +475,58 @@ func (c *Client) SubmitMint(ctx context.Context, cmd MintCommand) (*MintResult, 
 	return result, nil
 }
 
+func (c *Client) resolveToken(ctx context.Context) (string, error) {
+	if c.tokenSource != nil {
+		return c.tokenSource.AccessToken(ctx)
+	}
+
+	token := strings.TrimSpace(c.adminToken)
+	if token == "" {
+		return "", fmt.Errorf("canton ledger token is not configured")
+	}
+
+	return token, nil
+}
+
+func (c *Client) refreshAuthToken(ctx context.Context) error {
+	refresher, ok := c.tokenSource.(interface {
+		ForceRefresh(context.Context) (string, error)
+	})
+	if !ok {
+		return fmt.Errorf("canton token source does not support refresh")
+	}
+
+	_, err := refresher.ForceRefresh(ctx)
+	return err
+}
+
 func (c *Client) submitAndWait(ctx context.Context, body submitRequest) ([]byte, error) {
+	responseBody, err := c.doSubmitAndWait(ctx, body)
+	if err == nil || !IsAuthSubmitError(err) {
+		return responseBody, err
+	}
+
+	if refreshErr := c.refreshAuthToken(ctx); refreshErr != nil {
+		return nil, err
+	}
+
+	return c.doSubmitAndWait(ctx, body)
+}
+
+func (c *Client) submitAndWaitForTransaction(ctx context.Context, body submitRequest) ([]byte, error) {
+	responseBody, err := c.doSubmitAndWaitForTransaction(ctx, body)
+	if err == nil || !IsAuthSubmitError(err) {
+		return responseBody, err
+	}
+
+	if refreshErr := c.refreshAuthToken(ctx); refreshErr != nil {
+		return nil, err
+	}
+
+	return c.doSubmitAndWaitForTransaction(ctx, body)
+}
+
+func (c *Client) doSubmitAndWait(ctx context.Context, body submitRequest) ([]byte, error) {
 	token, err := c.resolveToken(ctx)
 	if err != nil {
 		return nil, err
@@ -519,7 +570,7 @@ func (c *Client) submitAndWait(ctx context.Context, body submitRequest) ([]byte,
 	return responseBody, nil
 }
 
-func (c *Client) submitAndWaitForTransaction(ctx context.Context, body submitRequest) ([]byte, error) {
+func (c *Client) doSubmitAndWaitForTransaction(ctx context.Context, body submitRequest) ([]byte, error) {
 	token, err := c.resolveToken(ctx)
 	if err != nil {
 		return nil, err
@@ -561,19 +612,6 @@ func (c *Client) submitAndWaitForTransaction(ctx context.Context, body submitReq
 	}
 
 	return responseBody, nil
-}
-
-func (c *Client) resolveToken(ctx context.Context) (string, error) {
-	if c.tokenSource != nil {
-		return c.tokenSource.AccessToken(ctx)
-	}
-
-	token := strings.TrimSpace(c.adminToken)
-	if token == "" {
-		return "", fmt.Errorf("canton ledger token is not configured")
-	}
-
-	return token, nil
 }
 
 func extractStringField(body []byte, field string) (string, bool) {

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { formatTokenBalance } from '../../lib/format';
 import { claimFaucetViaBackend } from '../../lib/faucet/backendMint';
 import { fetchFaucetAssets } from '../../lib/api/faucetAssets';
-import { useLoopWallet } from '../providers/LoopWalletProvider';
 import { useCantonWallet } from '../../providers/CantonWalletProvider';
 import { sumAssetBalances } from '../../types/asset';
 import type { UserTokenAsset } from '../../types/asset';
@@ -38,6 +37,12 @@ function formatClaimError(error: unknown): string {
 
   if (error instanceof Error) {
     const message = error.message.trim();
+    if (
+      message.toLowerCase().includes('security-sensitive error') ||
+      message.toLowerCase().includes('authentication expired')
+    ) {
+      return 'Canton authentication expired on the server. Wait a moment and try claiming again.';
+    }
     if (message.includes('502') || message.toLowerCase().includes('bad gateway')) {
       return 'Canton could not complete the faucet mint. If you use Loop wallet, confirm your party is whitelisted and the RentyVest package is vetted on DevNet, then retry.';
     }
@@ -117,10 +122,8 @@ export function FaucetCard() {
     isConnected,
     isConnecting,
     partyId,
-    walletSource,
     openConnect,
   } = useCantonWallet();
-  const loop = useLoopWallet();
 
   const [assets, setAssets] = useState<UserTokenAsset[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -193,13 +196,6 @@ export function FaucetCard() {
     setToast(null);
 
     try {
-      if (walletSource === 'loop') {
-        const provider = await loop.connect();
-        if (!provider?.party_id) {
-          throw new Error('Connect Loop wallet before claiming tUSDC.');
-        }
-      }
-
       await claimFaucetViaBackend(getApiUrl(), activePartyId);
 
       await refetchBalance();
@@ -216,7 +212,7 @@ export function FaucetCard() {
     } finally {
       setIsClaiming(false);
     }
-  }, [loop, openConnect, partyId, refetchBalance, walletSource]);
+  }, [openConnect, partyId, refetchBalance]);
 
   return (
     <article className="card-surface overflow-hidden">
