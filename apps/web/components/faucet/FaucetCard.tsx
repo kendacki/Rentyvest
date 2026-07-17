@@ -229,7 +229,7 @@ export function FaucetCard() {
       <div className="space-y-4 px-5 py-5 sm:px-6">
         <div className="px-4 text-left">
           <p className="section-label">DevNet Faucet</p>
-          <p className="mt-2 text-sm text-neutral-600">
+          <p className="mt-2 text-sm font-semibold text-brand-black">
             {isWalletConnected
               ? 'Wallet connected. Claim tUSDC — one claim every 24 hours.'
               : 'Connect your wallet to claim tUSDC — one claim every 24 hours.'}
