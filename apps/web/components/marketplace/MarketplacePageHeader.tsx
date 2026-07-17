@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useCantonWallet } from '../../providers/CantonWalletProvider';
 import { Reveal } from '../motion/Reveal';
 
@@ -20,11 +19,6 @@ export function MarketplacePageHeader() {
         Invest per slot in vetted properties. Slot availability updates in real
         time as investors pledge on Canton.
       </p>
-      <div className="mt-6 flex justify-center">
-        <Link href="/wallet" className="btn-secondary shrink-0">
-          Faucet
-        </Link>
-      </div>
     </Reveal>
   );
 }
