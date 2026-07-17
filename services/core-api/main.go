@@ -99,6 +99,16 @@ func main() {
 	listingRequestsHandler := handlers.NewListingRequestsHandler(store)
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			w.Header().Set("Allow", "GET, HEAD")
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"status":"ok","service":"core-api"}`))
+	})
 	mux.HandleFunc("/auth/exchange", authHandler.Exchange)
 	mux.HandleFunc("/properties", propertiesHandler.List)
 	mux.HandleFunc("/listing-requests", listingRequestsHandler.Create)
