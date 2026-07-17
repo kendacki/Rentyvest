@@ -9,7 +9,7 @@ const FOOTER_LINKS = {
   ],
   Platform: [
     { href: 'https://app.seaport.to/', label: '5N Seaport' },
-    { href: '/wallet', label: 'tUSDC faucet' },
+    { href: '/seller', label: 'Sell Property' },
     { href: 'https://devnet.cantonloop.com/', label: 'Loop Wallet' },
   ],
 } as const;
