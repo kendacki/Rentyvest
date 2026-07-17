@@ -2,19 +2,141 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { usePrivy } from '@privy-io/react-auth';
 import { useState } from 'react';
 import { BrandLogo } from '../brand/BrandLogo';
 import { WalletAccountMenu } from '../wallet/WalletAccountMenu';
 
-const NAV_LINKS = [
+const PUBLIC_NAV_LINKS = [
   { href: '/marketplace', label: 'Marketplace' },
   { href: '/dashboard', label: 'Portfolio' },
   { href: '/wallet', label: 'Faucet' },
 ] as const;
 
+const SELLER_NAV_LINK = { href: '/seller', label: 'List property' } as const;
+
+const HAS_PRIVY = Boolean(
+  (process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? '').trim(),
+);
+
 type SiteHeaderProps = {
   variant?: 'light' | 'dark';
 };
+
+type NavLinkItem = { href: string; label: string };
+
+function AuthenticatedSiteHeaderNav({
+  pathname,
+  isDark,
+  onNavigate,
+  layout,
+}: {
+  pathname: string;
+  isDark: boolean;
+  onNavigate?: () => void;
+  layout: 'desktop' | 'mobile';
+}) {
+  const { ready, authenticated } = usePrivy();
+  const navLinks: NavLinkItem[] =
+    ready && authenticated
+      ? [...PUBLIC_NAV_LINKS, SELLER_NAV_LINK]
+      : [...PUBLIC_NAV_LINKS];
+
+  const className =
+    layout === 'desktop'
+      ? 'hidden flex-none items-center gap-8 md:flex'
+      : 'flex flex-col gap-3';
+
+  return (
+    <nav className={className}>
+      {navLinks.map(({ href, label }) => (
+        <NavLink
+          key={href}
+          href={href}
+          label={label}
+          pathname={pathname}
+          isDark={isDark}
+          onNavigate={onNavigate}
+        />
+      ))}
+    </nav>
+  );
+}
+
+function SiteHeaderNav({
+  pathname,
+  isDark,
+  onNavigate,
+  layout,
+}: {
+  pathname: string;
+  isDark: boolean;
+  onNavigate?: () => void;
+  layout: 'desktop' | 'mobile';
+}) {
+  if (HAS_PRIVY) {
+    return (
+      <AuthenticatedSiteHeaderNav
+        pathname={pathname}
+        isDark={isDark}
+        onNavigate={onNavigate}
+        layout={layout}
+      />
+    );
+  }
+
+  const className =
+    layout === 'desktop'
+      ? 'hidden flex-none items-center gap-8 md:flex'
+      : 'flex flex-col gap-3';
+
+  return (
+    <nav className={className}>
+      {PUBLIC_NAV_LINKS.map(({ href, label }) => (
+        <NavLink
+          key={href}
+          href={href}
+          label={label}
+          pathname={pathname}
+          isDark={isDark}
+          onNavigate={onNavigate}
+        />
+      ))}
+    </nav>
+  );
+}
+
+function NavLink({
+  href,
+  label,
+  pathname,
+  isDark,
+  onNavigate,
+}: {
+  href: string;
+  label: string;
+  pathname: string;
+  isDark: boolean;
+  onNavigate?: () => void;
+}) {
+  const active = pathname === href || pathname.startsWith(`${href}/`);
+
+  return (
+    <Link
+      href={href}
+      className={`text-sm font-medium transition-colors ${
+        active
+          ? 'text-brand-orange'
+          : isDark
+            ? 'text-neutral-400 hover:text-white'
+            : 'text-neutral-600 hover:text-black'
+      }`}
+      onClick={onNavigate}
+    >
+      {label}
+    </Link>
+  );
+}
 
 export function SiteHeader({ variant = 'light' }: SiteHeaderProps) {
   const pathname = usePathname();
@@ -38,27 +160,7 @@ export function SiteHeader({ variant = 'light' }: SiteHeaderProps) {
           />
         </div>
 
-        <nav className="hidden flex-none items-center gap-8 md:flex">
-          {NAV_LINKS.map(({ href, label }) => {
-            const active = pathname === href || pathname.startsWith(`${href}/`);
-
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`text-sm font-medium transition-colors ${
-                  active
-                    ? 'text-brand-orange'
-                    : isDark
-                      ? 'text-neutral-400 hover:text-white'
-                      : 'text-neutral-600 hover:text-black'
-                }`}
-              >
-                {label}
-              </Link>
-            );
-          })}
-        </nav>
+        <SiteHeaderNav pathname={pathname} isDark={isDark} layout="desktop" />
 
         <div className="flex flex-1 items-center justify-end gap-3">
           <div className="hidden items-center md:flex">
@@ -107,21 +209,15 @@ export function SiteHeader({ variant = 'light' }: SiteHeaderProps) {
               : 'glass-header-light'
           }`}
         >
-          <nav className="flex flex-col gap-3">
-            {NAV_LINKS.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className="text-sm font-medium"
-                onClick={() => setMenuOpen(false)}
-              >
-                {label}
-              </Link>
-            ))}
-            <div className="mt-2">
-              <WalletAccountMenu variant={isDark ? 'dark' : 'light'} />
-            </div>
-          </nav>
+          <SiteHeaderNav
+            pathname={pathname}
+            isDark={isDark}
+            layout="mobile"
+            onNavigate={() => setMenuOpen(false)}
+          />
+          <div className="mt-2">
+            <WalletAccountMenu variant={isDark ? 'dark' : 'light'} />
+          </div>
         </div>
       ) : null}
     </header>
