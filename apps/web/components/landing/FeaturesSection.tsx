@@ -76,7 +76,7 @@ export function HowItWorksSection() {
               variants={staggerItem}
               className="card-surface group flex flex-col p-8 transition-colors hover:border-black"
             >
-              <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-orange/10 text-brand-orange">
+              <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-white/70 bg-white/40 text-brand-orange shadow-[inset_0_1px_1px_rgba(255,255,255,0.65),0_8px_24px_rgba(0,0,0,0.04)] backdrop-blur-lg">
                 <Icon className="h-8 w-8" />
               </div>
               <h3 className="mt-5 text-xl font-bold tracking-tight text-black">
