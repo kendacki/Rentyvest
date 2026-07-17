@@ -8,7 +8,7 @@ const FOOTER_LINKS = {
     { href: '/wallet', label: 'Faucet' },
   ],
   Platform: [
-    { href: '/marketplace', label: 'Property pools' },
+    { href: 'https://app.seaport.to/', label: '5N Seaport' },
     { href: '/wallet', label: 'tUSDC faucet' },
     { href: 'https://devnet.cantonloop.com/', label: 'Loop Wallet' },
   ],
