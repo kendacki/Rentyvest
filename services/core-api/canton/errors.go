@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -48,24 +49,28 @@ func cantonCause(body string) string {
 	return body
 }
 
-// IsAuthSubmitError reports Canton ledger auth failures (expired or invalid bearer token).
+// IsAuthSubmitError reports Canton ledger auth failures that may be fixed by refreshing the bearer token.
+// PERMISSION_DENIED (403 / grpc 7) is NOT included — that means the user lacks actAs rights.
 func IsAuthSubmitError(err error) bool {
 	var submitErr *SubmitError
 	if !errors.As(err, &submitErr) {
 		return false
 	}
 
-	if submitErr.StatusCode == http.StatusUnauthorized || submitErr.StatusCode == http.StatusForbidden {
+	if submitErr.StatusCode == http.StatusUnauthorized {
+		return true
+	}
+
+	// grpcCodeValue 16 = UNAUTHENTICATED; 7 = PERMISSION_DENIED (do not refresh for 7).
+	body := strings.ToLower(submitErr.Body)
+	if strings.Contains(body, `"grpccodevalue":16`) {
 		return true
 	}
 
 	cause := strings.ToLower(cantonCause(submitErr.Body))
-	body := strings.ToLower(submitErr.Body)
-
-	return strings.Contains(cause, "security-sensitive error") ||
-		strings.Contains(body, "security-sensitive error") ||
-		strings.Contains(cause, "unauthenticated") ||
-		strings.Contains(cause, "permission denied")
+	return strings.Contains(cause, "unauthenticated") ||
+		strings.Contains(cause, "access_token_expired") ||
+		(strings.Contains(cause, "security-sensitive error") && submitErr.StatusCode == http.StatusUnauthorized)
 }
 
 // HumanizeSubmitError turns Canton ledger failures into faucet-friendly copy.
@@ -82,13 +87,28 @@ func HumanizeSubmitError(err error) string {
 	upper := strings.ToUpper(cause)
 
 	switch {
+	case submitErr.StatusCode == http.StatusForbidden,
+		strings.Contains(upper, "SECURITY-SENSITIVE ERROR") && submitErr.StatusCode == http.StatusForbidden,
+		strings.Contains(strings.ToLower(submitErr.Body), `"grpcCodeValue":7`):
+		adminParty := strings.TrimSpace(os.Getenv("CANTON_ADMIN_PARTY_ID"))
+		if adminParty == "" {
+			adminParty = strings.TrimSpace(os.Getenv("CANTON_ACT_AS_PARTY"))
+		}
+		userID := strings.TrimSpace(os.Getenv("CANTON_LEDGER_USER_ID"))
+		if userID == "" {
+			userID = "6"
+		}
+		return fmt.Sprintf(
+			"Canton PERMISSION_DENIED: M2M user %q cannot actAs admin party %q. "+
+				"Ask FiveNorth to grant canActAs for that party on user %q, or set CANTON_ADMIN_PARTY_ID to a party this M2M client already controls.",
+			userID,
+			adminParty,
+			userID,
+		)
 	case strings.Contains(upper, "SECURITY-SENSITIVE ERROR"),
 		strings.Contains(upper, "UNAUTHENTICATED"),
-		submitErr.StatusCode == http.StatusUnauthorized,
-		submitErr.StatusCode == http.StatusForbidden:
-		return "Canton rejected the mint (auth/permission). " +
-			"Confirm Railway CANTON_LEDGER_USER_ID matches the M2M token sub (usually \"6\"), " +
-			"and that CANTON_ADMIN_PARTY_ID can act with this M2M client on FiveNorth DevNet."
+		submitErr.StatusCode == http.StatusUnauthorized:
+		return "Canton ledger authentication failed. Refresh M2M OAuth credentials on Railway and retry."
 	case strings.Contains(upper, "INVALID_PRESCRIBED_SYNCHRONIZER_ID"),
 		strings.Contains(upper, "NOT KNOWN TO ALL INFORMEES"),
 		strings.Contains(upper, "HAS NOT VETTED"):

@@ -84,6 +84,7 @@ func main() {
 				cantonClient.LedgerUserID(),
 			)
 		}
+		cantonClient.LogUserRightsProbe(workerCtx)
 		worker := canton.NewWorker(store, cantonClient)
 		go worker.Start(workerCtx)
 	}
