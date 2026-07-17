@@ -14,20 +14,30 @@ export async function GET(request: NextRequest) {
   const upstream = `${getCoreApiUrl()}/faucet/assets?canton_party_id=${encodeURIComponent(cantonPartyId)}`;
 
   try {
-    const response = await fetch(upstream, { cache: 'no-store' });
-    const body = await response.text();
-
-    return new NextResponse(body, {
-      status: response.status,
+    const response = await fetch(upstream, {
+      cache: 'no-store',
       headers: {
-        'Content-Type':
-          response.headers.get('Content-Type') ?? 'application/json',
+        Accept: 'application/json',
       },
     });
+
+    if (response.ok) {
+      const body = await response.text();
+      return new NextResponse(body, {
+        status: response.status,
+        headers: {
+          'Content-Type':
+            response.headers.get('Content-Type') ?? 'application/json',
+        },
+      });
+    }
+
+    if (response.status === 404) {
+      return NextResponse.json({ assets: [] });
+    }
   } catch {
-    return NextResponse.json(
-      { detail: 'Unable to reach core api for faucet assets' },
-      { status: 502 },
-    );
+    // Fall through to empty holdings when core-api is unavailable.
   }
+
+  return NextResponse.json({ assets: [] });
 }

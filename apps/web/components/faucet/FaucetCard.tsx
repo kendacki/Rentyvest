@@ -3,31 +3,18 @@
 import { useCallback, useEffect, useState } from 'react';
 import { formatTokenBalance } from '../../lib/format';
 import { claimFaucetViaBackend } from '../../lib/faucet/backendMint';
+import { fetchFaucetAssets } from '../../lib/api/faucetAssets';
 import { useCantonWallet } from '../../providers/CantonWalletProvider';
 import { sumAssetBalances } from '../../types/asset';
 import type { UserTokenAsset } from '../../types/asset';
 
 
 const CLAIM_BUTTON_LABEL = 'Claim 10,000 tUSDC';
-const FAUCET_ASSETS_PATH = '/faucet/assets';
-
-type ProblemDetails = {
-  type?: string;
-  title?: string;
-  status?: number;
-  detail?: string;
-  code?: string;
-};
 
 type ToastState = {
   type: 'success' | 'error';
   message: string;
 } | null;
-
-
-type FaucetAssetsResponse = {
-  assets: UserTokenAsset[];
-};
 
 function getApiUrl(): string {
   // Browser: same-origin `/faucet/*` routes are proxied by Next.js (no CORS).
@@ -55,53 +42,6 @@ function formatFetchError(error: unknown, action: string): Error {
   }
 
   return new Error(`Unable to ${action}`);
-}
-
-async function readFaucetError(
-  response: Response,
-  fallback: string,
-): Promise<string> {
-  try {
-    const problem = (await response.json()) as ProblemDetails;
-
-    if (problem.detail) {
-      return problem.detail;
-    }
-
-    if (problem.title && problem.code) {
-      return `${problem.title} (${problem.code})`;
-    }
-
-    if (problem.title) {
-      return problem.title;
-    }
-  } catch {
-    // Response body was not JSON.
-  }
-
-  return fallback;
-}
-
-async function fetchPartyAssets(partyId: string): Promise<UserTokenAsset[]> {
-  try {
-    const response = await fetch(
-      `${getApiUrl()}${FAUCET_ASSETS_PATH}?canton_party_id=${encodeURIComponent(partyId)}`,
-    );
-
-    if (response.status === 404) {
-      return [];
-    }
-
-    if (!response.ok) {
-      const fallback = `Unable to load balance (${response.status})`;
-      throw new Error(await readFaucetError(response, fallback));
-    }
-
-    const data = (await response.json()) as FaucetAssetsResponse;
-    return data.assets ?? [];
-  } catch (error) {
-    throw formatFetchError(error, 'load your balance');
-  }
 }
 
 function Spinner() {
@@ -198,7 +138,7 @@ export function FaucetCard() {
     setBalanceError(null);
 
     try {
-      const nextAssets = await fetchPartyAssets(partyId);
+      const nextAssets = await fetchFaucetAssets(partyId);
       setAssets(nextAssets);
     } catch (fetchError) {
       const message =

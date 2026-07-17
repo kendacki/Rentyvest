@@ -4,13 +4,12 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   fetchLedgerProperties,
-  getLedgerApiUrl,
   type ExecutePledgeParams,
   type LedgerPropertyPool,
 } from '@rentyvest/ledger-client';
+import { fetchFaucetAssets } from '../../lib/api/faucetAssets';
 import { formatTokenBalance } from '../../lib/format';
-import type { UserTokenAsset } from '../../types/asset';
-import { parseAssetBalance } from '../../types/asset';
+import { parseAssetBalance, type UserTokenAsset } from '../../types/asset';
 
 const PRIMARY_EMERALD = '#059669';
 
@@ -20,10 +19,6 @@ type PortfolioPledgeModalProps = {
   partyId: string;
   isSigning: boolean;
   onExecutePledge: (params: ExecutePledgeParams) => Promise<void>;
-};
-
-type FaucetAssetsResponse = {
-  assets: UserTokenAsset[];
 };
 
 function Spinner() {
@@ -49,24 +44,6 @@ function Spinner() {
       />
     </svg>
   );
-}
-
-async function fetchPartyAssets(partyId: string): Promise<UserTokenAsset[]> {
-  const apiUrl = getLedgerApiUrl();
-  const response = await fetch(
-    `${apiUrl}/faucet/assets?canton_party_id=${encodeURIComponent(partyId)}`,
-  );
-
-  if (response.status === 404) {
-    return [];
-  }
-
-  if (!response.ok) {
-    throw new Error(`Unable to load tUSDC balance (${response.status})`);
-  }
-
-  const data = (await response.json()) as FaucetAssetsResponse;
-  return data.assets ?? [];
 }
 
 export function PortfolioPledgeModal({
@@ -130,7 +107,7 @@ export function PortfolioPledgeModal({
       try {
         const [poolResponse, partyAssets] = await Promise.all([
           fetchLedgerProperties(),
-          fetchPartyAssets(partyId),
+          fetchFaucetAssets(partyId),
         ]);
 
         if (cancelled) {

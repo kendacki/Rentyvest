@@ -3,11 +3,11 @@ export function getCoreApiUrl(): string {
     process.env.CORE_API_URL ??
     process.env.NEXT_PUBLIC_CORE_API_URL ??
     process.env.NEXT_PUBLIC_API_URL ??
-    'http://localhost:8080';
+    'http://127.0.0.1:8080';
 
   const trimmed = base.trim();
   if (!trimmed) {
-    return 'http://localhost:8080';
+    return 'http://127.0.0.1:8080';
   }
 
   const withProtocol =
@@ -15,5 +15,7 @@ export function getCoreApiUrl(): string {
       ? trimmed
       : `https://${trimmed}`;
 
-  return withProtocol.replace(/\/$/, '');
+  return withProtocol
+    .replace(/\/$/, '')
+    .replace('://localhost', '://127.0.0.1');
 }
