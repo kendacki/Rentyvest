@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -41,6 +42,10 @@ func (c *Client) resolveUSDCIssuerContractID(ctx context.Context, preferred stri
 }
 
 func (c *Client) refreshUSDCIssuerFromLedger(ctx context.Context) (string, error) {
+	return c.refreshUSDCIssuerFromLedgerOnce(ctx, true)
+}
+
+func (c *Client) refreshUSDCIssuerFromLedgerOnce(ctx context.Context, allowAuthRetry bool) (string, error) {
 	party := strings.TrimSpace(c.adminParty)
 	if party == "" {
 		party = strings.TrimSpace(c.actAsParty)
@@ -109,7 +114,14 @@ func (c *Client) refreshUSDCIssuerFromLedger(ctx context.Context) (string, error
 		return "", fmt.Errorf("read active contracts response: %w", err)
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", NewSubmitError(resp.StatusCode, string(responseBody))
+		submitErr := NewSubmitError(resp.StatusCode, string(responseBody))
+		if allowAuthRetry && IsAuthSubmitError(submitErr) {
+			log.Printf("[canton] auth error on active-contracts; forcing m2m token refresh: %v", submitErr)
+			if refreshErr := c.refreshAuthToken(ctx); refreshErr == nil {
+				return c.refreshUSDCIssuerFromLedgerOnce(ctx, false)
+			}
+		}
+		return "", submitErr
 	}
 
 	issuerCID, err := pickUSDCIssuerContractID(responseBody, c.templateUSDCIssuerID)

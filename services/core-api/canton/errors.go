@@ -86,7 +86,9 @@ func HumanizeSubmitError(err error) string {
 		strings.Contains(upper, "UNAUTHENTICATED"),
 		submitErr.StatusCode == http.StatusUnauthorized,
 		submitErr.StatusCode == http.StatusForbidden:
-		return "Canton ledger authentication expired. Please retry your claim in a few seconds."
+		return "Canton rejected the mint (auth/permission). " +
+			"Confirm Railway CANTON_LEDGER_USER_ID matches the M2M token sub (usually \"6\"), " +
+			"and that CANTON_ADMIN_PARTY_ID can act with this M2M client on FiveNorth DevNet."
 	case strings.Contains(upper, "INVALID_PRESCRIBED_SYNCHRONIZER_ID"),
 		strings.Contains(upper, "NOT KNOWN TO ALL INFORMEES"),
 		strings.Contains(upper, "HAS NOT VETTED"):

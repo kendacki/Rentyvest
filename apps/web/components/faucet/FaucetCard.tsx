@@ -39,9 +39,10 @@ function formatClaimError(error: unknown): string {
     const message = error.message.trim();
     if (
       message.toLowerCase().includes('security-sensitive error') ||
-      message.toLowerCase().includes('authentication expired')
+      message.toLowerCase().includes('authentication expired') ||
+      message.toLowerCase().includes('auth/permission')
     ) {
-      return 'Canton authentication expired on the server. Wait a moment and try claiming again.';
+      return 'Canton rejected the mint (auth/permission). Check Railway logs for [faucet/usdc], confirm CANTON_LEDGER_USER_ID matches the M2M token sub, and keep core-api running (not stopped).';
     }
     if (message.includes('502') || message.toLowerCase().includes('bad gateway')) {
       return 'Canton could not complete the faucet mint. If you use Loop wallet, confirm your party is whitelisted and the RentyVest package is vetted on DevNet, then retry.';

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -373,6 +374,30 @@ func (c *Client) AdminPartyID() string {
 	return strings.TrimSpace(c.adminParty)
 }
 
+func (c *Client) LedgerUserID() string {
+	return strings.TrimSpace(c.userID)
+}
+
+func (c *Client) ForceRefreshAuth(ctx context.Context) error {
+	refresher, ok := c.tokenSource.(interface {
+		ForceRefresh(context.Context) (string, error)
+	})
+	if !ok {
+		return nil
+	}
+	_, err := refresher.ForceRefresh(ctx)
+	return err
+}
+
+// ProbeLedgerAuth verifies the configured M2M token can call the JSON Ledger API.
+func (c *Client) ProbeLedgerAuth(ctx context.Context) error {
+	probeCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel()
+
+	_, err := c.ledgerEndOffset(probeCtx)
+	return err
+}
+
 func (c *Client) TemplatePropertyPoolID() string {
 	return strings.TrimSpace(c.templatePoolID)
 }
@@ -506,7 +531,9 @@ func (c *Client) submitAndWait(ctx context.Context, body submitRequest) ([]byte,
 		return responseBody, err
 	}
 
+	log.Printf("[canton] auth error on submit-and-wait; forcing m2m token refresh: %v", err)
 	if refreshErr := c.refreshAuthToken(ctx); refreshErr != nil {
+		log.Printf("[canton] m2m force refresh failed: %v", refreshErr)
 		return nil, err
 	}
 
@@ -519,7 +546,9 @@ func (c *Client) submitAndWaitForTransaction(ctx context.Context, body submitReq
 		return responseBody, err
 	}
 
+	log.Printf("[canton] auth error on submit-and-wait-for-transaction; forcing m2m token refresh: %v", err)
 	if refreshErr := c.refreshAuthToken(ctx); refreshErr != nil {
+		log.Printf("[canton] m2m force refresh failed: %v", refreshErr)
 		return nil, err
 	}
 

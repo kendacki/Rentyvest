@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -349,6 +350,18 @@ func (h *FaucetHandler) ClaimUSDC(w http.ResponseWriter, r *http.Request) {
 	cantonCtx, cancel := contextWithTimeout(r, 90*time.Second)
 	defer cancel()
 
+	if refreshErr := h.cantonClient.ForceRefreshAuth(cantonCtx); refreshErr != nil {
+		log.Printf("[faucet/usdc] pre-mint token refresh failed: %v", refreshErr)
+	}
+
+	log.Printf(
+		"[faucet/usdc] mint start party=%s admin=%s userId=%s amount=%s",
+		cantonPartyID,
+		h.cantonClient.AdminPartyID(),
+		h.cantonClient.LedgerUserID(),
+		h.mintAmount,
+	)
+
 	mintResult, err := h.cantonClient.SubmitMint(cantonCtx, canton.MintCommand{
 		OwnerPartyID: cantonPartyID,
 		Amount:       h.mintAmount,
@@ -356,6 +369,7 @@ func (h *FaucetHandler) ClaimUSDC(w http.ResponseWriter, r *http.Request) {
 		CommandID:    fmt.Sprintf("faucet-%s-%d", cantonPartyID, time.Now().UnixNano()),
 	})
 	if err != nil {
+		log.Printf("[faucet/usdc] mint failed party=%s err=%v", cantonPartyID, err)
 		_, _, detail := canton.ProblemForSubmitError(err)
 		problems.WriteCode(
 			w,
@@ -366,6 +380,13 @@ func (h *FaucetHandler) ClaimUSDC(w http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
+
+	log.Printf(
+		"[faucet/usdc] mint ok party=%s command=%s holding=%s",
+		cantonPartyID,
+		mintResult.CommandID,
+		mintResult.HoldingContractID,
+	)
 
 	audit, err := h.recordFaucetClaim(r.Context(), cantonPartyID, db.FaucetClaimEventData{
 		Amount:              h.mintAmount,

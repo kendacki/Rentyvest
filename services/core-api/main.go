@@ -70,6 +70,20 @@ func main() {
 		if tokenManager != nil {
 			go tokenManager.Start(workerCtx)
 		}
+		if probeErr := cantonClient.ProbeLedgerAuth(workerCtx); probeErr != nil {
+			log.Printf(
+				"WARNING: canton ledger probe failed for admin=%s userId=%s: %v — faucet mints will fail until M2M rights/party mapping are fixed",
+				cantonClient.AdminPartyID(),
+				cantonClient.LedgerUserID(),
+				probeErr,
+			)
+		} else {
+			log.Printf(
+				"canton ledger probe ok; admin=%s userId=%s",
+				cantonClient.AdminPartyID(),
+				cantonClient.LedgerUserID(),
+			)
+		}
 		worker := canton.NewWorker(store, cantonClient)
 		go worker.Start(workerCtx)
 	}

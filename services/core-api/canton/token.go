@@ -2,6 +2,7 @@ package canton
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -210,7 +211,64 @@ func (m *M2MTokenManager) refresh(ctx context.Context) (string, error) {
 	m.expiresAt = time.Now().Add(time.Duration(expiresIn) * time.Second)
 	m.mu.Unlock()
 
+	log.Printf(
+		"canton m2m token refreshed; expires_in=%ds claims=%s",
+		expiresIn,
+		summarizeJWTClaims(token),
+	)
+
 	return token, nil
+}
+
+// summarizeJWTClaims logs safe JWT payload fields (sub/aud/exp) for debugging auth mismatches.
+func summarizeJWTClaims(token string) string {
+	parts := strings.Split(token, ".")
+	if len(parts) < 2 {
+		return "unreadable"
+	}
+
+	payload, err := decodeJWTSegment(parts[1])
+	if err != nil {
+		return "unreadable"
+	}
+
+	var claims map[string]interface{}
+	if err := json.Unmarshal(payload, &claims); err != nil {
+		return "unreadable"
+	}
+
+	sub, _ := claims["sub"].(string)
+	aud := formatClaimValue(claims["aud"])
+	exp := formatClaimValue(claims["exp"])
+	return fmt.Sprintf("sub=%q aud=%s exp=%s", sub, aud, exp)
+}
+
+func decodeJWTSegment(segment string) ([]byte, error) {
+	segment = strings.TrimSpace(segment)
+	if decoded, err := base64.RawURLEncoding.DecodeString(segment); err == nil {
+		return decoded, nil
+	}
+	return base64.URLEncoding.DecodeString(segment)
+}
+
+func formatClaimValue(value interface{}) string {
+	switch typed := value.(type) {
+	case string:
+		return typed
+	case float64:
+		return fmt.Sprintf("%.0f", typed)
+	case []interface{}:
+		parts := make([]string, 0, len(typed))
+		for _, item := range typed {
+			parts = append(parts, formatClaimValue(item))
+		}
+		return strings.Join(parts, ",")
+	default:
+		if value == nil {
+			return ""
+		}
+		return fmt.Sprintf("%v", value)
+	}
 }
 
 // RefreshInterval reports the background refresh cadence.
