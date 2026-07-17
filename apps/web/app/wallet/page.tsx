@@ -23,11 +23,11 @@ export default function WalletPage() {
             <h1 className="heading-section text-brand-black">
               tUSDC on Canton DevNet
             </h1>
-            <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-neutral-600">
-              {isMounted && isConnected
-                ? 'Your wallet is connected. Claim tUSDC minted directly to your party.'
-                : 'Connect your wallet to claim tUSDC minted directly to your party.'}
-            </p>
+            {!(isMounted && isConnected) ? (
+              <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-neutral-600">
+                Connect your wallet to claim tUSDC minted directly to your party.
+              </p>
+            ) : null}
           </Reveal>
 
           {HAS_PRIVY ? (
