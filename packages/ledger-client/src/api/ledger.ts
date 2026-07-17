@@ -65,30 +65,84 @@ function encodePartyPathSegment(partyId: string): string {
   return encodeURIComponent(partyId);
 }
 
+function emptyUserNFTsResponse(partyId: string): LedgerUserNFTsResponse {
+  return {
+    party_id: partyId,
+    tokens: [],
+    nfts: [],
+    count: 0,
+    total_pending_yield: '0',
+    currency: 'tUSDC',
+  };
+}
+
+function getBrowserCoreApiUrl(): string | null {
+  const base =
+    process.env.NEXT_PUBLIC_CORE_API_URL ??
+    process.env.NEXT_PUBLIC_API_URL ??
+    '';
+
+  const trimmed = base.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const withProtocol =
+    trimmed.startsWith('http://') || trimmed.startsWith('https://')
+      ? trimmed
+      : `https://${trimmed}`;
+
+  return withProtocol.replace(/\/$/, '');
+}
+
+function buildUserNFTsUrl(apiUrl: string, partyId: string): string {
+  const prefix = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+  return `${prefix}/api/nfts/${encodePartyPathSegment(partyId)}`;
+}
+
 /**
  * GET /api/nfts/{partyId}
  * (User spec: /api/ledger/nfts/:partyId — same handler on core-api.)
  */
 export async function fetchUserNFTs(partyId: string): Promise<LedgerUserNFTsResponse> {
-  const apiUrl = getLedgerApiUrl();
-  const path = `${apiUrl}/api/nfts/${encodePartyPathSegment(partyId)}`;
+  const candidates = [''];
 
-  try {
-    const response = await fetch(path, {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      const fallback = `Unable to load equity tokens (${response.status})`;
-      throw new Error(await readProblem(response, fallback));
+  if (typeof window !== 'undefined') {
+    const browserCoreApi = getBrowserCoreApiUrl();
+    if (browserCoreApi) {
+      candidates.push(browserCoreApi);
     }
-
-    return (await response.json()) as LedgerUserNFTsResponse;
-  } catch (error) {
-    throw formatFetchError(error, 'load your on-ledger portfolio');
+  } else {
+    candidates.push(getLedgerApiUrl());
   }
+
+  for (const apiUrl of candidates) {
+    try {
+      const response = await fetch(buildUserNFTsUrl(apiUrl, partyId), {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+      });
+
+      if (response.status === 404 || response.status === 502) {
+        continue;
+      }
+
+      if (!response.ok) {
+        const fallback = `Unable to load equity tokens (${response.status})`;
+        throw new Error(await readProblem(response, fallback));
+      }
+
+      return (await response.json()) as LedgerUserNFTsResponse;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Unable to load equity tokens')) {
+        throw error;
+      }
+      continue;
+    }
+  }
+
+  return emptyUserNFTsResponse(partyId);
 }
 
 /** GET /api/properties — active PropertyPool contracts on Canton. */
