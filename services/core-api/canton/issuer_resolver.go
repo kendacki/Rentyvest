@@ -11,6 +11,9 @@ import (
 	"strings"
 )
 
+// Canton JSON API v2 ACS filter uses identifierFilter.TemplateFilter (not legacy templateFilters).
+// A wrong filter falls back to WildcardFilter and can exceed the 200-node response limit.
+
 type activeContractsRequest struct {
 	Filter         activeContractsFilter `json:"filter"`
 	Verbose        bool                  `json:"verbose"`
@@ -26,16 +29,27 @@ type partyFilter struct {
 }
 
 type cumulativeFilter struct {
-	TemplateFilters []templateFilter `json:"templateFilters"`
+	IdentifierFilter identifierFilter `json:"identifierFilter"`
 }
 
-type templateFilter struct {
-	TemplateID              interface{} `json:"templateId"`
-	IncludeCreatedEventBlob bool        `json:"includeCreatedEventBlob"`
+type identifierFilter struct {
+	TemplateFilter *templateFilterWrapper `json:"TemplateFilter,omitempty"`
+}
+
+type templateFilterWrapper struct {
+	Value templateFilterValue `json:"value"`
+}
+
+type templateFilterValue struct {
+	TemplateID              string `json:"templateId"`
+	IncludeCreatedEventBlob bool   `json:"includeCreatedEventBlob"`
 }
 
 func (c *Client) resolveUSDCIssuerContractID(ctx context.Context, preferred string) (string, error) {
 	if id := strings.TrimSpace(preferred); id != "" {
+		return id, nil
+	}
+	if id := strings.TrimSpace(c.usdcIssuerContractID); id != "" {
 		return id, nil
 	}
 	return c.refreshUSDCIssuerFromLedger(ctx)
@@ -54,30 +68,34 @@ func (c *Client) refreshUSDCIssuerFromLedgerOnce(ctx context.Context, allowAuthR
 		return "", fmt.Errorf("canton admin party is not configured")
 	}
 
+	templateID := strings.TrimSpace(c.templateUSDCIssuerID)
+	if templateID == "" {
+		return "", fmt.Errorf("USDC issuer template id is not configured")
+	}
+
 	offset, err := c.ledgerEndOffset(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	templateFilters := []templateFilter{{IncludeCreatedEventBlob: false}}
-	if parts := strings.SplitN(c.templateUSDCIssuerID, ":", 3); len(parts) == 3 {
-		templateFilters = []templateFilter{{
-			TemplateID: map[string]string{
-				"packageId":  parts[0],
-				"moduleName": parts[1],
-				"entityName": parts[2],
-			},
-			IncludeCreatedEventBlob: false,
-		}}
-	}
-
 	body := activeContractsRequest{
 		Filter: activeContractsFilter{
 			FiltersByParty: map[string]partyFilter{
-				party: {Cumulative: []cumulativeFilter{{TemplateFilters: templateFilters}}},
+				party: {
+					Cumulative: []cumulativeFilter{{
+						IdentifierFilter: identifierFilter{
+							TemplateFilter: &templateFilterWrapper{
+								Value: templateFilterValue{
+									TemplateID:              templateID,
+									IncludeCreatedEventBlob: false,
+								},
+							},
+						},
+					}},
+				},
 			},
 		},
-		Verbose:        true,
+		Verbose:        false,
 		ActiveAtOffset: offset,
 	}
 

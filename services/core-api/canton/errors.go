@@ -109,6 +109,9 @@ func HumanizeSubmitError(err error) string {
 		strings.Contains(upper, "UNAUTHENTICATED"),
 		submitErr.StatusCode == http.StatusUnauthorized:
 		return "Canton ledger authentication failed. Refresh M2M OAuth credentials on Railway and retry."
+	case strings.Contains(upper, "JSON_API_MAXIMUM_LIST_ELEMENTS_NUMBER_REACHED"),
+		strings.Contains(upper, "GREATER THAN THE NODE LIMIT"):
+		return "Canton ACS query returned too many contracts. Faucet will use CANTON_USDC_ISSUER_CONTRACT_ID directly; ensure that env var is the current active issuer CID."
 	case strings.Contains(upper, "INVALID_PRESCRIBED_SYNCHRONIZER_ID"),
 		strings.Contains(upper, "NOT KNOWN TO ALL INFORMEES"),
 		strings.Contains(upper, "HAS NOT VETTED"):

@@ -55,11 +55,22 @@ for (const party of actAsParties) {
       filter: {
         filtersByParty: {
           [party]: {
-            cumulative: [{ templateFilters: [{ templateId, includeCreatedEventBlob: false }] }],
+            cumulative: [
+              {
+                identifierFilter: {
+                  TemplateFilter: {
+                    value: {
+                      templateId,
+                      includeCreatedEventBlob: false,
+                    },
+                  },
+                },
+              },
+            ],
           },
         },
       },
-      verbose: true,
+      verbose: false,
       activeAtOffset: String(offset),
     }),
   });

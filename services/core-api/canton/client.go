@@ -411,10 +411,17 @@ func (c *Client) SubmitMint(ctx context.Context, cmd MintCommand) (*MintResult, 
 	if err != nil {
 		return nil, err
 	}
+
+	// Prefer configured/cached issuer CID. ACS refresh is best-effort only — a wildcard
+	// ACS query on busy sandbox parties can hit JSON_API_MAXIMUM_LIST_ELEMENTS_NUMBER_REACHED.
 	if refreshed, refreshErr := c.refreshUSDCIssuerFromLedger(ctx); refreshErr == nil && refreshed != "" {
 		issuerContractID = refreshed
-	} else if cached := strings.TrimSpace(c.usdcIssuerContractID); cached != "" {
-		issuerContractID = cached
+	} else if refreshErr != nil {
+		log.Printf("[canton] issuer ACS refresh skipped; using cached issuer cid: %v", refreshErr)
+	}
+
+	if strings.TrimSpace(issuerContractID) == "" {
+		return nil, fmt.Errorf("USDC issuer contract id is not configured; set CANTON_USDC_ISSUER_CONTRACT_ID")
 	}
 	if strings.TrimSpace(cmd.OwnerPartyID) == "" {
 		return nil, fmt.Errorf("owner party id is required")

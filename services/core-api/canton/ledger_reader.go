@@ -163,25 +163,29 @@ func (r *LedgerReader) queryActiveContracts(ctx context.Context, party, qualifie
 		return nil, fmt.Errorf("ledger end: %w", err)
 	}
 
-	templateFilters := []templateFilter{{IncludeCreatedEventBlob: false}}
-	if parts := strings.SplitN(qualifiedTemplateID, ":", 3); len(parts) == 3 {
-		templateFilters = []templateFilter{{
-			TemplateID: map[string]string{
-				"packageId":  parts[0],
-				"moduleName": parts[1],
-				"entityName": parts[2],
-			},
-			IncludeCreatedEventBlob: false,
-		}}
+	templateID := strings.TrimSpace(qualifiedTemplateID)
+	if templateID == "" {
+		return nil, fmt.Errorf("template id is required for active contracts query")
 	}
 
 	reqBody := activeContractsRequest{
 		Filter: activeContractsFilter{
 			FiltersByParty: map[string]partyFilter{
-				party: {Cumulative: []cumulativeFilter{{TemplateFilters: templateFilters}}},
+				party: {
+					Cumulative: []cumulativeFilter{{
+						IdentifierFilter: identifierFilter{
+							TemplateFilter: &templateFilterWrapper{
+								Value: templateFilterValue{
+									TemplateID:              templateID,
+									IncludeCreatedEventBlob: false,
+								},
+							},
+						},
+					}},
+				},
 			},
 		},
-		Verbose:        true,
+		Verbose:        false,
 		ActiveAtOffset: offset,
 	}
 
