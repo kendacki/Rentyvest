@@ -2,8 +2,8 @@
  * Find RentyVest USDCIssuer contracts on ledger (one party at a time).
  */
 const ledgerUrl = (process.env.CANTON_JSON_API_URL ?? '').replace(/\/$/, '');
-const pkg = process.env.CANTON_DAML_PACKAGE_ID;
-const templateId = `${pkg}:RentyVest.TestUSDC:USDCIssuer`;
+const pkgName = process.env.CANTON_DAML_PACKAGE_NAME ?? 'rentyvest-faucet';
+const templateId = `#${pkgName}:RentyVest.TestUSDC:USDCIssuer`;
 
 async function getToken() {
   const form = new URLSearchParams({
@@ -43,7 +43,8 @@ const configuredIssuer = process.env.CANTON_USDC_ISSUER_CONTRACT_ID;
 
 console.log('Configured admin:', configuredAdmin);
 console.log('Configured issuer:', configuredIssuer?.slice(0, 40) + '...');
-console.log('Package:', pkg);
+console.log('Package name filter:', templateId);
+console.log('Package id (commands):', process.env.CANTON_DAML_PACKAGE_ID);
 console.log('M2M can act as configured admin?', actAsParties.includes(configuredAdmin));
 
 let found = [];

@@ -68,7 +68,7 @@ func (c *Client) refreshUSDCIssuerFromLedgerOnce(ctx context.Context, allowAuthR
 		return "", fmt.Errorf("canton admin party is not configured")
 	}
 
-	templateID := strings.TrimSpace(c.templateUSDCIssuerID)
+	templateID := QualifyTemplateIDForFilter(c.templateUSDCIssuerID)
 	if templateID == "" {
 		return "", fmt.Errorf("USDC issuer template id is not configured")
 	}

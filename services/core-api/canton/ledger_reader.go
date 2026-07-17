@@ -163,7 +163,7 @@ func (r *LedgerReader) queryActiveContracts(ctx context.Context, party, qualifie
 		return nil, fmt.Errorf("ledger end: %w", err)
 	}
 
-	templateID := strings.TrimSpace(qualifiedTemplateID)
+	templateID := QualifyTemplateIDForFilter(qualifiedTemplateID)
 	if templateID == "" {
 		return nil, fmt.Errorf("template id is required for active contracts query")
 	}

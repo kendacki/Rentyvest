@@ -126,8 +126,13 @@ func HumanizeSubmitError(err error) string {
 		return "Your Loop wallet party is not known on this Canton synchronizer yet. Reconnect Loop and try again, or use a DevNet party that is already onboarded."
 	case strings.Contains(upper, "CONTRACT_NOT_FOUND"):
 		return "The faucet issuer contract was rotated on-ledger. Please retry your claim in a few seconds."
-	case strings.Contains(upper, "DAML_AUTHORIZATION_ERROR"):
-		return "Canton rejected the mint authorization for this party. The deployed tUSDC contract may require a package upgrade on DevNet."
+	case strings.Contains(upper, "DAML_AUTHORIZATION_ERROR"),
+		strings.Contains(upper, "REQUIRES AUTHORIZERS"):
+		return "Mint requires the Loop owner as a co-authorizer because the on-ledger Asset template still has `signatory issuer, owner`. " +
+			"Rebuild and redeploy the current DAR (Asset is `signatory issuer` only), create a new USDCIssuer, then update CANTON_DAML_PACKAGE_ID and CANTON_USDC_ISSUER_CONTRACT_ID."
+	case strings.Contains(upper, "EXPECTED A PACKAGE NAME"),
+		strings.Contains(upper, "INVALID FIELD PACKAGEID"):
+		return "Canton ACS expects a package name (rentyvest-faucet), not a package-id hash. Set CANTON_DAML_PACKAGE_NAME=rentyvest-faucet."
 	case cause != "":
 		return cause
 	default:

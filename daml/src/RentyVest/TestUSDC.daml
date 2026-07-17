@@ -72,6 +72,8 @@ mintAsset issuer owner instrumentId amount meta observers = do
       observers = observers
 
 -- | Primary CIP-0056 holding template. Balances are read via the Holding interface view.
+-- IMPORTANT: keep `signatory issuer` only (owner is observer). If owner is also a
+-- signatory, admin-only faucet mints to Loop parties fail with DAML_AUTHORIZATION_ERROR.
 template Asset
   with
     issuer : Party

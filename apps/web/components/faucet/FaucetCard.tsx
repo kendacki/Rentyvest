@@ -38,6 +38,14 @@ function formatClaimError(error: unknown): string {
   if (error instanceof Error) {
     const message = error.message.trim();
     if (
+      message.toLowerCase().includes('requires authorizers') ||
+      message.toLowerCase().includes('co-authorizer') ||
+      message.toLowerCase().includes('signatory issuer, owner') ||
+      message.toLowerCase().includes('daml_authorization')
+    ) {
+      return 'Mint needs a DAR upgrade: on-ledger Asset still requires the Loop owner to co-sign. Rebuild/redeploy the current package (Asset is issuer-only), create a new USDCIssuer, then update package + issuer IDs on Railway.';
+    }
+    if (
       message.toLowerCase().includes('permission_denied') ||
       message.toLowerCase().includes('cannot actas') ||
       message.toLowerCase().includes('security-sensitive error') ||
