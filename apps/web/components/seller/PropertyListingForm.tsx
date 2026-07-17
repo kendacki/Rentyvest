@@ -2,10 +2,9 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { usePrivy } from '@privy-io/react-auth';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { useCantonWallet } from '../../providers/CantonWalletProvider';
 import type { PropertyListingFormValues } from '../../types/listing';
 
@@ -104,9 +103,8 @@ function Spinner() {
 }
 
 export function PropertyListingForm() {
-  const { user } = usePrivy();
+  const { user, getAccessToken } = usePrivy();
   const { partyId } = useCantonWallet();
-  const { supabase, isLoading: isAuthLoading } = useSupabaseAuth();
 
   const [submitState, setSubmitState] = useState<
     'idle' | 'submitting' | 'success' | 'error'
@@ -117,13 +115,14 @@ export function PropertyListingForm() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isValid },
   } = useForm<FormValues>({
     resolver: zodResolver(listingSchema),
     mode: 'onChange',
     defaultValues: {
       contact_name: '',
-      contact_email: user?.email?.address ?? '',
+      contact_email: '',
       contact_phone: '',
       property_title: '',
       property_description: '',
@@ -141,6 +140,13 @@ export function PropertyListingForm() {
     },
   });
 
+  useEffect(() => {
+    const email = user?.email?.address?.trim();
+    if (email) {
+      setValue('contact_email', email, { shouldValidate: true });
+    }
+  }, [setValue, user?.email?.address]);
+
   const onSubmit = useCallback(
     async (values: FormValues) => {
       if (!user?.id) {
@@ -149,82 +155,93 @@ export function PropertyListingForm() {
         return;
       }
 
-      if (!supabase) {
-        setSubmitState('error');
-        setSubmitMessage(
-          isAuthLoading
-            ? 'Finishing sign-in. Try again in a moment.'
-            : 'Unable to connect to RentyVest services. Refresh and try again.',
-        );
-        return;
-      }
-
       setSubmitState('submitting');
       setSubmitMessage(null);
 
-      const payload: PropertyListingFormValues = {
-        contact_name: values.contact_name,
-        contact_email: values.contact_email,
-        contact_phone: values.contact_phone,
-        property_title: values.property_title,
-        property_description: values.property_description,
-        property_type: values.property_type,
-        address_line1: values.address_line1,
-        city: values.city,
-        state: values.state,
-        country: values.country,
-        postal_code: values.postal_code,
-        total_units: values.total_units,
-        unit_price: values.unit_price,
-        estimated_annual_yield: values.estimated_annual_yield,
-        image_url: values.image_url,
-        additional_notes: values.additional_notes,
-      };
+      try {
+        const accessToken = await getAccessToken();
+        if (!accessToken) {
+          throw new Error('Sign in session expired. Refresh and try again.');
+        }
 
-      const { error } = await supabase.from('property_listing_requests').insert({
-        submitter_id: user.id,
-        canton_party_id: partyId ?? null,
-        ...payload,
-        contact_phone: payload.contact_phone || null,
-        postal_code: payload.postal_code || null,
-        image_url: payload.image_url || null,
-        additional_notes: payload.additional_notes || null,
-      });
+        const payload: PropertyListingFormValues & {
+          canton_party_id?: string;
+        } = {
+          contact_name: values.contact_name,
+          contact_email: values.contact_email,
+          contact_phone: values.contact_phone,
+          property_title: values.property_title,
+          property_description: values.property_description,
+          property_type: values.property_type,
+          address_line1: values.address_line1,
+          city: values.city,
+          state: values.state,
+          country: values.country,
+          postal_code: values.postal_code,
+          total_units: values.total_units,
+          unit_price: values.unit_price,
+          estimated_annual_yield: values.estimated_annual_yield,
+          image_url: values.image_url,
+          additional_notes: values.additional_notes,
+        };
 
-      if (error) {
+        if (partyId) {
+          payload.canton_party_id = partyId;
+        }
+
+        const response = await fetch('/api/listing-requests', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          let message = `Unable to submit listing (${response.status})`;
+          try {
+            const problem = (await response.json()) as { detail?: string; title?: string };
+            message = problem.detail ?? problem.title ?? message;
+          } catch {
+            // Response was not JSON.
+          }
+          throw new Error(message);
+        }
+
+        setSubmitState('success');
+        setSubmitMessage(
+          'Your listing request was received. Our team will review the details and reach out about onboarding your property pool on Canton DevNet.',
+        );
+        reset({
+          contact_name: values.contact_name,
+          contact_email: values.contact_email,
+          contact_phone: '',
+          property_title: '',
+          property_description: '',
+          property_type: 'residential',
+          address_line1: '',
+          city: '',
+          state: '',
+          country: values.country,
+          postal_code: '',
+          total_units: 100,
+          unit_price: 1000,
+          estimated_annual_yield: 8,
+          image_url: '',
+          additional_notes: '',
+        });
+      } catch (submitError) {
         setSubmitState('error');
         setSubmitMessage(
-          error.message.includes('property_listing_requests')
-            ? 'Listing submissions are not enabled yet. Contact support@rentyvest.com.'
-            : error.message,
+          submitError instanceof Error
+            ? submitError.message
+            : 'Unable to submit listing request.',
         );
-        return;
       }
-
-      setSubmitState('success');
-      setSubmitMessage(
-        'Your listing request was received. Our team will review the details and reach out about onboarding your property pool on Canton DevNet.',
-      );
-      reset({
-        contact_name: values.contact_name,
-        contact_email: values.contact_email,
-        contact_phone: '',
-        property_title: '',
-        property_description: '',
-        property_type: 'residential',
-        address_line1: '',
-        city: '',
-        state: '',
-        country: values.country,
-        postal_code: '',
-        total_units: 100,
-        unit_price: 1000,
-        estimated_annual_yield: 8,
-        image_url: '',
-        additional_notes: '',
-      });
     },
-    [isAuthLoading, partyId, reset, supabase, user?.id],
+    [getAccessToken, partyId, reset, user?.id],
   );
 
   if (submitState === 'success') {
@@ -526,7 +543,7 @@ export function PropertyListingForm() {
 
         <button
           type="submit"
-          disabled={!isValid || submitState === 'submitting' || isAuthLoading}
+          disabled={!isValid || submitState === 'submitting'}
           className="btn-primary h-12 w-full disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-500"
         >
           {submitState === 'submitting' ? (

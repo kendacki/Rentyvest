@@ -82,10 +82,12 @@ func main() {
 	ledgerReadHandler := handlers.NewLedgerReadHandler(cantonClient)
 	ledgerPrepareHandler := handlers.NewLedgerPrepareHandler(cantonClient)
 	backendExecuteHandler := handlers.NewBackendExecuteHandler(store, cantonClient)
+	listingRequestsHandler := handlers.NewListingRequestsHandler(store, verifier)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/auth/exchange", authHandler.Exchange)
 	mux.HandleFunc("/properties", propertiesHandler.List)
+	mux.HandleFunc("/listing-requests", listingRequestsHandler.Create)
 	mux.HandleFunc("/pledges", pledgesHandler.Create)
 	mux.HandleFunc("/pledges/flw-webhook", pledgesHandler.FlutterwaveWebhook)
 	mux.HandleFunc("/faucet/usdc", faucetHandler.ClaimUSDC)
