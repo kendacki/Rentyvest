@@ -277,7 +277,7 @@ export function FaucetCard() {
           ) : isConnected ? (
             CLAIM_BUTTON_LABEL
           ) : (
-            'Connect to claim 100,000 tUSDC'
+            'Connect to claim tUSDC'
           )}
         </button>
 
