@@ -9,7 +9,7 @@ import { sumAssetBalances } from '../../types/asset';
 import type { UserTokenAsset } from '../../types/asset';
 
 
-const CLAIM_BUTTON_LABEL = 'Claim 10,000 tUSDC';
+const CLAIM_BUTTON_LABEL = 'Claim 100,000 tUSDC';
 
 type ToastState = {
   type: 'success' | 'error';
@@ -277,7 +277,7 @@ export function FaucetCard() {
           ) : isConnected ? (
             CLAIM_BUTTON_LABEL
           ) : (
-            'Connect to claim tUSDC'
+            'Connect to claim 100,000 tUSDC'
           )}
         </button>
 
