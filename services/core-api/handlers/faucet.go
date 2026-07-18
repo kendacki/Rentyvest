@@ -215,6 +215,7 @@ func (h *FaucetHandler) CompleteClaim(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Best-effort indexing: the on-ledger claim already succeeded.
 	holdingCID := strings.TrimSpace(body.CantonHoldingContractID)
 	if holdingCID != "" {
 		if upsertErr := h.store.UpsertUserTokenAsset(
@@ -226,8 +227,7 @@ func (h *FaucetHandler) CompleteClaim(w http.ResponseWriter, r *http.Request) {
 			"tUSDC",
 			"tUSDC",
 		); upsertErr != nil {
-			problems.Write(w, http.StatusInternalServerError, "Internal Server Error", "Claim succeeded but asset indexing failed")
-			return
+			log.Printf("[faucet/usdc] asset indexing failed party=%s holding=%s err=%v", cantonPartyID, holdingCID, upsertErr)
 		}
 	}
 
@@ -405,6 +405,8 @@ func (h *FaucetHandler) ClaimUSDC(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Indexing is best-effort: the mint is already final on Canton and the claim
+	// is already recorded, so a DB error here must not fail the response.
 	if mintResult.HoldingContractID != "" {
 		if upsertErr := h.store.UpsertUserTokenAsset(
 			r.Context(),
@@ -415,8 +417,7 @@ func (h *FaucetHandler) ClaimUSDC(w http.ResponseWriter, r *http.Request) {
 			"tUSDC",
 			"tUSDC",
 		); upsertErr != nil {
-			problems.Write(w, http.StatusInternalServerError, "Internal Server Error", "Mint succeeded but asset indexing failed")
-			return
+			log.Printf("[faucet/usdc] asset indexing failed party=%s holding=%s err=%v", cantonPartyID, mintResult.HoldingContractID, upsertErr)
 		}
 	}
 
