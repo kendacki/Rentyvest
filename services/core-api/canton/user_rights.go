@@ -83,6 +83,12 @@ func parseUserRights(userID string, body []byte) *UserRightsSummary {
 			continue
 		}
 
+		// JSON Ledger API v2 wraps each right in a "kind" envelope:
+		// {"kind": {"CanActAs": {"value": {"party": "..."}}}}
+		if kind, ok := record["kind"].(map[string]interface{}); ok {
+			record = kind
+		}
+
 		if actAs, ok := nestedParty(record, "CanActAs", "canActAs", "can_act_as"); ok {
 			summary.CanActAs = append(summary.CanActAs, actAs)
 			continue
@@ -124,6 +130,12 @@ func nestedParty(record map[string]interface{}, keys ...string) (string, bool) {
 			}
 			if party, ok := typed["value"].(string); ok && party != "" {
 				return party, true
+			}
+			// v2 shape: {"value": {"party": "..."}}
+			if value, ok := typed["value"].(map[string]interface{}); ok {
+				if party, ok := value["party"].(string); ok && party != "" {
+					return party, true
+				}
 			}
 		}
 	}
