@@ -98,26 +98,45 @@ export function HeroImageUpload({ value, onChange, error }: HeroImageUploadProps
     setProgress(0);
     setUploadError(null);
 
+    // Abort the upload if no progress is made for 30s so the UI never hangs.
+    const controller = new AbortController();
+    let lastProgressAt = Date.now();
+    const watchdog = setInterval(() => {
+      if (Date.now() - lastProgressAt > 30_000) {
+        controller.abort();
+      }
+    }, 5_000);
+
     try {
       const optimized = await compressImage(file);
+      lastProgressAt = Date.now();
 
       // Client upload: file goes browser -> Vercel Blob directly, so the
-      // serverless 4.5 MB body limit (413) never applies.
+      // serverless 4.5 MB body limit (413) never applies. Multipart mode
+      // chunks the transfer and retries failed parts on flaky connections.
       const safeName = optimized.name.replace(/[^a-zA-Z0-9.-]/g, '-');
       const blob = await upload(`listing-heroes/${Date.now()}-${safeName}`, optimized, {
         access: 'public',
         handleUploadUrl: '/api/listing-images',
+        multipart: true,
+        abortSignal: controller.signal,
         onUploadProgress: ({ percentage }) => {
+          lastProgressAt = Date.now();
           setProgress(Math.round(percentage));
         },
       });
 
       onChange(blob.url);
     } catch (uploadFailure) {
-      setUploadError(
-        uploadFailure instanceof Error ? uploadFailure.message : 'Unable to upload image.',
-      );
+      if (controller.signal.aborted) {
+        setUploadError('Upload stalled — check your connection and try again.');
+      } else {
+        setUploadError(
+          uploadFailure instanceof Error ? uploadFailure.message : 'Unable to upload image.',
+        );
+      }
     } finally {
+      clearInterval(watchdog);
       setUploading(false);
       setProgress(0);
       if (inputRef.current) {
