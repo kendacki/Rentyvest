@@ -156,11 +156,11 @@ const REVIEW_STEPS = [
 
 function CheckBadge() {
   return (
-    <span className="relative inline-flex h-16 w-16 items-center justify-center">
-      <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/20 [animation-iteration-count:2]" />
-      <span className="relative inline-flex h-16 w-16 items-center justify-center rounded-full border border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100 shadow-[0_8px_24px_rgba(16,185,129,0.25)]">
+    <span className="animate-check-pop relative inline-flex h-16 w-16 items-center justify-center">
+      <span className="absolute inset-0 animate-ping rounded-full bg-brand-orange/20 [animation-iteration-count:2]" />
+      <span className="relative inline-flex h-16 w-16 items-center justify-center rounded-full border border-brand-orange/30 bg-gradient-to-br from-brand-orange/15 to-brand-orange/30 shadow-[0_8px_24px_rgba(234,88,12,0.3)] backdrop-blur-md">
         <svg
-          className="h-8 w-8 text-emerald-600"
+          className="h-8 w-8 text-brand-orange"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -169,7 +169,7 @@ function CheckBadge() {
           strokeLinejoin="round"
           aria-hidden="true"
         >
-          <path d="M20 6 9 17l-5-5" />
+          <path className="animate-check-draw" d="M20 6 9 17l-5-5" />
         </svg>
       </span>
     </span>
@@ -326,12 +326,48 @@ export function PropertyListingForm() {
     [partyId, reset],
   );
 
-  if (submitState === 'success') {
-    return (
-      <article className="card-surface overflow-hidden font-sans">
-        <div className="px-5 py-8 text-center sm:px-8">
-          <CheckBadge />
-          <p className="section-label mt-5 text-brand-orange">Listing submitted</p>
+  const dismissSuccess = useCallback(() => {
+    setSubmitState('idle');
+    setSubmitMessage(null);
+    setSubmittedSummary(null);
+  }, []);
+
+  const successModal =
+    submitState === 'success' ? (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Listing submitted"
+      >
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={dismissSuccess}
+          className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+        />
+        <article className="glass-panel animate-modal-pop relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl font-sans">
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={dismissSuccess}
+            className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/50 text-neutral-500 backdrop-blur-md transition-colors hover:bg-white/80 hover:text-brand-black"
+          >
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+          <div className="px-5 py-8 text-center sm:px-8">
+            <CheckBadge />
+            <p className="section-label mt-5 text-brand-orange">Listing submitted</p>
           <h2 className="mt-2 text-2xl font-bold tracking-[-0.02em] text-brand-black">
             You&rsquo;re in the review queue
           </h2>
@@ -442,31 +478,26 @@ export function PropertyListingForm() {
           </div>
         </div>
 
-        <div className="space-y-3 px-5 pb-8 sm:px-8">
-          <button
-            type="button"
-            onClick={() => {
-              setSubmitState('idle');
-              setSubmitMessage(null);
-              setSubmittedSummary(null);
-            }}
-            className="btn-primary h-12 w-full text-sm"
-          >
-            Submit another property
-          </button>
-          <Link
-            href="/marketplace"
-            className="btn-secondary h-12 w-full text-sm"
-          >
-            Browse the marketplace
-          </Link>
-        </div>
-      </article>
-    );
-  }
+          <div className="space-y-3 px-5 pb-8 sm:px-8">
+            <button
+              type="button"
+              onClick={dismissSuccess}
+              className="btn-primary h-12 w-full text-sm"
+            >
+              Submit another property
+            </button>
+            <Link href="/marketplace" className="btn-secondary h-12 w-full text-sm">
+              Browse the marketplace
+            </Link>
+          </div>
+        </article>
+      </div>
+    ) : null;
 
   return (
-    <article className="card-surface overflow-hidden font-sans">
+    <>
+      {successModal}
+      <article className="card-surface overflow-hidden font-sans">
       <form
         className="space-y-8 px-5 py-5 sm:px-6"
         onSubmit={(event) => {
@@ -718,6 +749,7 @@ export function PropertyListingForm() {
           Submissions are reviewed manually before marketplace listing goes live.
         </p>
       </form>
-    </article>
+      </article>
+    </>
   );
 }
