@@ -69,7 +69,7 @@ export function MarketplaceGrid() {
             }`}
             aria-hidden="true"
           />
-          {isRealtimeConnected ? 'Live slot updates' : 'Connecting…'}
+          {isRealtimeConnected ? 'Live property updates' : 'Connecting…'}
         </span>
       </div>
 

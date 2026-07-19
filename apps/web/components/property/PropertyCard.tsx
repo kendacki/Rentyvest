@@ -37,7 +37,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
         )}
 
         <div className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-black shadow-sm backdrop-blur">
-          Token Register
+          Fractional Ownership
         </div>
 
         <div
