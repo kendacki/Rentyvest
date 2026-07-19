@@ -1,7 +1,7 @@
 sdk-version: 3.4.11
-# New package name (not an upgrade of rentyvest-faucet 0.1.0). Same-name bumps fail
-# Canton SCU because CIP-0056 interfaces live in this package alongside templates.
-name: rentyvest-devnet
+# Fresh package lineage: DevNet M2M settlement (admin-only Pledge, issuer-controlled
+# Asset Split/Transfer, admin-signed PropertyNFT) is not a valid SCU of 0.1.0.
+name: rentyvest-markets
 version: 0.1.0
 source: src
 build-options:

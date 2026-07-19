@@ -50,7 +50,10 @@ func (c *Client) SubmitPledgeBackendExecute(ctx context.Context, cmd PledgeComma
 	}
 
 	body := submitRequest{
-		ActAs:     []string{c.adminParty, cmd.BuyerPartyID},
+		// DevNet: Pledge is platform_admin-only; Asset Split/Transfer are
+		// issuer-controlled. Do not put the Loop buyer in actAs — M2M user
+		// "6" cannot actAs Loop parties hosted on another participant.
+		ActAs:     []string{c.adminParty},
 		ReadAs:    c.ledgerReadAs(cmd.BuyerPartyID),
 		UserID:    c.userID,
 		CommandID: commandID,
@@ -72,7 +75,7 @@ func (c *Client) SubmitPledgeBackendExecute(ctx context.Context, cmd PledgeComma
 	}
 
 	ledgerLog("backend_execute", "pledge_submit", fmt.Sprintf(
-		"actAs=[%s,%s] pool=%s slots=%d payment=%s commandId=%s",
+		"actAs=[%s] buyer=%s pool=%s slots=%d payment=%s commandId=%s",
 		truncateForLog(c.adminParty, 20),
 		truncateForLog(cmd.BuyerPartyID, 20),
 		truncateForLog(cmd.PoolContractID, 20),

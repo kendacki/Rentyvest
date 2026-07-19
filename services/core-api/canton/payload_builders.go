@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// BuildPledgePayload constructs a Loop-safe exercise payload for PropertyPool.Pledge.
-// Controllers on-ledger: platform_admin, buyer (both must authorize).
+// BuildPledgePayload constructs a DevNet M2M exercise payload for PropertyPool.Pledge.
+// Controller on-ledger: platform_admin only (issuer-settled Assets + admin-signed NFTs).
 func BuildPledgePayload(
 	poolTemplateID,
 	poolContractID,

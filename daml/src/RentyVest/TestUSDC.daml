@@ -99,10 +99,12 @@ template Asset
           meta
 
     -- | Isolate an exact payment amount for settlement (CIP-0056 UTXO split).
+    -- DevNet: issuer-controlled so platform M2M can settle Loop-owned holdings
+    -- without requiring the Loop party in actAs.
     choice Split : (ContractId Asset, Optional (ContractId Asset))
       with
         paymentAmount : Decimal
-      controller owner
+      controller issuer
       do
         assertMsg "Payment amount must be positive" (paymentAmount > 0.0)
         assertMsg "Insufficient holding balance for split" (amount >= paymentAmount)
@@ -140,10 +142,11 @@ template Asset
         return (paymentCid, changeCid)
 
     -- | Transfer holding ownership to a new party (free-of-payment).
+    -- DevNet: issuer-controlled for M2M escrow settlement of Loop holdings.
     choice TransferAsset : ContractId Asset
       with
         newOwner : Party
-      controller owner
+      controller issuer
       do
         assertMsg "Cannot transfer to the current owner" (newOwner /= owner)
         assertMsg "Locked holdings cannot be transferred" (isNone lock)

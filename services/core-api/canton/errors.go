@@ -98,12 +98,15 @@ func HumanizeSubmitError(err error) string {
 		if userID == "" {
 			userID = "6"
 		}
+		// Your logs already show canActAsAdmin=true — the usual pledge failure is
+		// M2M trying to actAs a Loop buyer party, which it cannot. After the
+		// rentyvest-markets redeploy, pledges use admin-only actAs.
 		return fmt.Sprintf(
-			"Canton PERMISSION_DENIED: M2M user %q cannot actAs admin party %q. "+
-				"Ask FiveNorth to grant canActAs for that party on user %q, or set CANTON_ADMIN_PARTY_ID to a party this M2M client already controls.",
+			"Canton PERMISSION_DENIED (grpc 7). For pledges: redeploy the rentyvest-markets DAR "+
+				"(admin-only Pledge) and update CANTON_DAML_PACKAGE_NAME=rentyvest-markets plus package/issuer IDs. "+
+				"For admin creates/mints: confirm M2M user %q can actAs %q.",
 			userID,
 			adminParty,
-			userID,
 		)
 	case strings.Contains(upper, "SECURITY-SENSITIVE ERROR"),
 		strings.Contains(upper, "UNAUTHENTICATED"),
@@ -132,7 +135,7 @@ func HumanizeSubmitError(err error) string {
 			"Rebuild and redeploy the current DAR (Asset is `signatory issuer` only), create a new USDCIssuer, then update CANTON_DAML_PACKAGE_ID and CANTON_USDC_ISSUER_CONTRACT_ID."
 	case strings.Contains(upper, "EXPECTED A PACKAGE NAME"),
 		strings.Contains(upper, "INVALID FIELD PACKAGEID"):
-		return "Canton ACS expects a package name (rentyvest-devnet), not a package-id hash. Set CANTON_DAML_PACKAGE_NAME=rentyvest-devnet."
+		return "Canton ACS expects a package name (rentyvest-markets), not a package-id hash. Set CANTON_DAML_PACKAGE_NAME=rentyvest-markets."
 	case cause != "":
 		return cause
 	default:

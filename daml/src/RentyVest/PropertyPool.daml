@@ -95,13 +95,16 @@ template PropertyPool
         && slot_price > 0.0
 
     -- | AUD-002: Nonconsuming pledge with atomic slot minting, USDC settlement, and Active transition.
+    -- DevNet: platform_admin alone controls Pledge. Asset Split/Transfer are
+    -- issuer-controlled and PropertyNFT is admin-signed, so FiveNorth M2M can
+    -- settle Loop-buyer pledges without actAs on the Loop party.
     nonconsuming choice Pledge : PledgeResult
       with
         buyer : Party
         slot_count : Int
         meta_uri : Text
         paymentAssetCid : ContractId Asset
-      controller platform_admin, buyer
+      controller platform_admin
       do
         assertMsg "Property pool must be Pending to accept pledges" (status == Pending)
         assertMsg "Slot count must be greater than zero" (slot_count > 0)

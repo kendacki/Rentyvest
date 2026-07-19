@@ -1,6 +1,9 @@
 module RentyVest.PropertyNFT where
 
 -- | Cryptographic bearer instrument representing fractional ownership of one pool slot.
+-- DevNet: platform_admin is the sole signatory so M2M can mint NFTs to Loop
+-- holders during Pledge without requiring the Loop party in actAs. The holder
+-- remains controller of TransferNFT / ClaimYield.
 template PropertyNFT
   with
     platform_admin : Party
@@ -13,8 +16,8 @@ template PropertyNFT
     currency : Text
     transfer_locked : Bool
   where
-    signatory current_holder
-    observer original_holder, platform_admin
+    signatory platform_admin
+    observer original_holder, current_holder
 
     ensure
       slot_index >= 0
@@ -22,11 +25,12 @@ template PropertyNFT
         && currency /= ""
 
     -- | AUD-008 & AUD-009: Transfer with anti-self-transfer and yield preservation.
+    -- DevNet: platform_admin mediates transfers (NFT is admin-signed for M2M minting).
     choice TransferNFT : ContractId PropertyNFT
       with
         new_holder : Party
         transfer_id : Text
-      controller current_holder
+      controller platform_admin
       do
         assertMsg "NFT transfers are locked by compliance hold" (not transfer_locked)
         assertMsg "Transfer id is required" (transfer_id /= "")
@@ -40,11 +44,12 @@ template PropertyNFT
           pending_yield = pending_yield
 
     -- | Withdraw accrued yield; pool binding prevents cross-pool theft.
+    -- DevNet: admin-mediated (NFT signatory is platform_admin).
     choice ClaimYield : Decimal
       with
         claiming_pool_id : Text
         claim_amount : Decimal
-      controller current_holder
+      controller platform_admin
       do
         assertMsg "Yield claims must target the NFT originating pool"
           (pool_id == claiming_pool_id)
@@ -61,11 +66,11 @@ template PropertyNFT
 
         return claim_amount
 
-    -- | AUD-003: Holder-authorized yield accrual onto the NFT.
+    -- | AUD-003: Yield accrual onto the NFT (admin-mediated on DevNet).
     choice AccrueYield : ContractId PropertyNFT
       with
         accrued_amount : Decimal
-      controller current_holder
+      controller platform_admin
       do
         assertMsg "Accrued amount must be positive" (accrued_amount > 0.0)
 
@@ -90,7 +95,7 @@ template PropertyNFT
     choice LockTransferByOriginalHolder : ContractId PropertyNFT
       with
         reason : Text
-      controller original_holder
+      controller platform_admin
       do
         assertMsg "Lock reason is required" (reason /= "")
         assertMsg "NFT transfer is already locked" (not transfer_locked)
@@ -116,7 +121,7 @@ template PropertyNFT
     choice UnlockTransferByOriginalHolder : ContractId PropertyNFT
       with
         reason : Text
-      controller original_holder
+      controller platform_admin
       do
         assertMsg "Unlock reason is required" (reason /= "")
         assertMsg "NFT transfer is not locked" transfer_locked

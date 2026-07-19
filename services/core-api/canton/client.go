@@ -272,7 +272,7 @@ func (c *Client) SubmitPledge(ctx context.Context, cmd PledgeCommand) (*PledgeRe
 	}
 
 	body := submitRequest{
-		ActAs:     []string{c.adminParty, cmd.BuyerPartyID},
+		ActAs:     []string{c.adminParty},
 		ReadAs:    c.ledgerReadAs(cmd.BuyerPartyID),
 		UserID:    c.userID,
 		CommandID: commandID,

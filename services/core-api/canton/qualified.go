@@ -15,7 +15,7 @@ func PackageIDFromEnv() string {
 func PackageNameFromEnv() string {
 	name := strings.TrimSpace(os.Getenv("CANTON_DAML_PACKAGE_NAME"))
 	if name == "" {
-		name = "rentyvest-devnet"
+		name = "rentyvest-markets"
 	}
 	return strings.TrimPrefix(name, "#")
 }
