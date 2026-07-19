@@ -1,5 +1,6 @@
 'use client';
 
+import { upload } from '@vercel/blob/client';
 import { useRef, useState } from 'react';
 
 type HeroImageUploadProps = {
@@ -55,31 +56,15 @@ export function HeroImageUpload({ value, onChange, error }: HeroImageUploadProps
     setUploadError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('/api/listing-images', {
-        method: 'POST',
-        body: formData,
+      // Client upload: file goes browser -> Vercel Blob directly, so the
+      // serverless 4.5 MB body limit (413) never applies.
+      const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-');
+      const blob = await upload(`listing-heroes/${Date.now()}-${safeName}`, file, {
+        access: 'public',
+        handleUploadUrl: '/api/listing-images',
       });
 
-      if (!response.ok) {
-        let message = `Upload failed (${response.status})`;
-        try {
-          const problem = (await response.json()) as { detail?: string };
-          message = problem.detail ?? message;
-        } catch {
-          // Response was not JSON.
-        }
-        throw new Error(message);
-      }
-
-      const data = (await response.json()) as { url?: string };
-      if (!data.url) {
-        throw new Error('Upload succeeded but no image URL was returned.');
-      }
-
-      onChange(data.url);
+      onChange(blob.url);
     } catch (uploadFailure) {
       setUploadError(
         uploadFailure instanceof Error ? uploadFailure.message : 'Unable to upload image.',
