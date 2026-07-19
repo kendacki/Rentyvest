@@ -56,3 +56,35 @@ export function resetSupabaseBrowserClient(): void {
   cachedClient = null;
   cachedToken = null;
 }
+
+let cachedPublicClient: SupabaseClient | null = null;
+
+/**
+ * Anon-key client for public data (active marketplace listings).
+ * Works without sign-in; RLS must allow `anon` to read the rows.
+ */
+export function createSupabasePublicClient(): SupabaseClient | null {
+  if (cachedPublicClient) {
+    return cachedPublicClient;
+  }
+
+  const url = getSupabaseUrl();
+  const anonKey = getSupabaseAnonKey();
+
+  if (!url || !anonKey) {
+    console.error(
+      '[supabase] NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required',
+    );
+    return null;
+  }
+
+  cachedPublicClient = createClient(url, anonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
+
+  return cachedPublicClient;
+}

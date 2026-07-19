@@ -1,11 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   RealtimeChannel,
   RealtimePostgresUpdatePayload,
 } from '@supabase/supabase-js';
-import { useSupabaseAuth } from './useSupabaseAuth';
+import { createSupabasePublicClient } from '../lib/supabase/client';
 import {
   normalizeProperty,
   type Property,
@@ -33,8 +33,9 @@ function isPropertyRow(value: unknown): value is PropertyRow {
 }
 
 export function usePropertySlots(): UsePropertySlotsResult {
-  const { supabase, isLoading: isAuthLoading, error: authError } =
-    useSupabaseAuth();
+  // Marketplace listings are public: use the anon client so visitors
+  // (including Loop-only wallets with no Privy session) can browse.
+  const supabase = useMemo(() => createSupabasePublicClient(), []);
 
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,18 +91,8 @@ export function usePropertySlots(): UsePropertySlotsResult {
   }, [supabase]);
 
   useEffect(() => {
-    if (isAuthLoading) {
-      return;
-    }
-
-    if (authError) {
-      setError(authError);
-      setIsLoading(false);
-      return;
-    }
-
     void fetchProperties();
-  }, [authError, fetchProperties, isAuthLoading]);
+  }, [fetchProperties]);
 
   useEffect(() => {
     if (!supabase) {
@@ -136,7 +127,7 @@ export function usePropertySlots(): UsePropertySlotsResult {
 
   return {
     properties,
-    isLoading: isAuthLoading || isLoading,
+    isLoading,
     error,
     isRealtimeConnected,
     refetch: fetchProperties,
