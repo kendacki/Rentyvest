@@ -23,8 +23,8 @@ type createCommand struct {
 }
 
 type createPayload struct {
-	TemplateID     string                 `json:"templateId"`
-	CreateArgument map[string]interface{} `json:"createArgument"`
+	TemplateID      string                 `json:"templateId"`
+	CreateArguments map[string]interface{} `json:"createArguments"`
 }
 
 type CreatePoolCommand struct {
@@ -63,7 +63,7 @@ func (c *Client) CreatePropertyPool(ctx context.Context, cmd CreatePoolCommand) 
 		deadline = time.Now().Add(defaultFundraisingDuration)
 	}
 
-	now := time.Now().UTC().Format(time.RFC3339)
+	now := time.Now().UTC().Format(time.RFC3339Nano)
 
 	body := submitRequest{
 		ActAs:     []string{c.adminParty},
@@ -74,7 +74,7 @@ func (c *Client) CreatePropertyPool(ctx context.Context, cmd CreatePoolCommand) 
 			createCommand{
 				CreateCommand: createPayload{
 					TemplateID: c.templatePoolID,
-					CreateArgument: map[string]interface{}{
+					CreateArguments: map[string]interface{}{
 						"platform_admin":          c.adminParty,
 						"seller":                  c.adminParty,
 						"prop_manager":            c.adminParty,
@@ -86,7 +86,7 @@ func (c *Client) CreatePropertyPool(ctx context.Context, cmd CreatePoolCommand) 
 						"slot_price":              cmd.SlotPrice,
 						"currency":                defaultPoolCurrency,
 						"status":                  "Pending",
-						"fundraising_deadline":    deadline.UTC().Format(time.RFC3339),
+						"fundraising_deadline":    deadline.UTC().Format(time.RFC3339Nano),
 						"yield_history":           []interface{}{},
 						"transfer_log":            []interface{}{},
 						"refunded_bid_references": []interface{}{},
