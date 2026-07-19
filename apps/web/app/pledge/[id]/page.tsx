@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { PageShell } from '../../../components/layout/PageShell';
 import { Reveal } from '../../../components/motion/Reveal';
 import { PledgeModal } from '../../../components/pledge/PledgeModal';
@@ -10,8 +10,9 @@ import { usePropertySlots } from '../../../hooks/usePropertySlots';
 
 export default function PledgePage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const propertyId = params.id;
-  const { properties, isLoading, error } = usePropertySlots();
+  const { properties, isLoading, error, refetch } = usePropertySlots();
   const [modalOpen, setModalOpen] = useState(true);
 
   const property = useMemo(
@@ -91,10 +92,13 @@ export default function PledgePage() {
             onOpenChange={(open) => {
               setModalOpen(open);
               if (!open) {
-                window.history.back();
+                router.push('/marketplace');
               }
             }}
             property={property}
+            onPledgeConfirmed={() => {
+              void refetch();
+            }}
           />
         </div>
       </main>

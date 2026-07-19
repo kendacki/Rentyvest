@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// NOTE: /pledge is intentionally NOT here. The cookie check below only sees
+// Privy sessions, so Loop/WalletConnect users were bounced to /wallet even
+// though they were signed in. The pledge page gates on wallet connection
+// client-side instead.
 const PROTECTED_ROUTES = [
   '/portfolio',
-  '/pledge',
   '/yield',
   '/manager',
   '/admin',

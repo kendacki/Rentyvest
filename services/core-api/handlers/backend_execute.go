@@ -149,13 +149,7 @@ func (h *BackendExecuteHandler) ExecutePledge(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// Pledge archived the old pool and created a successor: keep the DB
-	// pointer current so subsequent pledges target a live contract.
-	if newPoolCID := strings.TrimSpace(result.PoolContractID); newPoolCID != "" && newPoolCID != property.CantonPoolContractID {
-		if rotateErr := h.store.UpdatePropertyPoolContractID(r.Context(), propertyID, newPoolCID); rotateErr != nil {
-			log.Printf("[backend-execute] pool contract rotation failed property=%s pool=%s err=%v", propertyID, newPoolCID, rotateErr)
-		}
-	}
+	h.indexConfirmedPledge(r, property, propertyID, buyerPartyID, amount, slotCount, paymentAssetContractID, result)
 
 	writeLedgerJSON(w, http.StatusOK, backendExecutePledgeResponse{
 		CommandID:              result.CommandID,
@@ -165,6 +159,77 @@ func (h *BackendExecuteHandler) ExecutePledge(w http.ResponseWriter, r *http.Req
 		SlotCount:              slotCount,
 		MintedNFTContractIDs:   result.NFTContractIDs,
 	})
+}
+
+// indexConfirmedPledge records a settled backend-execute pledge in the DB:
+// pledge row, slot counter, pool contract rotation, NFT index, and the
+// buyer's change asset. The ledger settlement already succeeded, so DB
+// failures are logged (with a pool-rotation fallback) instead of failing
+// the HTTP response.
+func (h *BackendExecuteHandler) indexConfirmedPledge(
+	r *http.Request,
+	property *db.PropertyNativePledgeContext,
+	propertyID uuid.UUID,
+	buyerPartyID string,
+	amount float64,
+	slotCount int,
+	paymentAssetContractID string,
+	result *canton.PledgeResult,
+) {
+	newPoolCID := strings.TrimSpace(result.PoolContractID)
+	if newPoolCID == property.CantonPoolContractID {
+		newPoolCID = ""
+	}
+
+	_, dbErr := h.store.InsertConfirmedNativePledge(r.Context(), db.NativePledgeRecord{
+		UserID:                 buyerPartyID,
+		PropertyID:             propertyID,
+		Units:                  int32(slotCount),
+		Amount:                 formatAmount(amount),
+		Currency:               defaultPledgeCurrency,
+		PaymentMethod:          db.PledgePaymentMethodTUSDC,
+		PaymentAssetContractID: paymentAssetContractID,
+		IdempotencyKey:         result.CommandID,
+		CantonCommandID:        result.CommandID,
+		CantonUpdateID:         result.UpdateID,
+		NewPoolContractID:      newPoolCID,
+		NFTContractIDs:         result.NFTContractIDs,
+	})
+	if dbErr != nil {
+		log.Printf(
+			"[backend-execute] pledge settled on Canton but DB indexing failed buyer=%s property=%s err=%v",
+			buyerPartyID, propertyID, dbErr,
+		)
+		// Keep the pool pointer fresh even when full indexing failed, so the
+		// next pledge still targets a live contract.
+		if newPoolCID != "" {
+			if rotateErr := h.store.UpdatePropertyPoolContractID(r.Context(), propertyID, newPoolCID); rotateErr != nil {
+				log.Printf("[backend-execute] pool contract rotation failed property=%s pool=%s err=%v", propertyID, newPoolCID, rotateErr)
+			}
+		}
+	}
+
+	// Re-index the buyer's change asset so their remaining tUSDC balance
+	// stays visible after the payment asset was consumed on-ledger.
+	for _, changeAsset := range result.BuyerChangeAssets {
+		if changeAsset.ContractID == "" || changeAsset.Amount == "" {
+			continue
+		}
+		if upsertErr := h.store.UpsertUserTokenAsset(
+			r.Context(),
+			buyerPartyID,
+			changeAsset.ContractID,
+			buyerPartyID,
+			changeAsset.Amount,
+			"tUSDC",
+			"tUSDC",
+		); upsertErr != nil {
+			log.Printf(
+				"[backend-execute] change asset indexing failed buyer=%s asset=%s err=%v",
+				buyerPartyID, changeAsset.ContractID, upsertErr,
+			)
+		}
+	}
 }
 
 func (h *BackendExecuteHandler) resolvePaymentAssetContractID(

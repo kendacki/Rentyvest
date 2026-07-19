@@ -1,18 +1,14 @@
 'use client';
 
 import * as Dialog from '@radix-ui/react-dialog';
-import { usePrivy } from '@privy-io/react-auth';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { executeBackendPledge } from '@rentyvest/ledger-client';
+import { fetchFaucetAssets } from '../../lib/api/faucetAssets';
 import {
   formatCurrency,
   formatTokenBalance,
   truncatePartyId,
 } from '../../lib/format';
-import { createPledge, mergeUserAssets } from '../../lib/pledge';
-import { submitPledgeTx } from '../../lib/canton/client';
-import { formatCantonError } from '../../lib/canton/errors';
-import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
-import { useUserAssets } from '../../hooks/useUserAssets';
 import { useCantonWallet } from '../../providers/CantonWalletProvider';
 import { ConnectWalletButton } from '../wallet/ConnectWalletButton';
 import {
@@ -21,7 +17,6 @@ import {
 } from '../../types/property';
 import {
   parseAssetBalance,
-  sumAssetBalances,
   type UserTokenAsset,
 } from '../../types/asset';
 
@@ -32,6 +27,12 @@ type PledgeModalProps = {
   onOpenChange: (open: boolean) => void;
   property: Property;
   onPledgeConfirmed?: () => void;
+};
+
+type PledgeSuccess = {
+  slotCount: number;
+  totalCost: number;
+  mintedNftCount: number;
 };
 
 function Spinner() {
@@ -69,55 +70,60 @@ export function PledgeModal({
   property,
   onPledgeConfirmed,
 }: PledgeModalProps) {
-  const { getAccessToken, authenticated, login, ready: privyReady } = usePrivy();
-  const { cantonLedgerToken } = useSupabaseAuth();
-  const { isConnected, partyId } = useCantonWallet();
-  const { assets, isLoading, isValidating, error, refetch } = useUserAssets({
-    enabled: open,
-  });
+  const { isConnected, partyId, walletLabel } = useCantonWallet();
 
+  const [assets, setAssets] = useState<UserTokenAsset[]>([]);
+  const [isLoadingAssets, setIsLoadingAssets] = useState(false);
   const [slotCount, setSlotCount] = useState(1);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [isSubmittingCanton, setIsSubmittingCanton] = useState(false);
-  const [isMerging, setIsMerging] = useState(false);
-  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
-  const [baselineSlotsFilled, setBaselineSlotsFilled] = useState<number | null>(
-    null,
-  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [success, setSuccess] = useState<PledgeSuccess | null>(null);
 
   const slotsRemaining = getSlotsRemaining(property);
   const totalCost = slotCount * property.unit_price;
-  const totalBalance = useMemo(() => sumAssetBalances(assets), [assets]);
-  const hasSufficientTotalBalance = totalBalance >= totalCost;
-  const hasSingleAffordableAsset = useMemo(
-    () => assets.some((asset) => canAffordAsset(asset, totalCost)),
-    [assets, totalCost],
+  const totalBalance = useMemo(
+    () => assets.reduce((sum, asset) => sum + parseAssetBalance(asset.balance), 0),
+    [assets],
   );
-  const showMergeButton =
-    assets.length > 1 && hasSufficientTotalBalance && !hasSingleAffordableAsset;
+  const hasSufficientTotalBalance = totalBalance >= totalCost;
 
   const selectedAsset = assets.find(
     (asset) => asset.canton_contract_id === selectedAssetId,
   );
 
-  const isBusy = isSubmittingCanton || awaitingConfirmation || isMerging;
+  const isBusy = isSubmitting || isLoadingAssets;
+
+  const loadAssets = useCallback(async () => {
+    if (!partyId) {
+      setAssets([]);
+      return;
+    }
+
+    setIsLoadingAssets(true);
+    try {
+      const partyAssets = await fetchFaucetAssets(partyId);
+      setAssets(partyAssets);
+    } finally {
+      setIsLoadingAssets(false);
+    }
+  }, [partyId]);
 
   const resetFlow = useCallback(() => {
     setSlotCount(1);
     setSelectedAssetId(null);
     setSubmitError(null);
-    setIsSubmittingCanton(false);
-    setIsMerging(false);
-    setAwaitingConfirmation(false);
-    setBaselineSlotsFilled(null);
+    setIsSubmitting(false);
+    setSuccess(null);
   }, []);
 
   useEffect(() => {
     if (!open) {
       resetFlow();
+      return;
     }
-  }, [open, resetFlow]);
+    void loadAssets();
+  }, [open, loadAssets, resetFlow]);
 
   useEffect(() => {
     if (!selectedAssetId && assets.length > 0) {
@@ -134,53 +140,18 @@ export function PledgeModal({
     }
   }, [selectedAsset, totalCost]);
 
-  useEffect(() => {
-    if (
-      awaitingConfirmation &&
-      baselineSlotsFilled !== null &&
-      property.slots_filled >= baselineSlotsFilled + slotCount
-    ) {
-      onPledgeConfirmed?.();
-      onOpenChange(false);
-    }
-  }, [
-    awaitingConfirmation,
-    baselineSlotsFilled,
-    onOpenChange,
-    onPledgeConfirmed,
-    property.slots_filled,
-    slotCount,
-  ]);
-
   const handleDialogOpenChange = (nextOpen: boolean) => {
-    if (!isBusy) {
+    if (!isSubmitting) {
       onOpenChange(nextOpen);
     }
   };
 
-  const handleMergeAssets = async () => {
-    setSubmitError(null);
-    setIsMerging(true);
-
-    try {
-      const accessToken = await getAccessToken();
-      if (!accessToken) {
-        throw new Error('Authentication is required to merge assets');
-      }
-
-      const response = await mergeUserAssets(accessToken);
-      await refetch();
-      setSelectedAssetId(response.merged_contract_id);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Unable to merge assets';
-      setSubmitError(message);
-    } finally {
-      setIsMerging(false);
-    }
-  };
-
   const handleSubmit = async () => {
+    if (!partyId) {
+      setSubmitError('Connect your Canton wallet to pledge');
+      return;
+    }
+
     if (!selectedAsset) {
       setSubmitError('Select a tUSDC holding with sufficient balance');
       return;
@@ -193,64 +164,31 @@ export function PledgeModal({
       return;
     }
 
-    if (!cantonLedgerToken) {
-      setSubmitError(
-        'Canton ledger access is unavailable. Configure CANTON_LEDGER_TOKEN on the API and sign in again.',
-      );
-      return;
-    }
-
     setSubmitError(null);
-    setIsSubmittingCanton(true);
-    setBaselineSlotsFilled(property.slots_filled);
+    setIsSubmitting(true);
 
     try {
-      const accessToken = await getAccessToken();
-      if (!accessToken) {
-        throw new Error('Authentication is required to submit a pledge');
-      }
-
-      const idempotencyKey =
-        typeof crypto !== 'undefined' && 'randomUUID' in crypto
-          ? crypto.randomUUID()
-          : `pledge-${Date.now()}`;
-
-      const commandId = `pledge-${idempotencyKey}`;
-      const metaUriBase =
-        process.env.NEXT_PUBLIC_PLEDGE_META_URI_BASE ??
-        'https://api.rentyvest.com/metadata/pledges';
-
-      const cantonResult = await submitPledgeTx(cantonLedgerToken, {
-        poolContractId: property.canton_pool_contract_id,
-        buyerPartyId: selectedAsset.owner_party_id,
-        paymentAssetCid: selectedAsset.canton_contract_id,
-        slotCount,
-        metaUri: `${metaUriBase.replace(/\/$/, '')}/${idempotencyKey}`,
-        commandId,
+      const result = await executeBackendPledge({
+        buyerPartyId: partyId,
+        propertyId: property.id,
+        amount: totalCost.toFixed(2),
+        paymentAssetContractId: selectedAsset.canton_contract_id,
       });
 
-      await createPledge(
-        {
-          property_id: property.id,
-          slot_count: slotCount,
-          payment_asset_contract_id: selectedAsset.canton_contract_id,
-          client_submitted: true,
-          canton_command_id: cantonResult.commandId,
-          canton_update_id: cantonResult.updateId,
-          pool_contract_id: cantonResult.poolContractId,
-          minted_nft_contract_ids: cantonResult.mintedNftContractIds,
-        },
-        accessToken,
-        idempotencyKey,
-      );
-
-      setAwaitingConfirmation(true);
+      setSuccess({
+        slotCount: result.slotCount ?? slotCount,
+        totalCost,
+        mintedNftCount:
+          result.mintedNftContractIds?.length ?? result.slotCount ?? slotCount,
+      });
+      onPledgeConfirmed?.();
+      void loadAssets();
     } catch (error) {
-      const message = formatCantonError(error);
-      setSubmitError(message);
-      setBaselineSlotsFilled(null);
+      setSubmitError(
+        error instanceof Error ? error.message : 'Pledge submission failed',
+      );
     } finally {
-      setIsSubmittingCanton(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -271,7 +209,7 @@ export function PledgeModal({
 
           <div className="border-b border-slate-200 px-5 pb-4 pt-3 sm:px-6">
             <Dialog.Title className="text-lg font-semibold text-slate-900">
-              Pledge with tUSDC
+              {success ? 'Pledge confirmed' : 'Pledge with tUSDC'}
             </Dialog.Title>
             <Dialog.Description className="mt-1 text-sm text-slate-600">
               {property.title}, {formatCurrency(property.unit_price)} per slot
@@ -279,243 +217,251 @@ export function PledgeModal({
           </div>
 
           <div className="relative flex-1 overflow-y-auto px-5 py-5 sm:px-6">
-            {isBusy && (
+            {isSubmitting && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-white/90 px-6 text-center backdrop-blur-[1px]">
                 <Spinner />
                 <p className="text-sm font-medium text-slate-800">
-                  {isMerging
-                    ? 'Consolidating UTXOs on Canton...'
-                    : 'Submitting transaction to Canton...'}
+                  Submitting transaction to Canton...
                 </p>
-                {awaitingConfirmation && (
-                  <p className="text-xs text-slate-500">
-                    Waiting for slot mint confirmation via realtime updates.
-                  </p>
-                )}
+                <p className="text-xs text-slate-500">
+                  The platform co-signs your pledge, this can take up to a
+                  minute.
+                </p>
               </div>
             )}
 
-            <div className="space-y-6">
-              {privyReady && !authenticated ? (
-                <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-center">
-                  <p className="text-sm font-semibold text-amber-950">
-                    Sign in to submit a pledge
-                  </p>
-                  <p className="mt-2 text-sm text-amber-900">
-                    Connect your account so we can load tUSDC holdings and record
-                    your pledge on Canton.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void login();
-                    }}
-                    className="btn-primary mt-4 h-11 px-6 text-sm"
+            {success ? (
+              <div className="flex flex-col items-center gap-4 py-6 text-center">
+                <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
+                  <svg
+                    className="h-7 w-7 text-emerald-600"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
                   >
-                    Sign in to continue
-                  </button>
-                </section>
-              ) : null}
-
-              {authenticated && (!isConnected || !partyId) ? (
-                <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-center">
-                  <p className="text-sm font-semibold text-slate-900">
-                    Connect your Canton wallet
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                </span>
+                <div>
+                  <p className="text-base font-semibold text-slate-900">
+                    {success.slotCount} slot{success.slotCount === 1 ? '' : 's'}{' '}
+                    secured in {property.title}
                   </p>
                   <p className="mt-2 text-sm text-slate-600">
-                    Approve a WalletConnect session to sign the on chain pledge
-                    from your party.
+                    {formatTokenBalance(success.totalCost)} settled on Canton and{' '}
+                    {success.mintedNftCount} property NFT
+                    {success.mintedNftCount === 1 ? '' : 's'} minted to your
+                    wallet.
                   </p>
-                  <div className="mt-4 flex justify-center">
-                    <ConnectWalletButton className="btn-primary h-11 px-6 text-sm" />
-                  </div>
-                </section>
-              ) : null}
-
-              {authenticated && isConnected && partyId ? (
-                <>
-              <section className="glass-inset p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                      Slots
-                    </p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {slotsRemaining} remaining
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={decrementSlots}
-                      disabled={isBusy || slotCount <= 1}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-lg font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
-                      aria-label="Decrease slot count"
-                    >
-                      −
-                    </button>
-                    <span className="min-w-8 text-center text-lg font-semibold text-slate-900">
-                      {slotCount}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={incrementSlots}
-                      disabled={isBusy || slotCount >= slotsRemaining}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-lg font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
-                      aria-label="Increase slot count"
-                    >
-                      +
-                    </button>
-                  </div>
                 </div>
-
-                <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-4">
-                  <span className="text-sm font-medium text-slate-600">
-                    Total settlement
-                  </span>
-                  <span className="text-lg font-bold text-slate-900">
-                    {formatTokenBalance(totalCost)}
-                  </span>
-                </div>
-              </section>
-
-              <section className="space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-sm font-semibold text-slate-900">
-                    Select payment asset
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => void refetch()}
-                    disabled={isBusy || isLoading || isValidating}
-                    className="text-xs font-semibold text-emerald-700 disabled:opacity-50"
-                  >
-                    Refresh
-                  </button>
-                </div>
-
-                {isLoading ? (
-                  <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                    Loading tUSDC holdings...
-                  </div>
-                ) : error ? (
-                  <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
-                    {error}
-                  </div>
-                ) : assets.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                    No tUSDC holdings found. Claim tUSDC from the faucet
-                    first.
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {assets.map((asset) => {
-                      const affordable = canAffordAsset(asset, totalCost);
-                      const isSelected =
-                        selectedAssetId === asset.canton_contract_id;
-
-                      return (
-                        <label
-                          key={asset.id}
-                          className={`flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-4 transition-colors ${
-                            affordable
-                              ? isSelected
-                                ? 'border-emerald-500 bg-emerald-50'
-                                : 'border-slate-200 bg-white hover:border-emerald-300'
-                              : 'cursor-not-allowed border-slate-200 bg-slate-50 opacity-60'
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="payment_asset"
-                            value={asset.canton_contract_id}
-                            checked={isSelected}
-                            disabled={!affordable || isBusy}
-                            onChange={() =>
-                              setSelectedAssetId(asset.canton_contract_id)
-                            }
-                            className="mt-1 h-4 w-4 border-slate-300 text-emerald-600"
-                          />
-                          <span className="flex-1">
-                            <span className="flex items-center justify-between gap-3">
-                              <span className="text-sm font-semibold text-slate-900">
-                                {formatTokenBalance(parseAssetBalance(asset.balance), asset.symbol)}
-                              </span>
-                              {!affordable && (
-                                <span className="text-xs font-medium text-slate-500">
-                                  Insufficient
-                                </span>
-                              )}
-                            </span>
-                            <span className="mt-1 block text-xs text-slate-500">
-                              {truncatePartyId(asset.canton_contract_id, 10, 10)}
-                            </span>
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {showMergeButton && (
-                  <button
-                    type="button"
-                    onClick={() => void handleMergeAssets()}
-                    disabled={isBusy}
-                    className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Merge Assets
-                  </button>
-                )}
-
-                {!hasSufficientTotalBalance && assets.length > 0 && (
-                  <p className="text-xs text-slate-500">
-                    Combined balance {formatTokenBalance(totalBalance)} is below the
-                    required {formatTokenBalance(totalCost)}.
-                  </p>
-                )}
-              </section>
-
-              {submitError && (
-                <div
-                  className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-                  role="alert"
+                <button
+                  type="button"
+                  onClick={() => onOpenChange(false)}
+                  className="inline-flex h-11 items-center justify-center rounded-2xl px-8 text-sm font-semibold text-white"
+                  style={{ backgroundColor: PRIMARY_EMERALD }}
                 >
-                  {submitError}
-                </div>
-              )}
-                </>
-              ) : null}
-            </div>
+                  Done
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {!isConnected || !partyId ? (
+                  <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-center">
+                    <p className="text-sm font-semibold text-slate-900">
+                      Connect your Canton wallet
+                    </p>
+                    <p className="mt-2 text-sm text-slate-600">
+                      Connect Loop or a Canton wallet to load your tUSDC and
+                      pledge for slots in this property.
+                    </p>
+                    <div className="mt-4 flex justify-center">
+                      <ConnectWalletButton className="btn-primary h-11 px-6 text-sm" />
+                    </div>
+                  </section>
+                ) : (
+                  <>
+                    <section className="glass-inset p-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                            Slots
+                          </p>
+                          <p className="mt-1 text-sm text-slate-600">
+                            {slotsRemaining} remaining
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={decrementSlots}
+                            disabled={isBusy || slotCount <= 1}
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-lg font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+                            aria-label="Decrease slot count"
+                          >
+                            −
+                          </button>
+                          <span className="min-w-8 text-center text-lg font-semibold text-slate-900">
+                            {slotCount}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={incrementSlots}
+                            disabled={isBusy || slotCount >= slotsRemaining}
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-lg font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+                            aria-label="Increase slot count"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-4">
+                        <span className="text-sm font-medium text-slate-600">
+                          Total settlement
+                        </span>
+                        <span className="text-lg font-bold text-slate-900">
+                          {formatTokenBalance(totalCost)}
+                        </span>
+                      </div>
+                    </section>
+
+                    <section className="space-y-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-sm font-semibold text-slate-900">
+                          Select payment asset
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => void loadAssets()}
+                          disabled={isBusy}
+                          className="text-xs font-semibold text-emerald-700 disabled:opacity-50"
+                        >
+                          Refresh
+                        </button>
+                      </div>
+
+                      <p className="text-xs text-slate-500">
+                        Connected via {walletLabel ?? 'Canton wallet'},{' '}
+                        {truncatePartyId(partyId, 10, 8)}
+                      </p>
+
+                      {isLoadingAssets ? (
+                        <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+                          Loading tUSDC holdings...
+                        </div>
+                      ) : assets.length === 0 ? (
+                        <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+                          No tUSDC holdings found for this wallet. Claim tUSDC
+                          from the faucet first, then hit Refresh.
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {assets.map((asset) => {
+                            const affordable = canAffordAsset(asset, totalCost);
+                            const isSelected =
+                              selectedAssetId === asset.canton_contract_id;
+
+                            return (
+                              <label
+                                key={asset.id}
+                                className={`flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-4 transition-colors ${
+                                  affordable
+                                    ? isSelected
+                                      ? 'border-emerald-500 bg-emerald-50'
+                                      : 'border-slate-200 bg-white hover:border-emerald-300'
+                                    : 'cursor-not-allowed border-slate-200 bg-slate-50 opacity-60'
+                                }`}
+                              >
+                                <input
+                                  type="radio"
+                                  name="payment_asset"
+                                  value={asset.canton_contract_id}
+                                  checked={isSelected}
+                                  disabled={!affordable || isBusy}
+                                  onChange={() =>
+                                    setSelectedAssetId(asset.canton_contract_id)
+                                  }
+                                  className="mt-1 h-4 w-4 border-slate-300 text-emerald-600"
+                                />
+                                <span className="flex-1">
+                                  <span className="flex items-center justify-between gap-3">
+                                    <span className="text-sm font-semibold text-slate-900">
+                                      {formatTokenBalance(
+                                        parseAssetBalance(asset.balance),
+                                        asset.symbol,
+                                      )}
+                                    </span>
+                                    {!affordable && (
+                                      <span className="text-xs font-medium text-slate-500">
+                                        Insufficient
+                                      </span>
+                                    )}
+                                  </span>
+                                  <span className="mt-1 block text-xs text-slate-500">
+                                    {truncatePartyId(asset.canton_contract_id, 10, 10)}
+                                  </span>
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {!hasSufficientTotalBalance && assets.length > 0 && (
+                        <p className="text-xs text-slate-500">
+                          Combined balance {formatTokenBalance(totalBalance)} is
+                          below the required {formatTokenBalance(totalCost)}.
+                          Claim more tUSDC from the faucet.
+                        </p>
+                      )}
+                    </section>
+
+                    {submitError && (
+                      <div
+                        className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                        role="alert"
+                      >
+                        {submitError}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
-          <div className="border-t border-slate-200 px-5 py-4 sm:px-6">
-            <button
-              type="button"
-              onClick={() => void handleSubmit()}
-              disabled={
-                isBusy ||
-                !authenticated ||
-                !isConnected ||
-                !partyId ||
-                !selectedAsset ||
-                !canAffordAsset(selectedAsset, totalCost) ||
-                slotsRemaining <= 0
-              }
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl px-4 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-              style={{ backgroundColor: PRIMARY_EMERALD }}
-            >
-              {isBusy ? (
-                <>
-                  <Spinner />
-                  Processing pledge
-                </>
-              ) : (
-                `Pledge ${slotCount} slot${slotCount === 1 ? '' : 's'}`
-              )}
-            </button>
-          </div>
+          {!success && (
+            <div className="border-t border-slate-200 px-5 py-4 sm:px-6">
+              <button
+                type="button"
+                onClick={() => void handleSubmit()}
+                disabled={
+                  isBusy ||
+                  !isConnected ||
+                  !partyId ||
+                  !selectedAsset ||
+                  !canAffordAsset(selectedAsset, totalCost) ||
+                  slotsRemaining <= 0
+                }
+                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl px-4 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                style={{ backgroundColor: PRIMARY_EMERALD }}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Spinner />
+                    Processing pledge
+                  </>
+                ) : (
+                  `Pledge ${slotCount} slot${slotCount === 1 ? '' : 's'}`
+                )}
+              </button>
+            </div>
+          )}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

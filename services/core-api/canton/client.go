@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -58,12 +59,22 @@ type PledgeCommand struct {
 }
 
 type PledgeResult struct {
-	CommandID         string
-	UpdateID          string
-	PoolContractID    string
-	NFTContractIDs    []string
-	PaymentAssetCID   string
-	BuyerChangeCID    string
+	CommandID       string
+	UpdateID        string
+	PoolContractID  string
+	NFTContractIDs  []string
+	PaymentAssetCID string
+	BuyerChangeCID  string
+	// BuyerChangeAssets are the Asset contracts created for the buyer by the
+	// Pledge exercise (change from the payment split), used to re-index the
+	// buyer's remaining tUSDC balance.
+	BuyerChangeAssets []CreatedAssetInfo
+}
+
+// CreatedAssetInfo is a created Asset contract extracted from a transaction.
+type CreatedAssetInfo struct {
+	ContractID string
+	Amount     string
 }
 
 type MergeAssetsCommand struct {
@@ -448,9 +459,9 @@ func (c *Client) SubmitMint(ctx context.Context, cmd MintCommand) (*MintResult, 
 		Commands: []interface{}{
 			exerciseCommand{
 				ExerciseCommand: exercisePayload{
-					TemplateID:     c.templateUSDCIssuerID,
-					ContractID:     issuerContractID,
-					Choice:         "Mint",
+					TemplateID: c.templateUSDCIssuerID,
+					ContractID: issuerContractID,
+					Choice:     "Mint",
 					ChoiceArgument: map[string]interface{}{
 						"owner":     cmd.OwnerPartyID,
 						"amount":    cmd.Amount,
@@ -729,6 +740,55 @@ func collectCreatedContractIDs(node interface{}, templateSuffix string, ids *[]s
 			collectCreatedContractIDs(child, templateSuffix, ids)
 		}
 	}
+}
+
+// extractCreatedAssetsByOwner finds created Asset contracts whose payload
+// owner matches the given party, returning contract id and amount. Used to
+// re-index the buyer's change after a pledge consumes their payment asset.
+func extractCreatedAssetsByOwner(body []byte, owner string) []CreatedAssetInfo {
+	var decoded interface{}
+	if err := json.Unmarshal(body, &decoded); err != nil {
+		return nil
+	}
+	assets := make([]CreatedAssetInfo, 0, 2)
+	collectCreatedAssetsByOwner(decoded, owner, &assets)
+	return assets
+}
+
+func collectCreatedAssetsByOwner(node interface{}, owner string, out *[]CreatedAssetInfo) {
+	switch value := node.(type) {
+	case map[string]interface{}:
+		if contractID, ok := value["contractId"].(string); ok && contractID != "" && templateMatches(value, ":Asset") {
+			if payload := createdEventArgument(value); payload != nil {
+				if payloadOwner, _ := payload["owner"].(string); payloadOwner == owner {
+					amount := ""
+					switch raw := payload["amount"].(type) {
+					case string:
+						amount = raw
+					case float64:
+						amount = strconv.FormatFloat(raw, 'f', -1, 64)
+					}
+					*out = append(*out, CreatedAssetInfo{ContractID: contractID, Amount: amount})
+				}
+			}
+		}
+		for _, child := range value {
+			collectCreatedAssetsByOwner(child, owner, out)
+		}
+	case []interface{}:
+		for _, child := range value {
+			collectCreatedAssetsByOwner(child, owner, out)
+		}
+	}
+}
+
+func createdEventArgument(value map[string]interface{}) map[string]interface{} {
+	for _, key := range []string{"createArgument", "createArguments", "payload", "arguments"} {
+		if payload, ok := value[key].(map[string]interface{}); ok {
+			return payload
+		}
+	}
+	return nil
 }
 
 func templateMatches(value map[string]interface{}, templateSuffix string) bool {

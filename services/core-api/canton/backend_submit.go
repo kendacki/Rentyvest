@@ -87,7 +87,9 @@ func (c *Client) SubmitPledgeBackendExecute(ctx context.Context, cmd PledgeComma
 		return nil, err
 	}
 
-	responseBody, err := c.submitAndWaitWithToken(ctx, body, token)
+	// submit-and-wait-for-transaction: the plain submit-and-wait response has
+	// no events, so the new pool / NFT / change contract ids would be empty.
+	responseBody, err := c.submitAndWaitForTransactionWithToken(ctx, body, token)
 	if err != nil {
 		logBackendExecutePledgeFailure(cmd, body, err, nil)
 		return nil, err
@@ -102,6 +104,7 @@ func (c *Client) SubmitPledgeBackendExecute(ctx context.Context, cmd PledgeComma
 		result.UpdateID = updateID
 	}
 	result.NFTContractIDs = extractCreatedContractIDs(responseBody, ":PropertyNFT")
+	result.BuyerChangeAssets = extractCreatedAssetsByOwner(responseBody, cmd.BuyerPartyID)
 
 	ledgerLog("backend_execute", "pledge_success", fmt.Sprintf(
 		"commandId=%s updateId=%s nfts=%d",
@@ -113,21 +116,21 @@ func (c *Client) SubmitPledgeBackendExecute(ctx context.Context, cmd PledgeComma
 	return result, nil
 }
 
-func (c *Client) submitAndWaitWithToken(ctx context.Context, body submitRequest, token string) ([]byte, error) {
+func (c *Client) submitAndWaitForTransactionWithToken(ctx context.Context, body submitRequest, token string) ([]byte, error) {
 	token = strings.TrimSpace(token)
 	if token == "" {
 		return nil, fmt.Errorf("canton ledger token is not configured")
 	}
 
-	payload, err := json.Marshal(body)
+	payload, err := json.Marshal(submitForTransactionRequest{Commands: body})
 	if err != nil {
-		return nil, fmt.Errorf("marshal canton submit request: %w", err)
+		return nil, fmt.Errorf("marshal canton submit-for-transaction request: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		c.baseURL+defaultSubmitPath,
+		c.baseURL+submitForTransactionPath,
 		bytes.NewReader(payload),
 	)
 	if err != nil {
@@ -143,7 +146,7 @@ func (c *Client) submitAndWaitWithToken(ctx context.Context, body submitRequest,
 	}
 	defer resp.Body.Close()
 
-	responseBody, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	responseBody, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
 	if err != nil {
 		return nil, fmt.Errorf("read canton submit response: %w", err)
 	}
