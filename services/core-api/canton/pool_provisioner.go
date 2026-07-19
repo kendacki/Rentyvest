@@ -129,19 +129,23 @@ func NewPoolProvisioner(store *db.Store, client *Client) *PoolProvisioner {
 		}
 	}
 
-	duration := defaultFundraisingDuration
-	if raw := strings.TrimSpace(os.Getenv("POOL_FUNDRAISING_DURATION")); raw != "" {
-		if parsed, err := time.ParseDuration(raw); err == nil && parsed > 0 {
-			duration = parsed
-		}
-	}
-
 	return &PoolProvisioner{
 		store:    store,
 		client:   client,
 		interval: interval,
-		duration: duration,
+		duration: FundraisingDurationFromEnv(),
 	}
+}
+
+// FundraisingDurationFromEnv returns the configured pool fundraising window
+// (POOL_FUNDRAISING_DURATION), defaulting to 30 days.
+func FundraisingDurationFromEnv() time.Duration {
+	if raw := strings.TrimSpace(os.Getenv("POOL_FUNDRAISING_DURATION")); raw != "" {
+		if parsed, err := time.ParseDuration(raw); err == nil && parsed > 0 {
+			return parsed
+		}
+	}
+	return defaultFundraisingDuration
 }
 
 func (p *PoolProvisioner) Start(ctx context.Context) {

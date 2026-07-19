@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/rentyvest/core-api/canton"
@@ -97,6 +98,25 @@ func (h *BackendExecuteHandler) ExecutePledge(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// On-demand provisioning: if the background worker has not created the
+	// on-ledger pool yet, create it now so the pledge can proceed in this
+	// request instead of telling the user to come back later.
+	if property.CantonPoolContractID == "" && property.Status == db.PropertyStatusActive {
+		poolCID, provisionErr := h.provisionPoolNow(r, property)
+		if provisionErr != nil {
+			log.Printf("[backend-execute] on-demand pool provisioning failed property=%s err=%v", propertyID, provisionErr)
+			problems.WriteCode(
+				w,
+				http.StatusServiceUnavailable,
+				"RV-2008",
+				"Service Unavailable",
+				"The on-chain pool for this property could not be created yet. Please try again shortly.",
+			)
+			return
+		}
+		property.CantonPoolContractID = poolCID
+	}
+
 	unitPrice, err := strconv.ParseFloat(property.UnitPrice, 64)
 	if err != nil || unitPrice <= 0 {
 		problems.Write(w, http.StatusInternalServerError, "Internal Server Error", "Invalid property unit price")
@@ -159,6 +179,45 @@ func (h *BackendExecuteHandler) ExecutePledge(w http.ResponseWriter, r *http.Req
 		SlotCount:              slotCount,
 		MintedNFTContractIDs:   result.NFTContractIDs,
 	})
+}
+
+// provisionPoolNow creates the PropertyPool on Canton for a property that has
+// none yet (mirrors the pool provisioner worker, but synchronously within the
+// pledge request). Uses a deterministic command id so a concurrent worker run
+// deduplicates on Canton instead of creating a second pool.
+func (h *BackendExecuteHandler) provisionPoolNow(
+	r *http.Request,
+	property *db.PropertyNativePledgeContext,
+) (string, error) {
+	title, err := h.store.GetPropertyTitle(r.Context(), property.ID)
+	if err != nil {
+		return "", fmt.Errorf("load property title: %w", err)
+	}
+
+	deadline := time.Now().Add(canton.FundraisingDurationFromEnv())
+
+	cantonCtx, cancel := pledgeCantonContext(r)
+	defer cancel()
+
+	poolCID, err := h.cantonClient.CreatePropertyPool(cantonCtx, canton.CreatePoolCommand{
+		PropertyID:    property.ID.String(),
+		PropertyTitle: title,
+		TotalSlots:    property.TotalUnits,
+		SlotPrice:     property.UnitPrice,
+		Deadline:      deadline,
+		CommandID:     fmt.Sprintf("create-pool-%s", property.ID),
+	})
+	if err != nil {
+		return "", err
+	}
+
+	if setErr := h.store.SetPropertyPoolContract(r.Context(), property.ID, poolCID, deadline); setErr != nil {
+		// The pool exists on Canton; log and continue with the in-memory CID.
+		log.Printf("[backend-execute] pool created but DB update failed property=%s pool=%s err=%v", property.ID, poolCID, setErr)
+	}
+
+	log.Printf("[backend-execute] pool provisioned on demand property=%s pool=%s", property.ID, poolCID)
+	return poolCID, nil
 }
 
 // indexConfirmedPledge records a settled backend-execute pledge in the DB:

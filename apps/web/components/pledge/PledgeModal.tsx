@@ -178,12 +178,8 @@ export function PledgeModal({
       return;
     }
 
-    if (!property.canton_pool_contract_id) {
-      setSubmitError(
-        'The on-chain pool for this property is still being set up. Try again in a minute.',
-      );
-      return;
-    }
+    // No canton_pool_contract_id check here: the backend provisions the
+    // on-chain pool on demand if the background worker has not yet.
 
     setSubmitError(null);
     setIsSubmitting(true);

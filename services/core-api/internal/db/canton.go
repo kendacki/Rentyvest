@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type CantonPledgeJob struct {
@@ -167,6 +168,19 @@ func (s *Store) ListPropertiesNeedingPool(ctx context.Context, limit int32) ([]P
 	return properties, nil
 }
 
+func (s *Store) GetPropertyTitle(ctx context.Context, propertyID uuid.UUID) (string, error) {
+	var title string
+	err := s.pool.QueryRow(ctx, `
+		SELECT title
+		FROM public.properties
+		WHERE id = $1
+	`, propertyID).Scan(&title)
+	if err != nil {
+		return "", fmt.Errorf("get property title: %w", err)
+	}
+	return title, nil
+}
+
 // UpdatePropertyPoolContractID rotates the stored PropertyPool contract id
 // after a Pledge exercise archived the previous pool and created a successor.
 func (s *Store) UpdatePropertyPoolContractID(
@@ -203,6 +217,18 @@ func (s *Store) SetPropertyPoolContract(
 		WHERE id = $1
 	`, propertyID, poolContractID, expiryAt)
 	if err != nil {
+		// expiry_at only exists once migration 007 is applied; a missing
+		// column must not orphan a pool that was already created on Canton.
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "42703" {
+			if _, fallbackErr := s.pool.Exec(ctx, `
+				UPDATE public.properties
+				SET canton_pool_contract_id = $2, updated_at = now()
+				WHERE id = $1
+			`, propertyID, poolContractID); fallbackErr == nil {
+				return nil
+			}
+		}
 		return fmt.Errorf("set property pool contract: %w", err)
 	}
 	return nil
