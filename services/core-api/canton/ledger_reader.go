@@ -100,6 +100,58 @@ func (r *LedgerReader) ListPropertyNFTs(ctx context.Context, partyID string) ([]
 	return nfts, nil
 }
 
+// VerifyPledgeNFTs cross-checks client-submitted NFT contract ids against the
+// ledger: every claimed id must exist as an active PropertyNFT currently held
+// by the buyer party. Returns the subset of claimed ids that are verified.
+// This prevents a client-submitted pledge from indexing fabricated NFT ids.
+func (r *LedgerReader) VerifyPledgeNFTs(
+	ctx context.Context,
+	buyerPartyID string,
+	claimedContractIDs []string,
+) ([]string, error) {
+	buyerPartyID = strings.TrimSpace(buyerPartyID)
+	if buyerPartyID == "" {
+		return nil, fmt.Errorf("buyer party id is required")
+	}
+	if len(claimedContractIDs) == 0 {
+		return nil, nil
+	}
+
+	held, err := r.ListPropertyNFTs(ctx, buyerPartyID)
+	if err != nil {
+		return nil, err
+	}
+
+	onLedger := make(map[string]struct{}, len(held))
+	for _, nft := range held {
+		if nft.Payload.CurrentHolder == buyerPartyID {
+			onLedger[nft.ContractID] = struct{}{}
+		}
+	}
+
+	verified := make([]string, 0, len(claimedContractIDs))
+	for _, claimed := range claimedContractIDs {
+		claimed = strings.TrimSpace(claimed)
+		if claimed == "" {
+			continue
+		}
+		if _, ok := onLedger[claimed]; !ok {
+			return nil, fmt.Errorf(
+				"claimed NFT %s is not an active PropertyNFT held by %s",
+				truncateForLog(claimed, 24),
+				truncateForLog(buyerPartyID, 24),
+			)
+		}
+		verified = append(verified, claimed)
+	}
+
+	ledgerLog("read", "verify_pledge_nfts", fmt.Sprintf(
+		"party=%s claimed=%d verified=%d",
+		buyerPartyID, len(claimedContractIDs), len(verified),
+	))
+	return verified, nil
+}
+
 // ListUserEquityTokens returns PropertyNFT contracts where partyID is current_holder.
 func (r *LedgerReader) ListUserEquityTokens(ctx context.Context, partyID string) ([]PropertyNFTContract, error) {
 	nfts, err := r.ListPropertyNFTs(ctx, partyID)

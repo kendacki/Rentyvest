@@ -242,6 +242,24 @@ func (h *PledgesHandler) Create(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// Cross-check the claimed NFTs against the ledger so a client cannot
+		// index fabricated (but well-formed) contract ids. Requires a
+		// configured Canton client; the NFTs must be active and held by the buyer.
+		if h.cantonClient == nil || !h.cantonClient.Configured() {
+			problems.WriteCode(w, http.StatusServiceUnavailable, "RV-9003", "Service Unavailable", "Canton ledger integration is not configured to verify client-submitted pledges")
+			return
+		}
+
+		verifyCtx, verifyCancel := pledgeCantonContext(r)
+		reader := canton.NewLedgerReader(h.cantonClient)
+		verifiedNFTs, verifyErr := reader.VerifyPledgeNFTs(verifyCtx, buyerPartyID, nftContractIDs)
+		verifyCancel()
+		if verifyErr != nil {
+			problems.WriteCode(w, http.StatusBadRequest, "RV-2015", "Bad Request", "Submitted NFT contract IDs could not be verified on the Canton ledger")
+			return
+		}
+		nftContractIDs = verifiedNFTs
+
 		pledgeResult = &canton.PledgeResult{
 			CommandID:       clientCommandID,
 			UpdateID:        strings.TrimSpace(request.CantonUpdateID),
