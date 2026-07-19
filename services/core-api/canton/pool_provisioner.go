@@ -75,15 +75,17 @@ func (c *Client) CreatePropertyPool(ctx context.Context, cmd CreatePoolCommand) 
 				CreateCommand: createPayload{
 					TemplateID: c.templatePoolID,
 					CreateArguments: map[string]interface{}{
-						"platform_admin":          c.adminParty,
-						"seller":                  c.adminParty,
-						"prop_manager":            c.adminParty,
-						"pool_id":                 cmd.PropertyID,
-						"property_id":             cmd.PropertyID,
-						"property_title":          cmd.PropertyTitle,
-						"total_slots":             cmd.TotalSlots,
-						"next_slot_index":         0,
-						"slot_price":              cmd.SlotPrice,
+						"platform_admin": c.adminParty,
+						"seller":         c.adminParty,
+						"prop_manager":   c.adminParty,
+						"pool_id":        cmd.PropertyID,
+						"property_id":    cmd.PropertyID,
+						"property_title": cmd.PropertyTitle,
+						// Canton JSON API prefers Int as strings (numbers can
+						// fail with "Expected ujson.Str (data: 0)").
+						"total_slots":             fmt.Sprintf("%d", cmd.TotalSlots),
+						"next_slot_index":         "0",
+						"slot_price":              normalizeDecimalString(cmd.SlotPrice),
 						"currency":                defaultPoolCurrency,
 						"status":                  "Pending",
 						"fundraising_deadline":    deadline.UTC().Format(time.RFC3339Nano),
@@ -109,6 +111,16 @@ func (c *Client) CreatePropertyPool(ctx context.Context, cmd CreatePoolCommand) 
 	}
 
 	return poolCID, nil
+}
+
+// normalizeDecimalString trims a DB/numeric text value into a Canton-safe
+// Decimal JSON string (no trailing spaces; empty becomes "0").
+func normalizeDecimalString(raw string) string {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return "0"
+	}
+	return trimmed
 }
 
 // PoolProvisioner watches for active properties without an on-ledger

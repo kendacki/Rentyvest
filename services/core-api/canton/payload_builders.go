@@ -44,10 +44,10 @@ func BuildPledgePayload(
 
 	commandID := fmt.Sprintf("pledge-%s-%d", buyerPartyID, time.Now().UnixNano())
 	choiceArgs := map[string]interface{}{
-		"buyer":             buyerPartyID,
-		"slot_count":        slotCount,
-		"meta_uri":          metaURI,
-		"paymentAssetCid":   paymentAssetContractID,
+		"buyer":           buyerPartyID,
+		"slot_count":      fmt.Sprintf("%d", slotCount),
+		"meta_uri":        metaURI,
+		"paymentAssetCid": paymentAssetContractID,
 	}
 
 	exercise := exerciseCommand{

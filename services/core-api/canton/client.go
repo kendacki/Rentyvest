@@ -284,7 +284,7 @@ func (c *Client) SubmitPledge(ctx context.Context, cmd PledgeCommand) (*PledgeRe
 					Choice:     "Pledge",
 					ChoiceArgument: map[string]interface{}{
 						"buyer":           cmd.BuyerPartyID,
-						"slot_count":      cmd.SlotCount,
+						"slot_count":      fmt.Sprintf("%d", cmd.SlotCount),
 						"meta_uri":        cmd.MetaURI,
 						"paymentAssetCid": cmd.PaymentAssetContractID,
 					},
