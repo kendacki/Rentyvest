@@ -34,16 +34,20 @@ const coreApiUrl = normalizeCoreApiUrl(
 const nextConfig = {
   transpilePackages: ['@rentyvest/ledger-client'],
   async rewrites() {
-    return [
-      {
-        source: '/faucet/:path*',
-        destination: `${coreApiUrl}/faucet/:path*`,
-      },
-      {
-        source: '/api/:path*',
-        destination: `${coreApiUrl}/api/:path*`,
-      },
-    ];
+    // afterFiles: local Next.js routes (e.g. /listing-images) win first.
+    // Only proxy unmatched /api/* paths to core-api.
+    return {
+      afterFiles: [
+        {
+          source: '/faucet/:path*',
+          destination: `${coreApiUrl}/faucet/:path*`,
+        },
+        {
+          source: '/api/:path*',
+          destination: `${coreApiUrl}/api/:path*`,
+        },
+      ],
+    };
   },
 };
 

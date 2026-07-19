@@ -1,6 +1,5 @@
 'use client';
 
-import { upload } from '@vercel/blob/client';
 import { useRef, useState } from 'react';
 
 type HeroImageUploadProps = {
@@ -10,14 +9,12 @@ type HeroImageUploadProps = {
 };
 
 const MAX_BYTES = 5 * 1024 * 1024;
-// Images larger than this get downscaled/re-encoded in the browser before
-// upload — the single biggest speed win for photos straight off a phone.
-// PNG screenshots especially shrink 10-20x when re-encoded as WebP.
 const COMPRESS_THRESHOLD_BYTES = 150 * 1024;
 const MAX_DIMENSION = 1600;
+const UPLOAD_URL = '/listing-images';
+const UPLOAD_TIMEOUT_MS = 90_000;
 
 async function compressImage(file: File): Promise<File> {
-  // GIFs may be animated and small files aren't worth re-encoding.
   if (file.type === 'image/gif' || file.size <= COMPRESS_THRESHOLD_BYTES) {
     return file;
   }
@@ -48,9 +45,67 @@ async function compressImage(file: File): Promise<File> {
     const baseName = file.name.replace(/\.[^.]+$/, '');
     return new File([blob], `${baseName}.webp`, { type: 'image/webp' });
   } catch {
-    // Fall back to the original file if the browser can't decode it.
     return file;
   }
+}
+
+function uploadViaXhr(
+  file: File,
+  onProgress: (percentage: number) => void,
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const timeout = window.setTimeout(() => {
+      xhr.abort();
+      reject(new Error('Upload timed out — check your connection and try again.'));
+    }, UPLOAD_TIMEOUT_MS);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && event.total > 0) {
+        onProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      window.clearTimeout(timeout);
+      let payload: { url?: string; detail?: string } = {};
+      try {
+        payload = JSON.parse(xhr.responseText) as { url?: string; detail?: string };
+      } catch {
+        // Non-JSON body.
+      }
+
+      if (xhr.status >= 200 && xhr.status < 300 && payload.url) {
+        resolve(payload.url);
+        return;
+      }
+
+      reject(
+        new Error(
+          payload.detail ??
+            (xhr.status === 413
+              ? 'Image is still too large after compression. Try a smaller file.'
+              : `Upload failed (${xhr.status})`),
+        ),
+      );
+    };
+
+    xhr.onerror = () => {
+      window.clearTimeout(timeout);
+      reject(new Error('Network error during upload. Try again.'));
+    };
+
+    xhr.onabort = () => {
+      window.clearTimeout(timeout);
+      reject(new Error('Upload cancelled.'));
+    };
+
+    xhr.open('POST', UPLOAD_URL);
+    xhr.send(formData);
+  });
 }
 
 function UploadSpinner() {
@@ -78,55 +133,6 @@ function UploadSpinner() {
   );
 }
 
-class StallError extends Error {
-  constructor() {
-    super('upload stalled');
-  }
-}
-
-/**
- * Single-request client upload with a stall watchdog and automatic retries.
- * Files are already compressed to a few hundred KB, so one PUT per attempt
- * beats multipart's extra round-trips on slow or flaky connections.
- */
-async function uploadWithRetry(
-  pathname: string,
-  file: File,
-  onProgress: (percentage: number) => void,
-  attempts = 3,
-): Promise<{ url: string }> {
-  let lastError: unknown = new StallError();
-
-  for (let attempt = 1; attempt <= attempts; attempt += 1) {
-    const controller = new AbortController();
-    let lastProgressAt = Date.now();
-    const watchdog = setInterval(() => {
-      if (Date.now() - lastProgressAt > 20_000) {
-        controller.abort();
-      }
-    }, 2_000);
-
-    try {
-      return await upload(pathname, file, {
-        access: 'public',
-        handleUploadUrl: '/api/listing-images',
-        abortSignal: controller.signal,
-        onUploadProgress: ({ percentage }) => {
-          lastProgressAt = Date.now();
-          onProgress(percentage);
-        },
-      });
-    } catch (error) {
-      lastError = controller.signal.aborted ? new StallError() : error;
-      onProgress(1);
-    } finally {
-      clearInterval(watchdog);
-    }
-  }
-
-  throw lastError;
-}
-
 export function HeroImageUpload({ value, onChange, error }: HeroImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -152,20 +158,15 @@ export function HeroImageUpload({ value, onChange, error }: HeroImageUploadProps
       const optimized = await compressImage(file);
       setProgress(1);
 
-      const safeName = optimized.name.replace(/[^a-zA-Z0-9.-]/g, '-');
-      const blob = await uploadWithRetry(`listing-heroes/${Date.now()}-${safeName}`, optimized, (pct) => {
-        setProgress(Math.max(1, Math.round(pct)));
+      const url = await uploadViaXhr(optimized, (pct) => {
+        setProgress(Math.max(1, pct));
       });
 
-      onChange(blob.url);
+      onChange(url);
     } catch (uploadFailure) {
-      if (uploadFailure instanceof StallError) {
-        setUploadError('Upload stalled — check your connection and try again.');
-      } else {
-        setUploadError(
-          uploadFailure instanceof Error ? uploadFailure.message : 'Unable to upload image.',
-        );
-      }
+      setUploadError(
+        uploadFailure instanceof Error ? uploadFailure.message : 'Unable to upload image.',
+      );
     } finally {
       setUploading(false);
       setProgress(0);
