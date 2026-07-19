@@ -1,12 +1,12 @@
 export function PropertyCardSkeleton() {
   return (
     <article
-      className="card-surface flex flex-col overflow-hidden"
+      className="card-surface flex flex-col overflow-hidden p-3"
       aria-hidden="true"
     >
-      <div className="relative aspect-[4/3] w-full bg-slate-200 animate-pulse" />
+      <div className="relative aspect-[4/3] w-full rounded-xl bg-slate-200 animate-pulse" />
 
-      <div className="flex flex-1 flex-col gap-4 p-4 sm:p-5">
+      <div className="flex flex-1 flex-col gap-4 px-2 pb-2 pt-4 sm:px-3 sm:pb-3">
         <div className="space-y-2">
           <div className="h-5 w-[80%] rounded-md bg-slate-200 animate-pulse" />
           <div className="h-4 w-[50%] rounded-md bg-slate-200 animate-pulse" />
@@ -31,7 +31,7 @@ export function PropertyCardSkeleton() {
           <div className="h-2 w-full rounded-full bg-slate-200 animate-pulse" />
         </div>
 
-        <div className="mt-auto h-11 w-full rounded-xl bg-slate-200 animate-pulse" />
+        <div className="mt-auto h-11 w-full rounded-full bg-slate-200 animate-pulse" />
       </div>
     </article>
   );
