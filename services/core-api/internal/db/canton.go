@@ -4,17 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
 type CantonPledgeJob struct {
-	PledgeID            uuid.UUID
-	UserID              string
-	PropertyID          uuid.UUID
-	Units               int32
-	IdempotencyKey      string
+	PledgeID             uuid.UUID
+	UserID               string
+	PropertyID           uuid.UUID
+	Units                int32
+	IdempotencyKey       string
 	CantonPoolContractID string
 }
 
@@ -116,13 +117,104 @@ func (s *Store) UpdatePropertySlotsFilled(
 	return nil
 }
 
+type PropertyNeedingPool struct {
+	ID         uuid.UUID
+	Title      string
+	TotalUnits int32
+	UnitPrice  string
+}
+
+// ListPropertiesNeedingPool returns active properties that have no on-ledger
+// PropertyPool yet (typically listings just promoted by the approval trigger).
+func (s *Store) ListPropertiesNeedingPool(ctx context.Context, limit int32) ([]PropertyNeedingPool, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+
+	rows, err := s.pool.Query(ctx, `
+		SELECT id, title, total_units, unit_price::text
+		FROM public.properties
+		WHERE status = 'active'
+		  AND COALESCE(canton_pool_contract_id, '') = ''
+		  AND total_units > 0
+		  AND unit_price > 0
+		ORDER BY created_at ASC
+		LIMIT $1
+	`, limit)
+	if err != nil {
+		return nil, fmt.Errorf("list properties needing pool: %w", err)
+	}
+	defer rows.Close()
+
+	properties := make([]PropertyNeedingPool, 0, limit)
+	for rows.Next() {
+		var property PropertyNeedingPool
+		if err := rows.Scan(
+			&property.ID,
+			&property.Title,
+			&property.TotalUnits,
+			&property.UnitPrice,
+		); err != nil {
+			return nil, fmt.Errorf("scan property needing pool: %w", err)
+		}
+		properties = append(properties, property)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate properties needing pool: %w", err)
+	}
+
+	return properties, nil
+}
+
+// UpdatePropertyPoolContractID rotates the stored PropertyPool contract id
+// after a Pledge exercise archived the previous pool and created a successor.
+func (s *Store) UpdatePropertyPoolContractID(
+	ctx context.Context,
+	propertyID uuid.UUID,
+	poolContractID string,
+) error {
+	if poolContractID == "" {
+		return nil
+	}
+	_, err := s.pool.Exec(ctx, `
+		UPDATE public.properties
+		SET canton_pool_contract_id = $2, updated_at = now()
+		WHERE id = $1
+	`, propertyID, poolContractID)
+	if err != nil {
+		return fmt.Errorf("update property pool contract id: %w", err)
+	}
+	return nil
+}
+
+func (s *Store) SetPropertyPoolContract(
+	ctx context.Context,
+	propertyID uuid.UUID,
+	poolContractID string,
+	expiryAt time.Time,
+) error {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE public.properties
+		SET
+			canton_pool_contract_id = $2,
+			expiry_at = $3,
+			updated_at = now()
+		WHERE id = $1
+	`, propertyID, poolContractID, expiryAt)
+	if err != nil {
+		return fmt.Errorf("set property pool contract: %w", err)
+	}
+	return nil
+}
+
 type MintedNFT struct {
-	PropertyID        uuid.UUID
-	OwnerID           string
-	PledgeID          *uuid.UUID
-	CantonContractID  string
-	TokenID           string
-	ShareUnits        int32
+	PropertyID       uuid.UUID
+	OwnerID          string
+	PledgeID         *uuid.UUID
+	CantonContractID string
+	TokenID          string
+	ShareUnits       int32
 }
 
 func (s *Store) InsertMintedNFT(ctx context.Context, nft MintedNFT) error {

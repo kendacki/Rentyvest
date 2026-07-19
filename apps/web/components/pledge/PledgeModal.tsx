@@ -187,7 +187,9 @@ export function PledgeModal({
     }
 
     if (!property.canton_pool_contract_id) {
-      setSubmitError('This property is not linked to a Canton pool contract yet');
+      setSubmitError(
+        'The on-chain pool for this property is still being set up. Try again in a minute.',
+      );
       return;
     }
 

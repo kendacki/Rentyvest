@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -146,6 +147,14 @@ func (h *BackendExecuteHandler) ExecutePledge(w http.ResponseWriter, r *http.Req
 		status, code, detail := canton.ProblemForSubmitError(submitErr)
 		problems.WriteCode(w, status, code, http.StatusText(status), detail)
 		return
+	}
+
+	// Pledge archived the old pool and created a successor: keep the DB
+	// pointer current so subsequent pledges target a live contract.
+	if newPoolCID := strings.TrimSpace(result.PoolContractID); newPoolCID != "" && newPoolCID != property.CantonPoolContractID {
+		if rotateErr := h.store.UpdatePropertyPoolContractID(r.Context(), propertyID, newPoolCID); rotateErr != nil {
+			log.Printf("[backend-execute] pool contract rotation failed property=%s pool=%s err=%v", propertyID, newPoolCID, rotateErr)
+		}
 	}
 
 	writeLedgerJSON(w, http.StatusOK, backendExecutePledgeResponse{

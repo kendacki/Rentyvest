@@ -33,12 +33,12 @@ const (
 )
 
 type PledgesHandler struct {
-	store           *db.Store
-	privyVerifier   *privy.Verifier
-	cantonClient    *canton.Client
-	webhookSecret   string
-	metaURIBase     string
-	pledgeCurrency  string
+	store          *db.Store
+	privyVerifier  *privy.Verifier
+	cantonClient   *canton.Client
+	webhookSecret  string
+	metaURIBase    string
+	pledgeCurrency string
 }
 
 func NewPledgesHandler(store *db.Store, verifier *privy.Verifier, cantonClient *canton.Client) *PledgesHandler {
@@ -236,12 +236,18 @@ func (h *PledgesHandler) Create(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		nftContractIDs, validateErr := validateClientPledgeResult(&request)
+		if validateErr != nil {
+			problems.WriteCode(w, http.StatusBadRequest, "RV-2014", "Bad Request", validateErr.Error())
+			return
+		}
+
 		pledgeResult = &canton.PledgeResult{
 			CommandID:       clientCommandID,
 			UpdateID:        strings.TrimSpace(request.CantonUpdateID),
 			PoolContractID:  coalesceNonEmpty(strings.TrimSpace(request.PoolContractID), property.CantonPoolContractID),
 			PaymentAssetCID: paymentAssetContractID,
-			NFTContractIDs:  request.MintedNFTContractIDs,
+			NFTContractIDs:  nftContractIDs,
 		}
 	} else {
 		cantonCtx, cancel := pledgeCantonContext(r)
@@ -263,6 +269,13 @@ func (h *PledgesHandler) Create(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Only rotate the stored pool contract id when the ledger reported a new
+	// pool (Pledge archives the old contract and creates a successor).
+	newPoolContractID := strings.TrimSpace(pledgeResult.PoolContractID)
+	if newPoolContractID == property.CantonPoolContractID {
+		newPoolContractID = ""
+	}
+
 	paymentMethod := db.PledgePaymentMethodTUSDC
 	pledge, err := h.store.InsertConfirmedNativePledge(r.Context(), db.NativePledgeRecord{
 		UserID:                 userID,
@@ -275,6 +288,8 @@ func (h *PledgesHandler) Create(w http.ResponseWriter, r *http.Request) {
 		IdempotencyKey:         idempotencyKey,
 		CantonCommandID:        pledgeResult.CommandID,
 		CantonUpdateID:         pledgeResult.UpdateID,
+		NewPoolContractID:      newPoolContractID,
+		NFTContractIDs:         pledgeResult.NFTContractIDs,
 	})
 	if errors.Is(err, db.ErrDuplicateIdempotencyKey) {
 		problems.WriteCode(w, http.StatusConflict, "RV-3007", "Conflict", "Duplicate idempotency key")
@@ -293,37 +308,6 @@ func (h *PledgesHandler) Create(w http.ResponseWriter, r *http.Request) {
 			"Pledge settled on Canton but database sync failed",
 		)
 		return
-	}
-
-	if archiveErr := h.store.ArchiveUserTokenAssets(r.Context(), []string{paymentAssetContractID}); archiveErr != nil {
-		problems.WriteCode(
-			w,
-			http.StatusInternalServerError,
-			"RV-9003",
-			"Internal Server Error",
-			"Pledge confirmed but payment asset index sync failed",
-		)
-		return
-	}
-
-	for _, nftContractID := range pledgeResult.NFTContractIDs {
-		if insertErr := h.store.InsertMintedNFT(r.Context(), db.MintedNFT{
-			PropertyID:       propertyID,
-			OwnerID:          userID,
-			PledgeID:         &pledge.ID,
-			CantonContractID: nftContractID,
-			TokenID:          nftContractID,
-			ShareUnits:       1,
-		}); insertErr != nil {
-			problems.WriteCode(
-				w,
-				http.StatusInternalServerError,
-				"RV-9003",
-				"Internal Server Error",
-				"Pledge confirmed but NFT indexing failed",
-			)
-			return
-		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -467,6 +451,39 @@ func pledgeCantonContext(r *http.Request) (context.Context, context.CancelFunc) 
 		}
 	}
 	return context.WithTimeout(r.Context(), timeout)
+}
+
+// validateClientPledgeResult sanity-checks the ledger results reported by a
+// client-submitted pledge before they are indexed: exactly one NFT per pledged
+// slot, all contract ids non-empty and distinct, and an update id present.
+func validateClientPledgeResult(request *createPledgeRequest) ([]string, error) {
+	if strings.TrimSpace(request.CantonUpdateID) == "" {
+		return nil, errors.New("canton_update_id is required when client_submitted is true")
+	}
+
+	nftContractIDs := make([]string, 0, len(request.MintedNFTContractIDs))
+	seen := make(map[string]struct{}, len(request.MintedNFTContractIDs))
+	for _, rawID := range request.MintedNFTContractIDs {
+		contractID := strings.TrimSpace(rawID)
+		if contractID == "" {
+			return nil, errors.New("minted_nft_contract_ids must not contain empty values")
+		}
+		if _, duplicate := seen[contractID]; duplicate {
+			return nil, errors.New("minted_nft_contract_ids must not contain duplicates")
+		}
+		seen[contractID] = struct{}{}
+		nftContractIDs = append(nftContractIDs, contractID)
+	}
+
+	if len(nftContractIDs) != int(request.SlotCount) {
+		return nil, fmt.Errorf(
+			"minted_nft_contract_ids must contain exactly %d entries (one per pledged slot), got %d",
+			request.SlotCount,
+			len(nftContractIDs),
+		)
+	}
+
+	return nftContractIDs, nil
 }
 
 func coalesceNonEmpty(values ...string) string {

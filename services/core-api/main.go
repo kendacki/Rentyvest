@@ -87,6 +87,8 @@ func main() {
 		cantonClient.LogUserRightsProbe(workerCtx)
 		worker := canton.NewWorker(store, cantonClient)
 		go worker.Start(workerCtx)
+		poolProvisioner := canton.NewPoolProvisioner(store, cantonClient)
+		go poolProvisioner.Start(workerCtx)
 	}
 
 	authHandler := handlers.NewAuthHandler(verifier, supabaseJWTSecret, tokenManager)
