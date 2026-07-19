@@ -10,6 +10,47 @@ type HeroImageUploadProps = {
 };
 
 const MAX_BYTES = 5 * 1024 * 1024;
+// Images larger than this get downscaled/re-encoded in the browser before
+// upload — the single biggest speed win for photos straight off a phone.
+const COMPRESS_THRESHOLD_BYTES = 700 * 1024;
+const MAX_DIMENSION = 1920;
+
+async function compressImage(file: File): Promise<File> {
+  // GIFs may be animated and small files aren't worth re-encoding.
+  if (file.type === 'image/gif' || file.size <= COMPRESS_THRESHOLD_BYTES) {
+    return file;
+  }
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
+    const width = Math.round(bitmap.width * scale);
+    const height = Math.round(bitmap.height * scale);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      return file;
+    }
+    context.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close();
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, 'image/webp', 0.82);
+    });
+    if (!blob || blob.size >= file.size) {
+      return file;
+    }
+
+    const baseName = file.name.replace(/\.[^.]+$/, '');
+    return new File([blob], `${baseName}.webp`, { type: 'image/webp' });
+  } catch {
+    // Fall back to the original file if the browser can't decode it.
+    return file;
+  }
+}
 
 function UploadSpinner() {
   return (
@@ -39,6 +80,7 @@ function UploadSpinner() {
 export function HeroImageUpload({ value, onChange, error }: HeroImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   async function handleFile(file: File) {
@@ -53,15 +95,21 @@ export function HeroImageUpload({ value, onChange, error }: HeroImageUploadProps
     }
 
     setUploading(true);
+    setProgress(0);
     setUploadError(null);
 
     try {
+      const optimized = await compressImage(file);
+
       // Client upload: file goes browser -> Vercel Blob directly, so the
       // serverless 4.5 MB body limit (413) never applies.
-      const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-');
-      const blob = await upload(`listing-heroes/${Date.now()}-${safeName}`, file, {
+      const safeName = optimized.name.replace(/[^a-zA-Z0-9.-]/g, '-');
+      const blob = await upload(`listing-heroes/${Date.now()}-${safeName}`, optimized, {
         access: 'public',
         handleUploadUrl: '/api/listing-images',
+        onUploadProgress: ({ percentage }) => {
+          setProgress(Math.round(percentage));
+        },
       });
 
       onChange(blob.url);
@@ -71,6 +119,7 @@ export function HeroImageUpload({ value, onChange, error }: HeroImageUploadProps
       );
     } finally {
       setUploading(false);
+      setProgress(0);
       if (inputRef.current) {
         inputRef.current.value = '';
       }
@@ -146,7 +195,11 @@ export function HeroImageUpload({ value, onChange, error }: HeroImageUploadProps
               </svg>
             )}
             <span className="text-sm font-medium text-brand-black">
-              {uploading ? 'Uploading…' : 'Upload hero image'}
+              {uploading
+                ? progress > 0
+                  ? `Uploading… ${progress}%`
+                  : 'Preparing image…'
+                : 'Upload hero image'}
             </span>
             <span className="text-xs text-neutral-500">
               JPEG, PNG, WebP, or GIF up to 5 MB
