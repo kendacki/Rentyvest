@@ -1,6 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import Link from 'next/link';
 import { useCallback, useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -127,6 +128,56 @@ function Spinner() {
   );
 }
 
+type SubmittedSummary = {
+  title: string;
+  location: string;
+  propertyType: string;
+  totalUnits: number;
+  unitPrice: number;
+  estimatedAnnualYield: number;
+  imageUrl: string;
+  contactEmail: string;
+};
+
+const REVIEW_STEPS = [
+  {
+    title: 'Review',
+    description: 'Our team verifies the property details and documentation.',
+  },
+  {
+    title: 'Pool deployment',
+    description: 'We deploy your PropertyPool on Canton DevNet and size the slots.',
+  },
+  {
+    title: 'Live on marketplace',
+    description: 'Your listing goes live and investors can start pledging tUSDC.',
+  },
+];
+
+function CheckBadge() {
+  return (
+    <span className="relative inline-flex h-16 w-16 items-center justify-center">
+      <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/20 [animation-iteration-count:2]" />
+      <span className="relative inline-flex h-16 w-16 items-center justify-center rounded-full border border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100 shadow-[0_8px_24px_rgba(16,185,129,0.25)]">
+        <svg
+          className="h-8 w-8 text-emerald-600"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+const numberFormatter = new Intl.NumberFormat('en-US');
+
 export function PropertyListingForm() {
   const { partyId } = useCantonWallet();
 
@@ -134,6 +185,9 @@ export function PropertyListingForm() {
     'idle' | 'submitting' | 'success' | 'error'
   >('idle');
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
+  const [submittedSummary, setSubmittedSummary] = useState<SubmittedSummary | null>(
+    null,
+  );
 
   const {
     register,
@@ -227,9 +281,21 @@ export function PropertyListingForm() {
         }
 
         setSubmitState('success');
-        setSubmitMessage(
-          'Your listing request was received. Our team will review the details and reach out about onboarding your property pool on Canton DevNet.',
-        );
+        setSubmitMessage(null);
+        setSubmittedSummary({
+          title: values.property_title.trim(),
+          location: [values.city.trim(), values.state.trim(), values.country.trim()]
+            .filter(Boolean)
+            .join(', '),
+          propertyType:
+            PROPERTY_TYPE_OPTIONS.find((option) => option.value === values.property_type)
+              ?.label ?? values.property_type,
+          totalUnits: values.total_units,
+          unitPrice: values.unit_price,
+          estimatedAnnualYield: values.estimated_annual_yield,
+          imageUrl: values.image_url.trim(),
+          contactEmail: values.contact_email.trim(),
+        });
         reset({
           contact_name: values.contact_name,
           contact_email: values.contact_email,
@@ -263,23 +329,137 @@ export function PropertyListingForm() {
   if (submitState === 'success') {
     return (
       <article className="card-surface overflow-hidden font-sans">
-        <div className="space-y-4 px-5 py-5 sm:px-6">
-          <p className="section-label text-brand-orange">Listing submitted</p>
-          <p className="text-sm leading-relaxed text-neutral-600">{submitMessage}</p>
-          <p className="text-sm leading-relaxed text-neutral-600">
-            We typically respond within 2–3 business days. You can submit another
-            property once review begins.
+        <div className="px-5 py-8 text-center sm:px-8">
+          <CheckBadge />
+          <p className="section-label mt-5 text-brand-orange">Listing submitted</p>
+          <h2 className="mt-2 text-2xl font-bold tracking-[-0.02em] text-brand-black">
+            You&rsquo;re in the review queue
+          </h2>
+          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-neutral-600">
+            Thanks for submitting{' '}
+            {submittedSummary?.title ? (
+              <span className="font-semibold text-brand-black">
+                {submittedSummary.title}
+              </span>
+            ) : (
+              'your property'
+            )}
+            . We&rsquo;ll email{' '}
+            {submittedSummary?.contactEmail ? (
+              <span className="font-semibold text-brand-black">
+                {submittedSummary.contactEmail}
+              </span>
+            ) : (
+              'you'
+            )}{' '}
+            within 2–3 business days about the next steps.
           </p>
+        </div>
+
+        {submittedSummary ? (
+          <div className="px-5 pb-6 sm:px-8">
+            <div className="glass-inset overflow-hidden">
+              {submittedSummary.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={submittedSummary.imageUrl}
+                  alt={submittedSummary.title}
+                  className="h-40 w-full object-cover"
+                />
+              ) : null}
+              <div className="space-y-3 p-4 text-left">
+                <div>
+                  <p className="text-sm font-semibold text-brand-black">
+                    {submittedSummary.title}
+                  </p>
+                  <p className="text-xs text-neutral-500">
+                    {submittedSummary.propertyType}
+                    {submittedSummary.location ? ` · ${submittedSummary.location}` : ''}
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="rounded-lg bg-white/60 px-3 py-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+                      Slots
+                    </p>
+                    <p className="text-sm font-bold text-brand-black">
+                      {numberFormatter.format(submittedSummary.totalUnits)}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-white/60 px-3 py-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+                      Per slot
+                    </p>
+                    <p className="text-sm font-bold text-brand-black">
+                      {numberFormatter.format(submittedSummary.unitPrice)}{' '}
+                      <span className="text-[10px] font-semibold text-neutral-500">
+                        tUSDC
+                      </span>
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-brand-orange/10 px-3 py-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+                      Est. yield
+                    </p>
+                    <p className="text-sm font-bold text-brand-orange">
+                      {submittedSummary.estimatedAnnualYield}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="px-5 pb-6 sm:px-8">
+          <div className="glass-accent p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand-orange">
+              What happens next
+            </p>
+            <ol className="mt-3 space-y-3">
+              {REVIEW_STEPS.map((step, index) => (
+                <li key={step.title} className="flex items-start gap-3 text-left">
+                  <span
+                    className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                      index === 0
+                        ? 'bg-brand-orange text-white'
+                        : 'border border-brand-orange/30 bg-white/60 text-brand-orange'
+                    }`}
+                  >
+                    {index + 1}
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold text-brand-black">
+                      {step.title}
+                    </p>
+                    <p className="text-xs leading-relaxed text-neutral-600">
+                      {step.description}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+
+        <div className="space-y-3 px-5 pb-8 sm:px-8">
           <button
             type="button"
             onClick={() => {
               setSubmitState('idle');
               setSubmitMessage(null);
+              setSubmittedSummary(null);
             }}
-            className="btn-secondary h-11 w-full text-sm"
+            className="btn-primary h-12 w-full text-sm"
           >
             Submit another property
           </button>
+          <Link
+            href="/marketplace"
+            className="btn-secondary h-12 w-full text-sm"
+          >
+            Browse the marketplace
+          </Link>
         </div>
       </article>
     );
