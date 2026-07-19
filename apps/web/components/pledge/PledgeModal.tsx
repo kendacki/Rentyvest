@@ -1,6 +1,7 @@
 'use client';
 
 import * as Dialog from '@radix-ui/react-dialog';
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { executeBackendPledge } from '@rentyvest/ledger-client';
 import { fetchFaucetAssets } from '../../lib/api/faucetAssets';
@@ -62,6 +63,28 @@ function Spinner() {
 
 function canAffordAsset(asset: UserTokenAsset, totalCost: number): boolean {
   return parseAssetBalance(asset.balance) >= totalCost;
+}
+
+function CheckBadge() {
+  return (
+    <span className="animate-check-pop relative inline-flex h-16 w-16 items-center justify-center">
+      <span className="absolute inset-0 animate-ping rounded-full bg-brand-orange/20 [animation-iteration-count:2]" />
+      <span className="relative inline-flex h-16 w-16 items-center justify-center rounded-full border border-brand-orange/30 bg-gradient-to-br from-brand-orange/15 to-brand-orange/30 shadow-[0_8px_24px_rgba(234,88,12,0.3)] backdrop-blur-md">
+        <svg
+          className="h-8 w-8 text-brand-orange"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path className="animate-check-draw" d="M20 6 9 17l-5-5" />
+        </svg>
+      </span>
+    </span>
+  );
 }
 
 export function PledgeModal({
@@ -200,6 +223,112 @@ export function PledgeModal({
     setSlotCount((current) => Math.max(current - 1, 1));
   };
 
+  if (success) {
+    return (
+      <Dialog.Root open={open} onOpenChange={handleDialogOpenChange}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm" />
+          <Dialog.Content className="glass-panel animate-modal-pop fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl font-sans focus:outline-none">
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={() => onOpenChange(false)}
+              className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/50 text-neutral-500 backdrop-blur-md transition-colors hover:bg-white/80 hover:text-brand-black"
+            >
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg>
+            </button>
+
+            <div className="px-6 pb-4 pt-8 text-center sm:px-8">
+              <CheckBadge />
+              <Dialog.Title asChild>
+                <h2 className="mt-2 text-2xl font-bold tracking-[-0.02em] text-brand-black">
+                  Pledge confirmed
+                </h2>
+              </Dialog.Title>
+              <p className="section-label mt-2 text-brand-orange">
+                Settled on Canton
+              </p>
+              <Dialog.Description asChild>
+                <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-neutral-600">
+                  Your pledge for{' '}
+                  <span className="font-semibold text-brand-black">
+                    {property.title}
+                  </span>{' '}
+                  is confirmed and your property NFT
+                  {success.mintedNftCount === 1 ? ' has' : 's have'} been minted
+                  to your wallet.
+                </p>
+              </Dialog.Description>
+            </div>
+
+            <div className="px-6 pb-4 sm:px-8">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="glass-inset px-3 py-2.5 text-center">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+                    Slots secured
+                  </p>
+                  <p className="mt-0.5 text-base font-bold text-brand-black">
+                    {success.slotCount}
+                  </p>
+                </div>
+                <div className="glass-inset px-3 py-2.5 text-center">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+                    Settled
+                  </p>
+                  <p className="mt-0.5 text-base font-bold text-brand-black">
+                    {formatTokenBalance(success.totalCost)}
+                  </p>
+                </div>
+                <div className="glass-accent px-3 py-2.5 text-center">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+                    NFTs minted
+                  </p>
+                  <p className="mt-0.5 text-base font-bold text-brand-orange">
+                    {success.mintedNftCount}
+                  </p>
+                </div>
+              </div>
+
+              {partyId ? (
+                <div className="glass-inset mt-3 flex items-center justify-between gap-3 px-4 py-3">
+                  <p className="text-xs font-semibold text-neutral-500">
+                    Minted to {walletLabel ?? 'Canton wallet'}
+                  </p>
+                  <p className="text-xs font-semibold text-brand-black">
+                    {truncatePartyId(partyId, 8, 8)}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="space-y-3 px-6 pb-8 sm:px-8">
+              <button
+                type="button"
+                onClick={() => onOpenChange(false)}
+                className="btn-primary h-12 w-full text-sm"
+              >
+                Browse more properties
+              </button>
+              <Link href="/dashboard" className="btn-secondary h-12 w-full text-sm">
+                View my portfolio
+              </Link>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+    );
+  }
+
   return (
     <Dialog.Root open={open} onOpenChange={handleDialogOpenChange}>
       <Dialog.Portal>
@@ -209,7 +338,7 @@ export function PledgeModal({
 
           <div className="border-b border-slate-200 px-5 pb-4 pt-3 sm:px-6">
             <Dialog.Title className="text-lg font-semibold text-slate-900">
-              {success ? 'Pledge confirmed' : 'Pledge with tUSDC'}
+              Pledge with tUSDC
             </Dialog.Title>
             <Dialog.Description className="mt-1 text-sm text-slate-600">
               {property.title}, {formatCurrency(property.unit_price)} per slot
@@ -230,45 +359,7 @@ export function PledgeModal({
               </div>
             )}
 
-            {success ? (
-              <div className="flex flex-col items-center gap-4 py-6 text-center">
-                <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
-                  <svg
-                    className="h-7 w-7 text-emerald-600"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M20 6 9 17l-5-5" />
-                  </svg>
-                </span>
-                <div>
-                  <p className="text-base font-semibold text-slate-900">
-                    {success.slotCount} slot{success.slotCount === 1 ? '' : 's'}{' '}
-                    secured in {property.title}
-                  </p>
-                  <p className="mt-2 text-sm text-slate-600">
-                    {formatTokenBalance(success.totalCost)} settled on Canton and{' '}
-                    {success.mintedNftCount} property NFT
-                    {success.mintedNftCount === 1 ? '' : 's'} minted to your
-                    wallet.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onOpenChange(false)}
-                  className="inline-flex h-11 items-center justify-center rounded-2xl px-8 text-sm font-semibold text-white"
-                  style={{ backgroundColor: PRIMARY_EMERALD }}
-                >
-                  Done
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-6">
+            <div className="space-y-6">
                 {!isConnected || !partyId ? (
                   <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-center">
                     <p className="text-sm font-semibold text-slate-900">
@@ -432,36 +523,33 @@ export function PledgeModal({
                   </>
                 )}
               </div>
-            )}
           </div>
 
-          {!success && (
-            <div className="border-t border-slate-200 px-5 py-4 sm:px-6">
-              <button
-                type="button"
-                onClick={() => void handleSubmit()}
-                disabled={
-                  isBusy ||
-                  !isConnected ||
-                  !partyId ||
-                  !selectedAsset ||
-                  !canAffordAsset(selectedAsset, totalCost) ||
-                  slotsRemaining <= 0
-                }
-                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl px-4 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                style={{ backgroundColor: PRIMARY_EMERALD }}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Spinner />
-                    Processing pledge
-                  </>
-                ) : (
-                  `Pledge ${slotCount} slot${slotCount === 1 ? '' : 's'}`
-                )}
-              </button>
-            </div>
-          )}
+          <div className="border-t border-slate-200 px-5 py-4 sm:px-6">
+            <button
+              type="button"
+              onClick={() => void handleSubmit()}
+              disabled={
+                isBusy ||
+                !isConnected ||
+                !partyId ||
+                !selectedAsset ||
+                !canAffordAsset(selectedAsset, totalCost) ||
+                slotsRemaining <= 0
+              }
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl px-4 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ backgroundColor: PRIMARY_EMERALD }}
+            >
+              {isSubmitting ? (
+                <>
+                  <Spinner />
+                  Processing pledge
+                </>
+              ) : (
+                `Pledge ${slotCount} slot${slotCount === 1 ? '' : 's'}`
+              )}
+            </button>
+          </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
