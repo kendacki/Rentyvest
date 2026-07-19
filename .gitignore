@@ -9,6 +9,27 @@ apps/web/.env.local
 # Supabase SQL migrations (managed locally / in Supabase, not in git)
 supabase/migrations/
 
+# Local ops / deploy helpers (not required for app runtime)
+scripts/
+Makefile
+Makefile.docker
+apps/web/scripts/probe-*.mjs
+apps/web/scripts/diagnose-*.mjs
+apps/web/scripts/dump-*.mjs
+apps/web/scripts/fetch-*.mjs
+apps/web/scripts/find-*.mjs
+apps/web/scripts/query-*.mjs
+apps/web/scripts/test-*.mjs
+apps/web/scripts/upload-*.mjs
+apps/web/scripts/bootstrap-*.mjs
+apps/web/scripts/decode-*.mjs
+apps/web/scripts/apply-*.mjs
+
+# Local logs / artifacts
+*.log
+RentyVest.dar
+.daml-cache/
+
 # Dependencies
 node_modules/
 
@@ -32,7 +53,6 @@ Thumbs.db
 .vscode/
 
 # Logs
-*.log
 npm-debug.log*
 
 # Misc

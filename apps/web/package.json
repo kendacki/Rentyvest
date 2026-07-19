@@ -9,11 +9,7 @@
     "prebuild": "node scripts/sync-env-local.mjs",
     "build": "next build",
     "start": "next start",
-    "lint": "tsc --noEmit",
-    "generate-daml": "dpm codegen-js ../../daml/.daml/dist/RentyVest-1.0.0.dar -o src/generated",
-    "probe-ledger": "node --env-file=../../.env scripts/probe-ledger.mjs",
-    "probe-m2m": "node --env-file=../../.env scripts/probe-m2m.mjs",
-    "fetch-canton-jwt": "node --env-file=../../.env scripts/fetch-canton-jwt.mjs"
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@c7/ledger": "npm:@c7-digital/ledger@^0.0.28",
