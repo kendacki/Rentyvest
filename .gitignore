@@ -6,6 +6,9 @@
 token.txt
 apps/web/.env.local
 
+# Supabase SQL migrations (managed locally / in Supabase, not in git)
+supabase/migrations/
+
 # Dependencies
 node_modules/
 
