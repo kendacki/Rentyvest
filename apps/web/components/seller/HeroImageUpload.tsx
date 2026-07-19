@@ -12,8 +12,9 @@ type HeroImageUploadProps = {
 const MAX_BYTES = 5 * 1024 * 1024;
 // Images larger than this get downscaled/re-encoded in the browser before
 // upload — the single biggest speed win for photos straight off a phone.
-const COMPRESS_THRESHOLD_BYTES = 700 * 1024;
-const MAX_DIMENSION = 1920;
+// PNG screenshots especially shrink 10-20x when re-encoded as WebP.
+const COMPRESS_THRESHOLD_BYTES = 150 * 1024;
+const MAX_DIMENSION = 1600;
 
 async function compressImage(file: File): Promise<File> {
   // GIFs may be animated and small files aren't worth re-encoding.
@@ -38,7 +39,7 @@ async function compressImage(file: File): Promise<File> {
     bitmap.close();
 
     const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, 'image/webp', 0.82);
+      canvas.toBlob(resolve, 'image/webp', 0.8);
     });
     if (!blob || blob.size >= file.size) {
       return file;
@@ -77,6 +78,55 @@ function UploadSpinner() {
   );
 }
 
+class StallError extends Error {
+  constructor() {
+    super('upload stalled');
+  }
+}
+
+/**
+ * Single-request client upload with a stall watchdog and automatic retries.
+ * Files are already compressed to a few hundred KB, so one PUT per attempt
+ * beats multipart's extra round-trips on slow or flaky connections.
+ */
+async function uploadWithRetry(
+  pathname: string,
+  file: File,
+  onProgress: (percentage: number) => void,
+  attempts = 3,
+): Promise<{ url: string }> {
+  let lastError: unknown = new StallError();
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const controller = new AbortController();
+    let lastProgressAt = Date.now();
+    const watchdog = setInterval(() => {
+      if (Date.now() - lastProgressAt > 20_000) {
+        controller.abort();
+      }
+    }, 2_000);
+
+    try {
+      return await upload(pathname, file, {
+        access: 'public',
+        handleUploadUrl: '/api/listing-images',
+        abortSignal: controller.signal,
+        onUploadProgress: ({ percentage }) => {
+          lastProgressAt = Date.now();
+          onProgress(percentage);
+        },
+      });
+    } catch (error) {
+      lastError = controller.signal.aborted ? new StallError() : error;
+      onProgress(1);
+    } finally {
+      clearInterval(watchdog);
+    }
+  }
+
+  throw lastError;
+}
+
 export function HeroImageUpload({ value, onChange, error }: HeroImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -98,37 +148,18 @@ export function HeroImageUpload({ value, onChange, error }: HeroImageUploadProps
     setProgress(0);
     setUploadError(null);
 
-    // Abort the upload if no progress is made for 30s so the UI never hangs.
-    const controller = new AbortController();
-    let lastProgressAt = Date.now();
-    const watchdog = setInterval(() => {
-      if (Date.now() - lastProgressAt > 30_000) {
-        controller.abort();
-      }
-    }, 5_000);
-
     try {
       const optimized = await compressImage(file);
-      lastProgressAt = Date.now();
+      setProgress(1);
 
-      // Client upload: file goes browser -> Vercel Blob directly, so the
-      // serverless 4.5 MB body limit (413) never applies. Multipart mode
-      // chunks the transfer and retries failed parts on flaky connections.
       const safeName = optimized.name.replace(/[^a-zA-Z0-9.-]/g, '-');
-      const blob = await upload(`listing-heroes/${Date.now()}-${safeName}`, optimized, {
-        access: 'public',
-        handleUploadUrl: '/api/listing-images',
-        multipart: true,
-        abortSignal: controller.signal,
-        onUploadProgress: ({ percentage }) => {
-          lastProgressAt = Date.now();
-          setProgress(Math.round(percentage));
-        },
+      const blob = await uploadWithRetry(`listing-heroes/${Date.now()}-${safeName}`, optimized, (pct) => {
+        setProgress(Math.max(1, Math.round(pct)));
       });
 
       onChange(blob.url);
     } catch (uploadFailure) {
-      if (controller.signal.aborted) {
+      if (uploadFailure instanceof StallError) {
         setUploadError('Upload stalled — check your connection and try again.');
       } else {
         setUploadError(
@@ -136,7 +167,6 @@ export function HeroImageUpload({ value, onChange, error }: HeroImageUploadProps
         );
       }
     } finally {
-      clearInterval(watchdog);
       setUploading(false);
       setProgress(0);
       if (inputRef.current) {
