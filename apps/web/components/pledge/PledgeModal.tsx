@@ -63,6 +63,25 @@ function canAffordAsset(asset: UserTokenAsset, totalCost: number): boolean {
   return parseAssetBalance(asset.balance) >= totalCost;
 }
 
+/** Prefer the largest UTXO that covers the pledge; otherwise the largest holding. */
+function pickBestPaymentAsset(
+  assets: UserTokenAsset[],
+  totalCost: number,
+): UserTokenAsset | null {
+  if (assets.length === 0) {
+    return null;
+  }
+
+  const sorted = [...assets].sort(
+    (left, right) =>
+      parseAssetBalance(right.balance) - parseAssetBalance(left.balance),
+  );
+
+  return (
+    sorted.find((asset) => canAffordAsset(asset, totalCost)) ?? sorted[0] ?? null
+  );
+}
+
 function CheckBadge() {
   return (
     <span className="animate-check-pop relative inline-flex h-16 w-16 items-center justify-center">
@@ -96,7 +115,6 @@ export function PledgeModal({
   const [assets, setAssets] = useState<UserTokenAsset[]>([]);
   const [isLoadingAssets, setIsLoadingAssets] = useState(false);
   const [slotCount, setSlotCount] = useState(1);
-  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState<PledgeSuccess | null>(null);
@@ -108,10 +126,15 @@ export function PledgeModal({
     [assets],
   );
   const hasSufficientTotalBalance = totalBalance >= totalCost;
-
-  const selectedAsset = assets.find(
-    (asset) => asset.canton_contract_id === selectedAssetId,
+  const paymentAsset = useMemo(
+    () => pickBestPaymentAsset(assets, totalCost),
+    [assets, totalCost],
   );
+  const canPayFromSingleHolding = Boolean(
+    paymentAsset && canAffordAsset(paymentAsset, totalCost),
+  );
+  const needsConsolidation =
+    assets.length > 1 && hasSufficientTotalBalance && !canPayFromSingleHolding;
 
   const isBusy = isSubmitting || isLoadingAssets;
 
@@ -132,7 +155,6 @@ export function PledgeModal({
 
   const resetFlow = useCallback(() => {
     setSlotCount(1);
-    setSelectedAssetId(null);
     setSubmitError(null);
     setIsSubmitting(false);
     setSuccess(null);
@@ -146,21 +168,6 @@ export function PledgeModal({
     void loadAssets();
   }, [open, loadAssets, resetFlow]);
 
-  useEffect(() => {
-    if (!selectedAssetId && assets.length > 0) {
-      const affordable = assets.find((asset) => canAffordAsset(asset, totalCost));
-      if (affordable) {
-        setSelectedAssetId(affordable.canton_contract_id);
-      }
-    }
-  }, [assets, selectedAssetId, totalCost]);
-
-  useEffect(() => {
-    if (selectedAsset && !canAffordAsset(selectedAsset, totalCost)) {
-      setSelectedAssetId(null);
-    }
-  }, [selectedAsset, totalCost]);
-
   const handleDialogOpenChange = (nextOpen: boolean) => {
     if (!isSubmitting) {
       onOpenChange(nextOpen);
@@ -173,8 +180,19 @@ export function PledgeModal({
       return;
     }
 
-    if (!selectedAsset) {
-      setSubmitError('Select a tUSDC holding with sufficient balance');
+    if (!paymentAsset) {
+      setSubmitError('No tUSDC holdings found. Claim from the faucet first.');
+      return;
+    }
+
+    if (!canAffordAsset(paymentAsset, totalCost)) {
+      if (needsConsolidation) {
+        setSubmitError(
+          'Your tUSDC is split across multiple holdings. Claim once more from the faucet for a larger single balance, or pledge an amount covered by your largest holding.',
+        );
+        return;
+      }
+      setSubmitError('Insufficient tUSDC balance for this pledge');
       return;
     }
 
@@ -189,7 +207,7 @@ export function PledgeModal({
         buyerPartyId: partyId,
         propertyId: property.id,
         amount: totalCost.toFixed(2),
-        paymentAssetContractId: selectedAsset.canton_contract_id,
+        paymentAssetContractId: paymentAsset.canton_contract_id,
       });
 
       setSuccess({
@@ -438,7 +456,7 @@ export function PledgeModal({
                     <section className="space-y-3">
                       <div className="flex items-center justify-between gap-3">
                         <h3 className="text-sm font-semibold text-slate-900">
-                          Select payment asset
+                          Available tUSDC
                         </h3>
                         <button
                           type="button"
@@ -465,65 +483,56 @@ export function PledgeModal({
                           from the faucet first, then hit Refresh.
                         </div>
                       ) : (
-                        <div className="space-y-2">
-                          {assets.map((asset) => {
-                            const affordable = canAffordAsset(asset, totalCost);
-                            const isSelected =
-                              selectedAssetId === asset.canton_contract_id;
-
-                            return (
-                              <label
-                                key={asset.id}
-                                className={`flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-4 transition-colors ${
-                                  affordable
-                                    ? isSelected
-                                      ? 'border-brand-orange bg-brand-orange/10'
-                                      : 'border-slate-200 bg-white hover:border-brand-orange/40'
-                                    : 'cursor-not-allowed border-slate-200 bg-slate-50 opacity-60'
-                                }`}
-                              >
-                                <input
-                                  type="radio"
-                                  name="payment_asset"
-                                  value={asset.canton_contract_id}
-                                  checked={isSelected}
-                                  disabled={!affordable || isBusy}
-                                  onChange={() =>
-                                    setSelectedAssetId(asset.canton_contract_id)
-                                  }
-                                  className="mt-1 h-4 w-4 border-slate-300 accent-brand-orange"
-                                />
-                                <span className="flex-1">
-                                  <span className="flex items-center justify-between gap-3">
-                                    <span className="text-sm font-semibold text-slate-900">
-                                      {formatTokenBalance(
-                                        parseAssetBalance(asset.balance),
-                                        asset.symbol,
-                                      )}
-                                    </span>
-                                    {!affordable && (
-                                      <span className="text-xs font-medium text-slate-500">
-                                        Insufficient
-                                      </span>
-                                    )}
-                                  </span>
-                                  <span className="mt-1 block text-xs text-slate-500">
-                                    {truncatePartyId(asset.canton_contract_id, 10, 10)}
-                                  </span>
-                                </span>
-                              </label>
-                            );
-                          })}
+                        <div
+                          className={`glass-inset px-4 py-4 ${
+                            hasSufficientTotalBalance
+                              ? 'border-brand-orange/30'
+                              : ''
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+                                Wallet balance
+                              </p>
+                              <p className="mt-1 text-xl font-bold tracking-[-0.02em] text-brand-black">
+                                {formatTokenBalance(totalBalance, 'tUSDC')}
+                              </p>
+                            </div>
+                            {hasSufficientTotalBalance ? (
+                              <span className="rounded-full bg-brand-orange/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-brand-orange">
+                                Ready
+                              </span>
+                            ) : (
+                              <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+                                Low balance
+                              </span>
+                            )}
+                          </div>
+                          {assets.length > 1 ? (
+                            <p className="mt-2 text-xs text-neutral-500">
+                              Combined from {assets.length} faucet claims into
+                              one available balance.
+                            </p>
+                          ) : null}
                         </div>
                       )}
 
-                      {!hasSufficientTotalBalance && assets.length > 0 && (
+                      {!hasSufficientTotalBalance && assets.length > 0 ? (
                         <p className="text-xs text-slate-500">
-                          Combined balance {formatTokenBalance(totalBalance)} is
-                          below the required {formatTokenBalance(totalCost)}.
-                          Claim more tUSDC from the faucet.
+                          You need {formatTokenBalance(totalCost)} for this
+                          pledge. Claim more tUSDC from the faucet.
                         </p>
-                      )}
+                      ) : null}
+
+                      {needsConsolidation ? (
+                        <p className="text-xs text-amber-700">
+                          Your balance is enough in total, but it is still split
+                          across separate holdings. Reduce the slot count to fit
+                          your largest holding, or claim again so one holding
+                          covers the pledge.
+                        </p>
+                      ) : null}
                     </section>
 
                     {submitError && (
@@ -547,8 +556,8 @@ export function PledgeModal({
                 isBusy ||
                 !isConnected ||
                 !partyId ||
-                !selectedAsset ||
-                !canAffordAsset(selectedAsset, totalCost) ||
+                !paymentAsset ||
+                !canPayFromSingleHolding ||
                 slotsRemaining <= 0
               }
               className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-brand-orange px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-orange-dark disabled:cursor-not-allowed disabled:opacity-50"
