@@ -206,7 +206,7 @@ you pay tUSDC for slots, the ledger records the deal, and you walk away with NFT
     <td style="padding: 10px; border-bottom: 1px solid #eee;">tUSDC</td>
   </tr>
   <tr>
-    <td style="padding: 10px; border-bottom: 1px solid #eee;">WalletConnect chain</td>
+    <td style="padding: 10px; border-bottom: 1px solid #eee;">Chain ID</td>
     <td style="padding: 10px; border-bottom: 1px solid #eee;"><code>canton:sandbox</code></td>
   </tr>
   <tr>
