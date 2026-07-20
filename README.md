@@ -21,12 +21,6 @@ Fractional real estate on the Canton Network. Built for the Canton DevNet hackat
 <div style="font-family: 'Times New Roman', Times, serif; line-height: 1.7; color: #222;">
 
 <h2 style="font-family: 'Times New Roman', Times, serif; background: #E85D04; color: #fff; padding: 10px 16px; display: inline-block; border-radius: 4px;">
-What this document is for
-</h2>
-
-<p>
-This is the team playbook for winning the hackathon. Read it once before demos. It explains the problem, the product story, the full user journey, how pledges settle on Canton, what we want to change in the market, and which public IDs are safe to show judges. Nothing secret lives in this file.
-</p>
 
 <hr style="border: none; border-top: 2px solid #E85D04; margin: 28px 0;" />
 
