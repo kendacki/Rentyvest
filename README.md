@@ -162,12 +162,7 @@ you pay tUSDC for slots, the ledger records the deal, and you walk away with NFT
 <hr style="border: none; border-top: 2px solid #E85D04; margin: 28px 0;" />
 
 <h2 style="font-family: 'Times New Roman', Times, serif; background: #E85D04; color: #fff; padding: 10px 16px; display: inline-block; border-radius: 4px;">
-Public IDs safe to show judges
 </h2>
-
-<p>
-These values identify our Canton package and demo issuer. They are public by design. Do <strong>not</strong> paste secrets, passwords, JWTs, OAuth client secrets, database URLs, Privy secrets, Supabase service keys, or WalletConnect project ids into chats, slides, or this README.
-</p>
 
 <table style="font-family: 'Times New Roman', Times, serif; width: 100%; border-collapse: collapse;">
   <tr style="background: #FFF3E8;">
@@ -220,10 +215,6 @@ These values identify our Canton package and demo issuer. They are public by des
   </tr>
 </table>
 
-<p>
-<strong>Never share:</strong> database connection strings, Privy app secret, Supabase service role key, Canton OAuth client secret, static JWTs, admin private credentials, or any production wallet seed.
-</p>
-
 <hr style="border: none; border-top: 2px solid #E85D04; margin: 28px 0;" />
 
 <h2 style="font-family: 'Times New Roman', Times, serif; background: #E85D04; color: #fff; padding: 10px 16px; display: inline-block; border-radius: 4px;">
@@ -241,7 +232,7 @@ Stack at a glance
 <hr style="border: none; border-top: 2px solid #E85D04; margin: 28px 0;" />
 
 <h2 style="font-family: 'Times New Roman', Times, serif; background: #E85D04; color: #fff; padding: 10px 16px; display: inline-block; border-radius: 4px;">
-Demo checklist for the team
+Demo checklist
 </h2>
 
 <ol>
@@ -255,7 +246,7 @@ Demo checklist for the team
 <hr style="border: none; border-top: 2px solid #E85D04; margin: 28px 0;" />
 
 <h2 style="font-family: 'Times New Roman', Times, serif; background: #E85D04; color: #fff; padding: 10px 16px; display: inline-block; border-radius: 4px;">
-Pitch line to remember
+Conclusion
 </h2>
 
 <p style="font-size: 1.15rem;">
