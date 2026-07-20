@@ -44,7 +44,7 @@ Owning real estate usually means one big payment, slow paperwork, and almost no 
 </ol>
 
 <p>
-We are building infrastructure for the next generation of property investing: transparent pools, live fill progress, and settlement that judges can verify on the ledger.
+We are building infrastructure for the next generation of property investing: transparent pools, live fill progress, and settlement that can be verified on the ledger.
 </p>
 
 <hr style="border: none; border-top: 2px solid #E85D04; margin: 28px 0;" />
@@ -54,11 +54,11 @@ What we want to change in the market
 </h2>
 
 <p>
-Today the market asks people to choose between “buy the whole house” or “buy a vague crypto claim.” We want a third path: <strong>buy a real share of a named property, settle it on Canton, and hold proof as an NFT.</strong>
+Today the market asks people to choose between “buy the whole Apartment” or “buy a vague crypto claim.” We want a third path: <strong>buy a real share of a named property, settle it on Canton, and hold proof as an NFT.</strong>
 </p>
 
 <h3 style="font-family: 'Times New Roman', Times, serif; color: #E85D04; border-left: 6px solid #E85D04; padding-left: 12px;">
-Example 1: The young professional
+Example 1: Ada the Young professional
 </h3>
 
 <p>
@@ -78,7 +78,7 @@ Example 3: What this means for Canton
 </h3>
 
 <p>
-Canton is strong at multi party agreement and privacy aware settlement. RentyVest shows that strength in a story anyone can follow: wallet, faucet, browse, pledge, NFT. Judges see Daml templates, admin settlement, and Loop users working together on DevNet without asking the audience to learn ledger jargon first.
+Canton is strong at multi party agreement and privacy aware settlement. RentyVest shows that strength in a story anyone can follow: wallet, faucet, browse, pledge, NFT.  This means Daml templates, admin settlement, and Loop users working together to execute tasks without asking the audience to learn technical jargons first.
 </p>
 
 <hr style="border: none; border-top: 2px solid #E85D04; margin: 28px 0;" />
@@ -87,14 +87,10 @@ Canton is strong at multi party agreement and privacy aware settlement. RentyVes
 User flow (demo path)
 </h2>
 
-<p>
-Use this order in live demos. Keep it calm and short.
-</p>
-
 <ol>
   <li>
     <strong>Connect wallet.</strong>
-    Open the app and connect a Canton wallet with WalletConnect. On DevNet we recommend Loop. Chain id used in the app is <code>canton:sandbox</code>.
+    Open the app and connect a Canton wallet. On DevNet we recommend Loop. Chain id used in the app is <code>canton:sandbox</code>.
   </li>
   <li>
     <strong>Claim faucet tUSDC.</strong>
@@ -123,7 +119,7 @@ Use this order in live demos. Keep it calm and short.
 </ol>
 
 <p>
-<strong>Three step story for slides:</strong> Connect and fund → Pick your pool → Own a property share.
+Connect and fund → Pick your pool → Own a property share.
 </p>
 
 <hr style="border: none; border-top: 2px solid #E85D04; margin: 28px 0;" />
@@ -131,10 +127,6 @@ Use this order in live demos. Keep it calm and short.
 <h2 style="font-family: 'Times New Roman', Times, serif; background: #E85D04; color: #fff; padding: 10px 16px; display: inline-block; border-radius: 4px;">
 How pledges work
 </h2>
-
-<p>
-A pledge is the heart of RentyVest. Keep this explanation simple for judges.
-</p>
 
 <ol>
   <li>
@@ -164,7 +156,7 @@ A pledge is the heart of RentyVest. Keep this explanation simple for judges.
 </ol>
 
 <p>
-In plain words: <strong>you pay tUSDC for slots, the ledger records the deal, and you walk away with NFT proof of your share.</strong>
+you pay tUSDC for slots, the ledger records the deal, and you walk away with NFT proof of your share and earn yields on the property in the future.</strong>
 </p>
 
 <hr style="border: none; border-top: 2px solid #E85D04; margin: 28px 0;" />
