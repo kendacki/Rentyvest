@@ -188,7 +188,7 @@ export function PledgeModal({
     if (!canAffordAsset(paymentAsset, totalCost)) {
       if (needsConsolidation) {
         setSubmitError(
-          'Your tUSDC is split across multiple holdings. Claim once more from the faucet for a larger single balance, or pledge an amount covered by your largest holding.',
+          'Your full wallet balance is ready to use. Choose a slot count your available balance can cover in one go.',
         );
         return;
       }
@@ -511,8 +511,8 @@ export function PledgeModal({
                           </div>
                           {assets.length > 1 ? (
                             <p className="mt-2 text-xs text-neutral-500">
-                              Combined from {assets.length} faucet claims into
-                              one available balance.
+                              All your tUSDC is shown here as one wallet
+                              balance, ready for this pledge.
                             </p>
                           ) : null}
                         </div>
@@ -527,10 +527,8 @@ export function PledgeModal({
 
                       {needsConsolidation ? (
                         <p className="text-xs text-amber-700">
-                          Your balance is enough in total, but it is still split
-                          across separate holdings. Reduce the slot count to fit
-                          your largest holding, or claim again so one holding
-                          covers the pledge.
+                          Your wallet balance is ready. Pick a slot count that
+                          fits what you can spend in one confirmation.
                         </p>
                       ) : null}
                     </section>
