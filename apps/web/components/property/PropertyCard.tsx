@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import {
   formatCurrency,
   formatLocation,
@@ -9,6 +12,8 @@ import {
   getSlotsRemaining,
   type Property,
 } from '../../types/property';
+
+const FALLBACK_PROPERTY_IMAGE = '/properties/ivy-towers.jpg';
 
 type PropertyCardProps = {
   property: Property;
@@ -37,22 +42,30 @@ export function PropertyCard({ property }: PropertyCardProps) {
   const fillPercent = getSlotFillPercent(property);
   const location = formatLocation(property.city, property.state);
   const isSoldOut = slotsRemaining === 0;
+  const preferredImage =
+    property.image_url?.trim() || FALLBACK_PROPERTY_IMAGE;
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [preferredImage]);
+
+  const imageSrc = imageFailed ? FALLBACK_PROPERTY_IMAGE : preferredImage;
 
   return (
     <article className="card-surface flex flex-col overflow-hidden p-2.5 transition-shadow hover:shadow-lg">
       <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-neutral-100">
-        {property.image_url ? (
-          <img
-            src={property.image_url}
-            alt={property.title}
-            className="h-full w-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-neutral-100 text-sm font-medium text-neutral-500">
-            Property image
-          </div>
-        )}
+        <img
+          src={imageSrc}
+          alt={property.title}
+          className="h-full w-full object-cover"
+          loading="lazy"
+          onError={() => {
+            if (!imageFailed) {
+              setImageFailed(true);
+            }
+          }}
+        />
 
         <div className="absolute left-2.5 top-2.5 rounded-full border border-white/60 bg-white/70 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-black shadow-sm backdrop-blur-md">
           Fractional Ownership
